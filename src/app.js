@@ -7,7 +7,7 @@
   var LABEL = {r1:"Round 1", r2:"Round 2", r3:"Round 3"};
 
   function blankC(no){
-    return {no:no, name:"", school:"",
+    return {no:no, name:"", school:"", photo:null,
             r1:new Array(QN).fill(false),
             r2:new Array(QN).fill(false),
             r3:new Array(QN).fill(false),
@@ -30,6 +30,7 @@
   var disp = {cue:"standby", round:"r1", reveal:0, page:0, cols:0, val:"total"};
   var sortBy = "no";   // "no" = contestant number, "score" = running total
   var perPage = 8;
+  var introPer = 6;    // portraits per page on the Introduce contestants screen
   var winRef = null, popFlag = false;
 
   var $ = function(id){ return document.getElementById(id); };
@@ -230,10 +231,18 @@
 
   function renderRoster(){
     var rows = state.contestants.map(function(c,i){
+      var has = isPhoto(c.photo);
       return '<tr><td class="no pad">'+c.no+'</td>'+
         '<td class="pad"><input class="rin" data-f="name" data-i="'+i+'" value="'+esc(c.name)+'" placeholder="Contestant name"></td>'+
-        '<td class="pad"><input class="rin" data-f="school" data-i="'+i+'" value="'+esc(c.school)+'" placeholder="School"></td></tr>';
+        '<td class="pad"><input class="rin" data-f="school" data-i="'+i+'" value="'+esc(c.school)+'" placeholder="School"></td>'+
+        '<td class="pad photocell">'+
+          (has ? '<img class="thumb" src="'+c.photo+'" alt="'+esc(c.name)+'">'
+               : '<span class="thumb none">'+c.no+'</span>')+
+          '<button class="lbtn tiny" data-photo="'+i+'">'+(has?"Replace":"Add photo")+'</button>'+
+          (has ? '<button class="lbtn tiny danger" data-unphoto="'+i+'">Remove</button>' : '')+
+        '</td></tr>';
     }).join("");
+    var withPhotos = state.contestants.filter(function(c){ return isPhoto(c.photo); }).length;
     return '<div class="panel">'+
       '<div class="setup">'+
         '<div class="field"><label for="mEd">Event</label><input id="mEd" data-m="edition" value="'+esc(state.meta.edition)+'"></div>'+
@@ -241,15 +250,19 @@
         '<div class="field"><label for="mPl">Province</label><input id="mPl" data-m="place" value="'+esc(state.meta.place)+'"></div>'+
         '<div class="field"><label for="mDt">Date</label><input id="mDt" data-m="date" value="'+esc(state.meta.date)+'"></div>'+
       '</div>'+
-      '<div class="panel-head"><h3>Roster</h3><span class="note">'+named().length+' of '+state.contestants.length+' slots filled</span>'+
+      '<div class="panel-head"><h3>Roster</h3><span class="note">'+named().length+' of '+state.contestants.length+
+        ' slots filled · '+withPhotos+' with a photo</span>'+
         '<div class="right"><button class="lbtn" id="btnPaste">Paste from Excel</button>'+
         '<button class="lbtn" id="btnAdd">Add 5 slots</button>'+
         '<button class="lbtn danger" id="btnClearAll">Clear all scores</button></div></div>'+
-      '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Name</th><th>School</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Name</th><th>School</th>'+
+      '<th class="c">Photo</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="paste" id="pasteBox"><p>Paste the name and school columns from the registration sheet — one contestant per line, tab or comma between the two.</p>'+
         '<textarea id="pasteText" placeholder="Juan dela Cruz&#9;Marinduque National High School"></textarea>'+
         '<div class="row"><button class="lbtn go" id="btnPasteGo">Load roster</button><button class="lbtn" id="btnPasteCancel">Cancel</button></div></div>'+
-      '<div class="legend">Scores stay attached to the slot number, so correcting a spelling never disturbs a tally.</div></div>';
+      '<div class="legend">Scores stay attached to the slot number, so correcting a spelling never disturbs a tally. '+
+      'Photos are shrunk before they are stored and travel inside the saved session, so one .json file still carries the whole contest. '+
+      'They appear on the Introduce contestants screen and on the winners’ cards.</div></div>';
   }
 
   function leadersLine(k, list){
@@ -437,12 +450,13 @@
   var CUES = [
     {id:"standby",     t:"Title card",        d:"Event name, province, date"},
     {id:"mechanics",   t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
+    {id:"introduce",   t:"Introduce contestants", d:"Portraits, names and schools"},
     {id:"round",       t:"Round scores",      d:"By contestant number, for the read-out"},
     {id:"advancing",   t:"Advancing to R3",   d:"Who made the cut after Round 2"},
     {id:"leaderboard", t:"Leaderboard",       d:"Ranked, current standings"},
     {id:"tiebreak",    t:"Sudden death",      d:"Live tie-break marks"},
-    {id:"reveal",      t:"Top 3 reveal",      d:"Third, then second, then champion"},
-    {id:"champion",    t:"Champion card",     d:"Full-screen winner"},
+    {id:"reveal",      t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
+    {id:"champion",    t:"Champion card",     d:"Full-screen winner, on its own"},
     {id:"blank",       t:"Blank the screen",  d:"Holding slate between segments"}
   ];
   function cueName(id){ var c=CUES.filter(function(x){return x.id===id;})[0]; return c?c.t:id; }
@@ -459,8 +473,10 @@
     var pl = pagedList();
     var pages = pl ? Math.max(1, Math.ceil(pl.length/per())) : 1;
     var mech = disp.cue==="mechanics";
-    var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2],["Reveal the champion",3]].map(function(r){
-      return '<button class="lbtn'+(disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
+    var intro = disp.cue==="introduce";
+    var photos = named().filter(function(c){ return isPhoto(c.photo); }).length;
+    var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2]].map(function(r){
+      return '<button class="lbtn'+(disp.cue==="reveal" && disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
     }).join("");
 
     // the Round 3 cut, offered here because the operator is on this tab while the
@@ -509,22 +525,29 @@
             return '<button class="lbtn'+(disp.cols===v[1]?" on":"")+'" data-cols="'+v[1]+'">'+v[0]+'</button>';
           }).join("")+
           '<span class="note">Tiles read downwards, then across.</span></div>'+
-        '<div class="deskrow"><span class="lab">Tiles per page</span>'+
-          [6,8,10,12].map(function(v){
-            return '<button class="lbtn'+(perPage===v?" on":"")+'" data-per="'+v+'">'+v+'</button>';
-          }).join("")+'</div>'+
+        '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
+          (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
+            return '<button class="lbtn'+((intro?introPer:perPage)===v?" on":"")+'" data-per="'+v+'">'+v+'</button>';
+          }).join("")+
+          (intro?'<span class="note">One per page introduces them individually.</span>':'')+'</div>'+
         '<div class="deskrow"><span class="lab">Page</span>'+
           '<button class="lbtn" data-pg="-1"'+(!pl||disp.page===0?" disabled":"")+'>\u25c0 Previous</button>'+
           '<button class="lbtn" data-pg="1"'+(!pl||disp.page>=pages-1?" disabled":"")+'>Next \u25b6</button>'+
           '<span class="note">'+(pl
             ? (mech ? (pl.length+" mechanics screens \u00b7 showing screen "+(disp.page+1)+" of "+pages)
-                    : (pl.length+" contestants \u00b7 "+perPage+" per page \u00b7 showing page "+
+                    : (pl.length+" contestants \u00b7 "+per()+" per page \u00b7 showing page "+
                        (disp.page+1)+" of "+pages))
             : "This cue is a single screen")+'</span></div>'+
         '<div class="deskrow"><span class="lab">Reveal</span>'+rev+
-          '<button class="lbtn" data-reveal="0">Hide all three</button></div>'+
+          '<button class="lbtn" data-reveal="0">Hide both</button>'+
+          '<button class="lbtn'+(disp.cue==="champion"?" on":"")+'" data-cue="champion">Then the champion</button>'+
+          '<span class="note">The champion has a card of their own — R walks the three in order.</span></div>'+
       '</div>'+
-      '<div class="legend">Shortcuts: T returns to the title card and M shows the contest mechanics, from anywhere. On this tab, 1–9 pick a cue, left and right arrows turn the page, and R reveals the next placer.</div></div>';
+      '<div class="legend">Shortcuts: T returns to the title card and M shows the contest mechanics, from anywhere. '+
+      'On this tab, 1–9 and 0 pick a cue, left and right arrows turn the page, and R walks the declaration — '+
+      '3rd placer, 2nd placer, then the champion’s card.'+
+      (photos<named().length ? ' <b>'+(named().length-photos)+' contestants have no photo yet</b> — add them on the Roster tab; the introduction screen shows their number instead.' : '')+
+      '</div></div>';
   }
 
   /* ===================== audience screen markup ===================== */
@@ -563,8 +586,13 @@
     return m;
   }
 
-  // the mechanics cue pages one screen at a time; the score cues page by tiles
-  function per(){ return disp.cue==="mechanics" ? 1 : perPage; }
+  // the mechanics cue pages one screen at a time; portraits and score tiles
+  // page at their own counts, since a portrait needs far more room than a score
+  function per(){
+    if(disp.cue==="mechanics") return 1;
+    if(disp.cue==="introduce") return introPer;
+    return perPage;
+  }
 
   function pageOf(list){
     var n = per();
@@ -590,6 +618,7 @@
   function pagedList(){
     var s2 = standings();
     if(disp.cue==="mechanics") return mechPages();
+    if(disp.cue==="introduce") return named();
     if(disp.cue==="round") return roundList(disp.round);
     if(disp.cue==="advancing") return hasMarks("r2") ? qualifiers() : [];
     if(disp.cue==="leaderboard") return s2.rows;
@@ -722,6 +751,30 @@
         '</div></div></div>';
     }
 
+    if(disp.cue==="introduce"){
+      var pgi = pageOf(list.slice().sort(function(a,b){ return a.no-b.no; }));
+      var n = pgi.slice.length;
+      // one row: the screen is wide and short, so tall narrow cards suit portraits
+      var cols = Math.max(1, n);
+      var body = list.length
+        ? '<div class="intro'+(n===1?" solo":"")+'" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+
+          pgi.slice.map(function(c){
+            return '<div class="icard">'+portrait(c)+
+              '<div class="itxt"><div class="num">No. '+c.no+'</div>'+
+              '<div class="who">'+esc(c.name)+'</div>'+
+              '<div class="sch">'+esc(c.school||"")+'</div></div></div>';
+          }).join("")+'</div>'+pagerHTML(pgi)
+        : '<div class="none">No contestants yet</div>';
+      return '<div class="dsp">'+dspHead("Meet the contestants")+
+        '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
+        '<div class="sect">The contestants<small>'+list.length+' from '+
+        (function(){
+          var sch = {}; list.forEach(function(c){ if(c.school) sch[c.school]=1; });
+          var n2 = Object.keys(sch).length;
+          return n2 ? (n2+" school"+(n2===1?"":"s")) : "the province";
+        })()+'</small></div>'+body+'</div></div>';
+    }
+
     if(disp.cue==="round"){
       var k = disp.round;
       var qual = qualifiers();
@@ -815,25 +868,29 @@
         '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+blocks+'</div></div>';
     }
 
+    // the champion is deliberately not here — that card stands on its own
     if(disp.cue==="reveal"){
-      var names = ["Champion","2nd placer","3rd placer"];
-      var order = [2,1,0];   // reveal 3rd, then 2nd, then 1st
-      var cards = [0,1,2].map(function(i){
+      var names = ["2nd placer","3rd placer"];
+      var order = [1,0];     // reveal the 3rd placer first, then the 2nd
+      var cards = [0,1].map(function(i){
         var shown = order.indexOf(i) < disp.reveal;
-        var c = s.rows[i];
+        var c = s.rows[i+1];                      // rows[0] is the champion
         if(!shown || !c){
-          return '<div class="card c'+(i+1)+' hidden"><div class="pl">'+names[i]+'</div>'+
+          return '<div class="card c'+(i+2)+' hidden"><div class="pl">'+names[i]+'</div>'+
             '<div class="who">?</div></div>';
         }
         var isNew = justRevealed && order[disp.reveal-1]===i;
-        return '<div class="card c'+(i+1)+(isNew?" pop":"")+'"><div class="pl">'+names[i]+'</div>'+
+        return '<div class="card c'+(i+2)+(isNew?" pop":"")+'"><div class="pl">'+names[i]+'</div>'+
+          portrait(c)+
           '<div class="who">'+esc(c.name)+'</div><div class="sch">'+esc(c.school||"")+'</div>'+
           '<div class="pts">'+s.stage.fn(c)+'<em>points</em></div></div>';
       }).join("");
       return '<div class="dsp">'+dspHead("Declaration of winners")+
-        '<div class="body"><div class="rev">'+cards+'</div></div>'+
-        '<div class="foot"><span>The three winners represent '+esc(state.meta.place)+
-        ' at the Regional Championship.</span></div></div>';
+        '<div class="body"><div class="rev two">'+cards+'</div></div>'+
+        '<div class="foot"><span>'+(disp.reveal>=2
+          ? 'And now the '+esc(state.meta.place)+' Provincial Champion.'
+          : 'The three winners represent '+esc(state.meta.place)+' at the Regional Championship.')+
+        '</span></div></div>';
     }
 
     if(disp.cue==="champion"){
@@ -842,6 +899,7 @@
       return '<div class="dsp">'+dspHead("Provincial Champion")+
         '<div class="body"><div class="champ'+(justRevealed?" pop":"")+'">'+
         '<div class="pl">'+esc(state.meta.place)+' Provincial Champion</div>'+
+        portrait(c1,"big")+
         '<div class="who">'+esc(c1.name)+'</div>'+
         '<div class="sch">'+esc(c1.school||"")+'</div>'+
         '<div class="pts">'+s.stage.fn(c1)+' points</div></div></div></div>';
@@ -944,6 +1002,64 @@
     setTimeout(render, 60);
   }
 
+  /* ===================== contestant portraits =====================
+     Photos live in the session file as data URIs, so a saved session is still
+     one self-contained .json you can carry to the venue. That only works if
+     they are small: every picture is redrawn through a canvas at no more than
+     PHOTO_MAX on its long side before it is stored. A 4 MB phone photo comes
+     out around 80 KB, so a full roster adds a couple of megabytes, not sixty. */
+  var PHOTO_MAX = 720;
+  var photoFor = null;            // which contestant the file picker is filling
+
+  function isPhoto(v){ return typeof v==="string" && /^data:image\//.test(v); }
+
+  function shrink(file, done){
+    var fr = new FileReader();
+    fr.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if(!w || !h){ done(null); return; }
+        var sc = Math.min(1, PHOTO_MAX/Math.max(w,h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w*sc));
+        cv.height = Math.max(1, Math.round(h*sc));
+        var cx = cv.getContext("2d");
+        cx.fillStyle = "#fff";                       // flatten transparency
+        cx.fillRect(0,0,cv.width,cv.height);
+        cx.drawImage(img, 0, 0, cv.width, cv.height);
+        try{ done(cv.toDataURL("image/jpeg", 0.85)); }catch(err){ done(null); }
+      };
+      img.onerror = function(){ done(null); };
+      img.src = fr.result;
+    };
+    fr.onerror = function(){ done(null); };
+    fr.readAsDataURL(file);
+  }
+
+  function pickPhoto(i){ photoFor = i; $("photoIn").click(); }
+
+  $("photoIn").addEventListener("change", function(e){
+    var f = e.target.files[0], i = photoFor;
+    e.target.value = ""; photoFor = null;
+    if(!f || i==null) return;
+    if(!/^image\//.test(f.type)){ toast("That file isn't a picture"); return; }
+    shrink(f, function(uri){
+      if(!uri){ toast("Could not read that picture"); return; }
+      state.contestants[i].photo = uri;
+      render();
+      toast("Photo added for "+(state.contestants[i].name || ("slot "+state.contestants[i].no)));
+    });
+  });
+
+  // portrait for the audience screen, with a numbered placeholder when there is none
+  function portrait(c, extra){
+    return '<div class="por'+(extra?" "+extra:"")+'">'+
+      (isPhoto(c.photo)
+        ? '<img src="'+c.photo+'" alt="'+esc(c.name)+'">'
+        : '<div class="noimg">'+c.no+'</div>')+'</div>';
+  }
+
   /* ===================== the Round 3 cut ===================== */
   function applyCut(){
     if(!hasMarks("r2")){ toast("Tally Round 2 before applying the cut"); return; }
@@ -1013,6 +1129,14 @@
       }
       return;
     }
+    var phEl = t.closest ? t.closest("[data-photo]") : null;
+    if(phEl){ pickPhoto(+phEl.dataset.photo); return; }
+    var unphEl = t.closest ? t.closest("[data-unphoto]") : null;
+    if(unphEl){
+      var ci = +unphEl.dataset.unphoto;
+      state.contestants[ci].photo = null; render(); toast("Photo removed");
+      return;
+    }
     var sortEl = t.closest ? t.closest("[data-sort]") : null;
     if(sortEl){ sortBy = sortEl.dataset.sort; disp.page = 0; render(); return; }
     var valEl = t.closest ? t.closest("[data-val]") : null;
@@ -1024,14 +1148,18 @@
     var colEl = t.closest ? t.closest("[data-cols]") : null;
     if(colEl){ disp.cols = +colEl.dataset.cols; render(); return; }
     var perEl = t.closest ? t.closest("[data-per]") : null;
-    if(perEl){ perPage = +perEl.dataset.per; disp.page = 0; render(); return; }
+    if(perEl){
+      if(disp.cue==="introduce") introPer = +perEl.dataset.per;
+      else perPage = +perEl.dataset.per;
+      disp.page = 0; render(); return;
+    }
     var pgEl = t.closest ? t.closest("[data-pg]") : null;
     if(pgEl && !pgEl.disabled){ turnPage(+pgEl.dataset.pg); return; }
     var cueEl = t.closest ? t.closest("[data-cue]") : null;
     if(cueEl){ setCue(cueEl.dataset.cue, cueEl.dataset.round); toast("On screen: "+cueName(cueEl.dataset.cue)); return; }
     var revEl = t.closest ? t.closest("[data-reveal]") : null;
     if(revEl){
-      disp.cue = "reveal"; disp.reveal = +revEl.dataset.reveal;
+      disp.cue = "reveal"; disp.reveal = Math.min(2, +revEl.dataset.reveal);
       justRevealed = disp.reveal>0; render(); return;
     }
     var tb = t.closest ? t.closest(".tab") : null;
@@ -1109,10 +1237,16 @@
     if(tab==="display" && !typing && !e.ctrlKey && !e.metaKey){
       if(e.key==="ArrowLeft"){ e.preventDefault(); turnPage(-1); return; }
       if(e.key==="ArrowRight"){ e.preventDefault(); turnPage(1); return; }
-      if(/^[1-9]$/.test(e.key) && CUES[+e.key-1]){ setCue(CUES[+e.key-1].id); return; }
+      if(/^[0-9]$/.test(e.key)){
+        var ci = e.key==="0" ? 9 : (+e.key-1);    // 1–9 then 0 for the tenth cue
+        if(CUES[ci]){ setCue(CUES[ci].id); return; }
+      }
+      // R walks the declaration: 3rd placer, 2nd placer, then the champion's own card
       if(e.key==="r" || e.key==="R"){
-        disp.cue="reveal";
-        disp.reveal = Math.min(3, disp.reveal+1);
+        if(disp.cue==="champion") return;
+        if(disp.cue!=="reveal"){ disp.cue="reveal"; disp.reveal=1; }
+        else if(disp.reveal<2) disp.reveal++;
+        else { disp.cue="champion"; }
         justRevealed = true; render(); return;
       }
     }
@@ -1170,6 +1304,7 @@
         if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
         d.contestants.forEach(function(c){
           if(!c.sd || typeof c.sd[0]==="boolean") c.sd = new Array(d.meta.sdCount).fill(null);
+          if(!isPhoto(c.photo)) c.photo = null;   // only ever put a data: image in an <img src>
         });
         state = d; render(); toast("Session restored");
       }catch(err){ toast("That file isn't a saved PSQ session"); }

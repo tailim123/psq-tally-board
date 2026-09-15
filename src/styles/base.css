@@ -163,6 +163,12 @@ td.st{font-size:12px}
 .rin:hover{border-color:#C9D3E2}
 .rin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
 
+/* roster photo cell */
+td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
+.thumb{width:34px;height:45px;object-fit:cover;border:2.5px solid var(--ink);border-radius:5px;background:#E7EDF7;flex:0 0 auto}
+.thumb.none{display:flex;align-items:center;justify-content:center;font-family:var(--pix);font-size:10px;color:#9AA9BE}
+.lbtn.tiny{padding:5px 9px;font-size:11px}
+
 .empty-state{padding:44px 20px;text-align:center;color:var(--muted);font-weight:600}
 .empty-state p{margin:0 0 14px}
 

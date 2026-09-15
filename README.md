@@ -73,14 +73,17 @@ docs/
 | scoring | `rt`, `cum12`, `grand`, `qualifiers`, `sdStreak`, `standings`, `unresolved` |
 | console header | `renderTop`, `renderTabs` — the Top 3 strip and tab bar |
 | console views | `renderRoster`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
+| portraits | `shrink`, `pickPhoto`, `portrait` — photos in, and how they are drawn |
 | audience screen | `sceneHTML`, `fit`, `paintDisplay`, `openDisplay` |
 | events | one delegated `click` handler, one `keydown`, one `input` |
 | Form 1 export | zip writer, `Sheet`, `buildForm1`, `exportForm1` |
 | session | `saveSession`, restore, `exportCsv` |
 
-State is one plain object, `state`, holding `meta` and `contestants`. Display
-settings (`disp`, `perPage`, `sortBy`) are deliberately kept out of it so the
-saved session file stays about the contest, not about the projector.
+State is one plain object, `state`, holding `meta`, `cut` (the announced Round 3
+cut, once there is one) and `contestants` — each of which carries its `photo` as
+a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
+deliberately kept out of it so the saved session file stays about the contest,
+not about the projector.
 
 Rendering is full-redraw: mutate `state`, call `render()`. There is no diffing.
 At 22 contestants this is instant and it removes a whole class of stale-DOM bugs.
@@ -96,6 +99,21 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   `.json` you can reopen with **Open session**. A browser refresh loses the tally.
 - **The audience window is a pop-up.** Browsers may block it the first time. Allow
   pop-ups for the file, then click again.
+- **Contestant photos.** The Roster tab has a Photo column — *Add photo* per
+  contestant, *Replace* or *Remove* after that. Pictures are shrunk to 720px on
+  the long side before they are stored, so a 10 MB phone photo becomes about
+  120 KB and a full 22-contestant roster adds roughly 2 MB to the saved session.
+  They ride inside the session `.json`, so one file still carries the whole
+  contest to the venue. A contestant with no photo shows their number instead —
+  nothing breaks if some pictures never arrive.
+- **Introduce contestants** is a cue of its own: portraits with name and school,
+  paged. Set *Portraits per page* to 1 on the Display tab to introduce them one
+  at a time — a single large portrait with the name and school beside it — or 4,
+  6, 8 to show a row at a time.
+- **Declaring the winners.** The reveal screen carries the **2nd and 3rd placers
+  only**, each with their portrait; the champion has a full-screen card of their
+  own. `R` walks the whole declaration in order: 3rd placer, 2nd placer, then the
+  champion's card.
 - **The title card offers the mechanics.** Under the date there is a *View the
   contest mechanics* button, which opens six screens covering the whole of the
   contest mechanics — how the contest runs, answering a question, scoring,
@@ -118,8 +136,8 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   cut* and re-apply. Applying it clears any Round 3 marks already ticked for an
   eliminated contestant.
 - **Shortcuts:** `T` returns to the title card and `M` shows the contest
-  mechanics, from anywhere. On the Display tab, `1`–`9` pick a cue, `←` `→` turn
-  the page, `R` reveals the next placer.
+  mechanics, from anywhere. On the Display tab, `1`–`9` then `0` pick a cue,
+  `←` `→` turn the page, `R` walks the declaration of winners.
 
 ---
 

@@ -175,8 +175,65 @@
 .dsp .line.gone .val{color:#8E2413}
 .dsp .line.gone .val em{color:#8E2413}
 
+/* ---- portraits ---- */
+.dsp .por{
+  width:100%;aspect-ratio:3/4;background:#DCE7FA;border:4px solid var(--ink);
+  border-radius:calc(var(--u)*.8);overflow:hidden;box-shadow:0 4px 0 var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+.dsp .por img{width:100%;height:100%;object-fit:cover;display:block;image-rendering:auto}
+.dsp .por .noimg{
+  font-family:var(--pix);font-size:calc(var(--u)*4);color:#7E9AD4;
+}
+
+/* ---- introduce the contestants ----
+   Cards are sized by the height left on the screen, never by their width: the
+   portrait takes what the name and school do not, and keeps its 3:4 frame from
+   that height. Six across two rows or one alone then fit the same way. */
+.dsp .intro{
+  display:grid;gap:calc(var(--u)*1.6);width:100%;justify-content:center;
+  flex:1 1 auto;min-height:0;grid-auto-rows:minmax(0,1fr);
+}
+.dsp .icard{
+  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.9);
+  box-shadow:0 3px 0 var(--ink);padding:calc(var(--u)*1.1);min-width:0;min-height:0;
+  text-align:center;display:flex;flex-direction:column;gap:calc(var(--u)*.8);
+  max-width:calc(var(--u)*30);                 /* keeps a sparse last page sane */
+}
+.dsp .intro.solo .icard{max-width:calc(var(--u)*66)}
+.dsp .icard .por{
+  flex:1 1 auto;min-height:0;width:auto;height:auto;max-width:100%;aspect-ratio:3/4;margin:0 auto;
+}
+.dsp .icard .itxt{flex:0 0 auto;min-width:0}
+.dsp .icard .num{font-family:var(--pix);font-size:calc(var(--u)*1.1);color:var(--d-olive)}
+.dsp .icard .who{
+  font-size:calc(var(--u)*1.7);font-weight:850;line-height:1.2;margin-top:calc(var(--u)*.4);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dsp .icard .sch{
+  font-size:calc(var(--u)*1.25);color:var(--d-grass2);font-weight:700;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* one contestant on the screen — the formal, one-at-a-time introduction */
+.dsp .intro.solo .icard{
+  flex-direction:row;align-items:center;text-align:left;
+  gap:calc(var(--u)*3.5);padding:calc(var(--u)*2.4);
+}
+.dsp .intro.solo .por{flex:0 0 auto;height:100%;width:auto;margin:0}
+.dsp .intro.solo .itxt{flex:1 1 auto}
+.dsp .intro.solo .num{font-size:calc(var(--u)*1.8)}
+.dsp .intro.solo .who{font-size:calc(var(--u)*4.4);white-space:normal;margin-top:calc(var(--u)*1.2)}
+.dsp .intro.solo .sch{
+  font-size:calc(var(--u)*2.2);white-space:normal;margin-top:calc(var(--u)*1);line-height:1.3;
+}
+
 /* ---- top 3 reveal ---- */
 .dsp .rev{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);align-items:stretch}
+/* the champion is not on this screen, so the two placers get the room */
+.dsp .rev.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:calc(var(--u)*78);margin:0 auto;width:100%}
+.dsp .rev .por{
+  width:calc(var(--u)*17);max-height:calc(var(--u)*23);margin:calc(var(--u)*1.4) auto 0;
+}
 .dsp .card{
   background:#FFFFFF;border:5px solid var(--ink);border-radius:calc(var(--u)*1.6);
   box-shadow:0 7px 0 var(--ink);
@@ -197,6 +254,12 @@
 
 /* ---- champion ---- */
 .dsp .champ{text-align:center}
+/* the portrait has to leave room for the name, school and points below it */
+.dsp .champ .por{
+  width:calc(var(--u)*19);max-height:calc(var(--u)*25);margin:calc(var(--u)*1.4) auto 0;
+  border-width:5px;box-shadow:0 6px 0 var(--ink), 0 0 0 calc(var(--u)*.8) var(--d-yellow);
+}
+.dsp .champ .who{margin-top:calc(var(--u)*2)}
 .dsp .champ .pl{font-family:var(--pix);font-size:calc(var(--u)*1.7);color:var(--d-yellow);text-shadow:3px 3px 0 var(--d-navy)}
 .dsp .champ .who{font-size:calc(var(--u)*7);font-weight:850;line-height:1.05;margin:calc(var(--u)*2.4) 0 calc(var(--u)*1.4);color:#fff;text-shadow:4px 4px 0 var(--d-navy)}
 .dsp .champ .sch{font-size:calc(var(--u)*2.6);color:#fff;font-weight:700;text-shadow:2px 2px 0 var(--sky-3)}
