@@ -21,6 +21,7 @@
           date:"24 September 2026",
           sdCount:5},
     cut:null,          // once the Round 3 cut is announced, the frozen list of contestant numbers
+    sdAck:[],          // tie-breaks the operator has seen resolved and cleared away
     contestants:[]
   };
   for(var i=1;i<=22;i++) state.contestants.push(blankC(i));
@@ -154,6 +155,40 @@
     if(!u) return null;
     var p = u.filter(function(g){ return !sdState(g).decided; });
     return p.length ? p : null;
+  }
+
+  /* A settled tie-break is signed by who was in it and who came through. The
+     operator clears the section away once, and it stays away — but correcting a
+     mark changes the signature, so the grid comes back rather than hiding a
+     result nobody has looked at. The marks themselves are never cleared: the
+     placings are ordered by sdKey, so wiping them would put the tie back. */
+  function sdSig(g, winner){
+    return g.members.map(function(c){ return c.no; }).sort(function(a,b){ return a-b; }).join("-")+
+      ">"+winner.no;
+  }
+  function sdOutcome(g){
+    var st = sdState(g);
+    if(!st.decided) return null;
+    var w = st.alive[0];
+    return {sig:sdSig(g,w), winner:w.no, place:g.place, name:w.name,
+            others:g.members.filter(function(c){ return c!==w; })
+                            .map(function(c){ return c.name || ("No. "+c.no); })};
+  }
+  function sdOutcomes(){
+    return (unresolved()||[]).map(sdOutcome).filter(Boolean);
+  }
+  function sdAcked(sig){
+    return (state.sdAck||[]).some(function(a){ return a.sig===sig; });
+  }
+  // what the tie-break tab shows: everything except the results already cleared away
+  function consoleTies(){
+    var u = unresolved();
+    if(!u) return null;
+    var open = u.filter(function(g){
+      var o = sdOutcome(g);
+      return !(o && sdAcked(o.sig));
+    });
+    return open.length ? open : null;
   }
 
   function decidedBy(c){
@@ -362,17 +397,25 @@
   }
 
   function renderSd(){
-    var u = unresolved();
+    var u = consoleTies();
+    var settled = (state.sdAck||[]);
     var head = '<div class="panel-head"><h3>Tie-break</h3><span class="note">Sudden death · '+
       state.meta.sdCount+' questions · a wrong answer eliminates</span>'+
       '<div class="right"><button class="lbtn" data-cue="tiebreak">Put on screen</button>'+
       '<button class="lbtn danger" data-clear="sd">Clear tie-break</button></div></div>';
 
     if(!u){
-      var msg = hasMarks("r3")
-        ? "No tie among the top three. Round 1 and Round 2 scores already separated everyone."
-        : "Nothing to break yet. Ties are detected automatically once Round 3 is tallied.";
-      return '<div class="panel">'+head+'<div class="empty-state"><p>'+msg+'</p></div></div>';
+      var done = settled.map(function(a){
+        return '<div class="banner ok"><b>'+esc(a.name)+'</b> took place '+a.place+
+          ' on sudden death. The marks are on record and the standings reflect them. '+
+          '<button class="lbtn" data-reopen="'+esc(a.sig)+'">Show the marks again</button></div>';
+      }).join("");
+      var msg = settled.length
+        ? "Nothing left to break."
+        : (hasMarks("r3")
+          ? "No tie among the top three. Round 1 and Round 2 scores already separated everyone."
+          : "Nothing to break yet. Ties are detected automatically once Round 3 is tallied.");
+      return '<div class="panel">'+head+done+'<div class="empty-state"><p>'+msg+'</p></div></div>';
     }
 
     var blocks = u.map(function(g){
@@ -1098,6 +1141,37 @@
     render();
   }
 
+  /* ===================== tie-break resolved pop-up ===================== */
+  var sdPop = null;          // the outcome being announced, or null
+
+  function renderModal(){
+    var m = $("sdModal");
+    if(!sdPop){ m.className = "modal"; m.innerHTML = ""; return; }
+    var beaten = sdPop.others.length
+      ? esc(sdPop.others.join(", "))+(sdPop.others.length===1?" is":" are")+" eliminated."
+      : "";
+    m.className = "modal show";
+    m.innerHTML = '<div class="sheet">'+
+      '<h3>Tie-break resolved</h3>'+
+      '<p class="big"><b>'+esc(sdPop.name || ("No. "+sdPop.winner))+'</b> takes place '+sdPop.place+'.</p>'+
+      (beaten?'<p>'+beaten+'</p>':'')+
+      '<p class="fine">The sudden-death marks stay on record — they are what orders the placings. '+
+      'Clearing the section only takes the entry grid off this tab.</p>'+
+      '<div class="row">'+
+        '<button class="lbtn go" id="btnSdClear">Clear the tie-break section</button>'+
+        '<button class="lbtn" id="btnSdKeep">Keep it open</button>'+
+      '</div></div>';
+  }
+
+  // announce a tie-break the moment it comes out decided
+  function checkSdResolved(before){
+    var now = sdOutcomes();
+    for(var i=0;i<now.length;i++){
+      if(before.indexOf(now[i].sig)<0 && !sdAcked(now[i].sig)){ sdPop = now[i]; return; }
+    }
+  }
+  function sigsNow(){ return sdOutcomes().map(function(o){ return o.sig; }); }
+
   /* ===================== render ===================== */
   function render(){
     renderTop(); renderTabs();
@@ -1107,6 +1181,7 @@
     else if(tab==="sd") v.innerHTML = renderSd();
     else if(tab==="display") v.innerHTML = renderDesk();
     else v.innerHTML = renderRound(tab);
+    renderModal();
     paintDisplay();
   }
 
@@ -1120,13 +1195,22 @@
       var c = state.contestants[+b.dataset.i];
       if(b.dataset.sd!==undefined){
         var i=+b.dataset.sd, v=c.sd[i];
+        var was = sigsNow();
         c.sd[i] = v===null ? "c" : (v==="c" ? "w" : null);
         if(c.sd[i]==="w"){ for(var z=i+1;z<state.meta.sdCount;z++) c.sd[z]=null; }
+        checkSdResolved(was);
         refocus('.qbtn[data-i="'+b.dataset.i+'"][data-sd="'+i+'"]');
       } else {
         c[b.dataset.k][+b.dataset.q] = !c[b.dataset.k][+b.dataset.q];
         refocus('.qbtn[data-i="'+b.dataset.i+'"][data-k="'+b.dataset.k+'"][data-q="'+b.dataset.q+'"]');
       }
+      return;
+    }
+    var reEl = t.closest ? t.closest("[data-reopen]") : null;
+    if(reEl){
+      var sig = reEl.dataset.reopen;
+      state.sdAck = (state.sdAck||[]).filter(function(a){ return a.sig!==sig; });
+      render(); toast("Tie-break back on this tab — the marks are as they were");
       return;
     }
     var phEl = t.closest ? t.closest("[data-photo]") : null;
@@ -1173,6 +1257,7 @@
           if(k==="sd") cc.sd = new Array(state.meta.sdCount).fill(null);
           else cc[k] = new Array(QN).fill(false);
         });
+        if(k==="sd"){ state.sdAck = []; sdPop = null; }   // the tie is open again
         render(); toast("Cleared");
       }
       return;
@@ -1189,7 +1274,7 @@
             cc.r1=new Array(QN).fill(false); cc.r2=new Array(QN).fill(false);
             cc.r3=new Array(QN).fill(false); cc.sd=new Array(state.meta.sdCount).fill(null);
           });
-          state.cut = null;
+          state.cut = null; state.sdAck = []; sdPop = null;
           render(); toast("All scores cleared");
         }
         break;
@@ -1201,6 +1286,15 @@
       case "btnCloseDisplay": if(winRef && !winRef.closed) winRef.close(); winRef=null; render(); break;
       case "btnTitle": case "btnTitle2":
         disp.reveal = 0; setCue("standby"); toast("Back to the title card"); break;
+      case "btnSdClear":
+        if(sdPop){
+          state.sdAck = (state.sdAck||[]).concat([{sig:sdPop.sig, winner:sdPop.winner,
+                                                   place:sdPop.place, name:sdPop.name}]);
+          var who = sdPop.name;
+          sdPop = null; render(); toast("Tie-break cleared — "+who+" keeps the place");
+        }
+        break;
+      case "btnSdKeep": sdPop = null; render(); break;
       case "btnCut": case "btnCut2": applyCut(); break;
       case "btnUncut": case "btnUncut2": undoCut(); break;
       case "btnPreview": case "btnPreview2":
@@ -1302,6 +1396,8 @@
         d.meta = d.meta || {};
         if(!d.meta.sdCount) d.meta.sdCount = 5;
         if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
+        if(!Array.isArray(d.sdAck)) d.sdAck = [];
+        sdPop = null;
         d.contestants.forEach(function(c){
           if(!c.sd || typeof c.sd[0]==="boolean") c.sd = new Array(d.meta.sdCount).fill(null);
           if(!isPhoto(c.photo)) c.photo = null;   // only ever put a data: image in an <img src>

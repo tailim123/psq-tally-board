@@ -99,6 +99,13 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   `.json` you can reopen with **Open session**. A browser refresh loses the tally.
 - **The audience window is a pop-up.** Browsers may block it the first time. Allow
   pop-ups for the file, then click again.
+- **When a tie-break resolves**, a pop-up names who took the place and who is
+  out. *Clear the tie-break section* takes the entry grid off the Tie-break tab
+  and leaves a one-line result; *Keep it open* leaves it up. The sudden-death
+  marks are never cleared — the placings are ordered by them, so wiping them
+  would put the contestants back in a tie. To fix a mis-tick, use *Show the marks
+  again* on the result line; to re-run the whole tie-break, *Clear tie-break*.
+  The audience screen keeps showing the result either way.
 - **Contestant photos.** The Roster tab has a Photo column — *Add photo* per
   contestant, *Replace* or *Remove* after that. Pictures are shrunk to 720px on
   the long side before they are stored, so a 10 MB phone photo becomes about

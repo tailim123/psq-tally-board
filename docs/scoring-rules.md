@@ -89,9 +89,32 @@ and the group survives until the questions have decided it.
 
 `sdState(g)` reports where a group stands — `started`, `done`, `decided` (one
 survivor), `stuck` (the two Board of Judges cases). `unresolved()` returns every
-group, so the tie-break tab and the audience screen keep showing a group after it
-is settled; `pendingTies()` filters out the decided ones and is what drives the
-header alert and the tab dot.
+group; `pendingTies()` filters out the decided ones and is what drives the header
+alert and the tab dot.
+
+### When it resolves
+
+The tick that leaves one survivor raises a pop-up naming who took the place and
+who is out. **Clear the tie-break section** records the outcome in `state.sdAck`
+and `consoleTies()` then leaves that group out of the Tie-break tab, which falls
+back to a one-line result and *Nothing left to break*. **Keep it open** just
+dismisses the pop-up.
+
+What is *not* cleared is the marks. Placings are ordered by `sdKey`, so wiping
+`c.sd` would put the contestants back in a tie and undo the result — the marks
+have to stay for the standings to hold. Clearing is therefore about the entry
+grid, not the record.
+
+An acknowledgement is signed by the group's contestant numbers and the winner's,
+so a correction that changes who came through produces a new signature: the grid
+returns and the pop-up announces the new result. *Show the marks again* on the
+result line drops the acknowledgement and brings the grid back with the marks
+intact, which is the way to fix a mis-tick; **Clear tie-break** is still there to
+throw the whole thing away and re-run it.
+
+The audience screen is deliberately untouched by all this — `sceneHTML` reads
+`unresolved()`, so the projector keeps showing the tie and its result until the
+operator cues something else.
 
 Two outcomes the app will not decide on its own, both of which display a notice
 to refer to the Board of Judges:
