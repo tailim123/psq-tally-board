@@ -424,7 +424,9 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
   text-align:center;display:flex;flex-direction:column;gap:calc(var(--u)*.8);
   max-width:calc(var(--u)*30);                 /* keeps a sparse last page sane */
 }
-.dsp .intro.solo .icard{max-width:calc(var(--u)*66)}
+/* a single portrait sits in the middle of the screen, not at the left edge:
+   the grid track is full width, so the card needs its own width to centre in it */
+.dsp .intro.solo .icard{justify-self:center;width:calc(var(--u)*70);max-width:100%}
 .dsp .icard .por{
   flex:1 1 auto;min-height:0;width:auto;height:auto;max-width:100%;aspect-ratio:3/4;margin:0 auto;
 }
