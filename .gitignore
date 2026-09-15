@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.vscode/*.log
+
+# session files and exports produced while operating the board
+*.json
+!.vscode/*.json
+psq-tally-*.csv
+PSQ-Form-1-*.xlsx

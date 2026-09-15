@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PSQ Tally Board — 30th Philippine Statistics Quiz</title>
+<link id="baseStyle" rel="stylesheet" href="styles/base.css">
+<link id="dspStyle" rel="stylesheet" href="styles/display.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="mark">
+    <span class="m1">Philippine Statistics Quiz</span>
+    <span class="m2" id="markTitle"></span>
+    <span class="m3" id="markSub"></span>
+  </div>
+  <div class="bar-actions">
+    <span class="livedot" id="liveDot"><i></i><span id="liveTxt">Display closed</span></span>
+    <button class="btn" id="btnTitle">Back to title</button>
+    <button class="btn" id="btnPreview">Preview</button>
+    <button class="btn primary" id="btnDisplay">Open display screen</button>
+    <button class="btn" id="btnForm1">Export Form 1</button>
+    <button class="btn" id="btnOpen">Open session</button>
+    <button class="btn" id="btnSave">Save session</button>
+    <input type="file" id="fileIn" accept=".json" style="display:none">
+  </div>
+</div>
+
+<div class="podium-wrap">
+  <div class="podium-head">
+    <h2>Top 3</h2>
+    <span class="basis" id="basisLabel"></span>
+    <span class="alert" id="alertFlag" style="display:none"></span>
+  </div>
+  <div class="podium" id="podium"></div>
+</div>
+
+<nav class="tabs" id="tabs"></nav>
+<main id="view"></main>
+
+<div class="preview" id="preview">
+  <div class="pv-bar">
+    <span>Preview of the audience screen — this is exactly what the second monitor shows.</span>
+    <button class="btn" id="btnTitle2" style="margin-left:auto">Back to title</button>
+    <button class="btn" id="btnClosePreview">Close preview</button>
+  </div>
+  <div class="frame"><div id="previewRoot" style="height:100%"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

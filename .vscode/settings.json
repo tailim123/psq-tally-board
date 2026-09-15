@@ -1,0 +1,12 @@
+{
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "editor.rulers": [100],
+  "[python]": { "editor.tabSize": 4 },
+  "liveServer.settings.root": "/src",
+  "liveServer.settings.CustomBrowser": "chrome",
+  "search.exclude": { "dist": true },
+  "files.associations": { "*.html": "html" }
+}
