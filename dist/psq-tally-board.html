@@ -629,19 +629,45 @@ td.st{font-size:12px}
     return {rows:list, place:place, shared:same, stage:st};
   }
 
+  // A tie-break group is defined by what was level *before* sudden death — the
+  // three rounds and then Round 1 and Round 2. Grouping on the full key would
+  // dissolve the group on the first tick, since that mark changes sdKey.
+  function samePre(a,b){
+    return grand(a)===grand(b) && rt(a,"r1")===rt(b,"r1") && rt(a,"r2")===rt(b,"r2");
+  }
   function unresolved(){
     var s = standings();
     if(s.stage.s!=="r3") return null;
     var groups=[], seen=new Set();
     s.rows.forEach(function(c){
       if(seen.has(c)) return;
-      var p = s.place.get(c);
-      if(p>3 || s.shared.get(c)<2) return;
-      var g = s.rows.filter(function(x){ return s.place.get(x)===p; });
+      var g = s.rows.filter(function(x){ return samePre(x,c); });
+      if(g.length<2) return;
+      var place = Math.min.apply(null, g.map(function(x){ return s.place.get(x); }));
+      if(place>3) return;                       // only the top three need breaking
       g.forEach(function(x){ seen.add(x); });
-      groups.push({place:p, members:g});
+      groups.push({place:place, members:g});
     });
     return groups.length ? groups : null;
+  }
+
+  // where a group stands: not started, in progress, settled, or one for the Board
+  function sdState(g){
+    var alive = g.members.filter(function(c){ return sdStreak(c).alive; });
+    var started = g.members.some(function(c){ return c.sd.some(function(v){ return v; }); });
+    var done = g.members.every(function(c){
+      return c.sd.slice(0,state.meta.sdCount).every(function(v){ return v; });
+    });
+    return {alive:alive, started:started, done:done,
+            decided: started && alive.length===1,
+            stuck: started && (alive.length===0 || (done && alive.length>1))};
+  }
+  // the ties still wanting the operator's attention — drives the alert and the tab dot
+  function pendingTies(){
+    var u = unresolved();
+    if(!u) return null;
+    var p = u.filter(function(g){ return !sdState(g).decided; });
+    return p.length ? p : null;
   }
 
   function decidedBy(c){
@@ -678,12 +704,14 @@ td.st{font-size:12px}
       pod.appendChild(d);
     }
 
-    var u = unresolved(), flag = $("alertFlag");
+    var u = pendingTies(), flag = $("alertFlag");
     if(u){
-      var live = u.some(function(g){ return g.members.some(function(m){ return m.sd.some(function(v){return v;}); }); });
+      var stuck = u.some(function(g){ return sdState(g).stuck; });
+      var live = u.some(function(g){ return sdState(g).started; });
       flag.style.display="";
       flag.textContent = u.map(function(g){ return g.members.length+" tied for place "+g.place; }).join(" · ")+
-        (live ? " — sudden death in progress" : " — run the sudden-death questions");
+        (stuck ? " — refer to the Board of Judges"
+               : (live ? " — sudden death in progress" : " — run the sudden-death questions"));
     } else { flag.style.display="none"; }
 
     var open = !!(winRef && !winRef.closed);
@@ -692,7 +720,7 @@ td.st{font-size:12px}
   }
 
   function renderTabs(){
-    var u = unresolved();
+    var u = pendingTies();
     var defs = [["roster","Roster"],["r1","Round 1"],["r2","Round 2"],["r3","Round 3"],
                 ["sd","Tie-break"],["standings","Standings"],["display","Display"]];
     $("tabs").innerHTML = defs.map(function(d){
@@ -835,8 +863,6 @@ td.st{font-size:12px}
       '<div class="legend">Click a box for a correct answer. Blank counts as wrong or no answer. Arrow keys move, space toggles. Rows stay in contestant-number order while you tally \u2014 nothing reorders under your cursor. The leader line above and the Top 3 strip update as you click.</div></div>';
   }
 
-  function hasSdIn(g){ return g.members.some(function(c){ return c.sd.some(function(v){return v;}); }); }
-
   function renderSd(){
     var u = unresolved();
     var head = '<div class="panel-head"><h3>Tie-break</h3><span class="note">Sudden death · '+
@@ -868,18 +894,16 @@ td.st{font-size:12px}
             : '<span class="pill dead">out at Q'+s.out+'</span>')+'</td></tr>';
       }).join("");
 
-      var alive = g.members.filter(function(c){ return sdStreak(c).alive; });
-      var done = g.members.every(function(c){
-        return c.sd.slice(0,state.meta.sdCount).every(function(v){ return v; });
-      });
+      var sd = sdState(g), alive = sd.alive;
       var status;
-      if(!hasSdIn(g)) status = '<div class="banner info">Ask the '+state.meta.sdCount+
+      if(!sd.started) status = '<div class="banner info">Ask the '+state.meta.sdCount+
         ' tie-break questions to these '+g.members.length+' contestants at the same time.</div>';
-      else if(alive.length===1) status = '<div class="banner ok"><b>'+esc(alive[0].name)+'</b> takes place '+g.place+'.</div>';
+      else if(sd.decided) status = '<div class="banner ok"><b>'+esc(alive[0].name)+'</b> takes place '+g.place+
+        ' — the rest are eliminated. The placings above already reflect this.</div>';
       else if(alive.length===0) status = '<div class="banner warn">Everyone was eliminated on the same question. Refer to the Board of Judges.</div>';
-      else if(done) status = '<div class="banner warn">'+alive.length+' contestants survived all '+
+      else if(sd.done) status = '<div class="banner warn">'+alive.length+' contestants survived all '+
         state.meta.sdCount+' questions. The Board of Judges decides how to proceed.</div>';
-      else status = '<div class="banner info">'+alive.length+' still in play.</div>';
+      else status = '<div class="banner info">'+alive.length+' still in play — keep going.</div>';
 
       return '<div class="panel"><div class="panel-head"><h3>Tie for place '+g.place+'</h3>'+
         '<span class="note">'+g.members.length+' contestants · '+grand(g.members[0])+' points each</span></div>'+
@@ -910,7 +934,7 @@ td.st{font-size:12px}
         '<td class="tot">'+grand(c)+'</td>'+
         '<td class="st">'+(q.indexOf(c)>=0?'<span class="pill qual">Round 3</span>':'—')+'</td></tr>';
     }).join("");
-    var u = unresolved();
+    var u = pendingTies();
     return '<div class="panel"><div class="panel-head"><h3>Standings</h3>'+
       '<span class="note">'+s.stage.label+'</span>'+
       '<div class="right"><button class="lbtn" data-cue="leaderboard">Put on screen</button>'+
@@ -1296,7 +1320,11 @@ td.st{font-size:12px}
             '<div class="marks">'+mk+'</div>'+
             '<div class="stat '+(st.alive?"in":"out")+'">'+(st.alive?"still in":"eliminated")+'</div></div>';
         }).join("");
-        return '<div class="sect">Tie for place '+g.place+'<small>'+grand(g.members[0])+' points each</small></div>'+rows;
+        var sd = sdState(g);
+        var note = grand(g.members[0])+' points each';
+        if(sd.decided) note = esc(sd.alive[0].name)+' takes place '+g.place;
+        else if(sd.stuck) note = 'referred to the Board of Judges';
+        return '<div class="sect">Tie for place '+g.place+'<small>'+note+'</small></div>'+rows;
       }).join("");
       return '<div class="dsp">'+dspHead("Sudden death")+
         '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+blocks+'</div></div>';

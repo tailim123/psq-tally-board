@@ -80,6 +80,19 @@ plus whether the contestant is still in. Ranking within the tied group is by
 that streak, with a still-in contestant ahead of an eliminated one on the same
 streak.
 
+A tie-break group is identified by `samePre` — level on the cumulative score,
+Round 1 and Round 2 — **not** by the full `key`. The full key includes `sdKey`,
+so grouping on it made the group dissolve on the first tick: one mark changed
+one contestant's key and the app concluded the tie was over, taking the entry
+grid off the screen mid-question. Group on what was level *before* sudden death
+and the group survives until the questions have decided it.
+
+`sdState(g)` reports where a group stands — `started`, `done`, `decided` (one
+survivor), `stuck` (the two Board of Judges cases). `unresolved()` returns every
+group, so the tie-break tab and the audience screen keep showing a group after it
+is settled; `pendingTies()` filters out the decided ones and is what drives the
+header alert and the tab dot.
+
 Two outcomes the app will not decide on its own, both of which display a notice
 to refer to the Board of Judges:
 
