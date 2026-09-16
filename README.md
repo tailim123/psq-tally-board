@@ -152,6 +152,14 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   Correcting a school's spelling parks its logo rather than losing it — type the
   spelling back and it returns.
 
+  A school's logo also sits **behind the portraits** of its contestants and their
+  coach, washed back to 45% — on the introduction screens, on the 2nd and 3rd
+  placer cards and on the champion's. A photograph is cropped to fill its frame,
+  so it covers the crest; the numbered placeholder does not, which is where the
+  crest does its work — a contestant whose photo never arrived gets their school's
+  seal instead of a blank tile, with the number on a soft disc over it. The
+  strength is one value, `--crest-opacity` on `.dsp .por` in `display.css`.
+
 - **Introduce contestants** runs **school by school, in alphabetical order**:
   a school's contestants first, then a screen for the coach who brought them,
   then on to the next school. The school's logo and name are the heading — the

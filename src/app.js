@@ -1615,7 +1615,12 @@
   /* Portrait for the audience screen. With no photo it falls back to the
      contestant's number, or — for a coach, who has no number — their initials. */
   function portrait(c, extra){
+    // the school's crest sits behind whatever the frame holds. A photograph is
+    // cropped to fill, so it covers the crest; the numbered placeholder does not,
+    // which is where the crest earns its keep
+    var logo = schoolLogo(c.school);
     return '<div class="por'+(extra?" "+extra:"")+'">'+
+      (logo ? '<i class="crest" style="background-image:url(&#39;'+logo+'&#39;)"></i>' : '')+
       (isPhoto(c.photo)
         ? '<img src="'+c.photo+'" alt="'+esc(c.name)+'">'
         : '<div class="noimg">'+esc(c.no==null ? initials(c.name) : String(c.no))+'</div>')+'</div>';
