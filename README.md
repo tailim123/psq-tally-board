@@ -73,7 +73,7 @@ docs/
 | scoring | `rt`, `cum12`, `grand`, `qualifiers`, `sdStreak`, `standings`, `unresolved` |
 | console header | `renderTop`, `renderTabs` — the Top 3 strip and tab bar |
 | coaches | `coachesAt`, `coachOf`, `unassigned`, `introGroups` — who coaches whom |
-| schools | `schoolList`, `schoolLogo` — the schools typed so far, and their logos |
+| logos | `logoList`, `logoFor` — every school and organisation named, and its logo |
 | judges | `judges`, `namedJudges` — the Board of Judges, in the order introduced |
 | console views | `renderRoster`, `renderCoachPanel`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
 | portraits | `shrink`, `pickPhoto`, `portrait` — photos in, and how they are drawn |
@@ -144,18 +144,25 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   and matching ignores case and extra spaces. Editing either school re-derives
   the pairing, so a coach who moves never drags a contestant with them.
 
-- **School logos.** Under the Coaches table is a **School logos** panel. Its rows
-  are not typed — they are every school already named on the roster or against a
-  coach — so the only thing to do there is *Add logo*. The logo then sits beside
-  that school's name on every introduction screen, the coach's included. Logos
-  keep their transparency (a cut-out seal stays cut out), are shrunk to 360px
-  before they are stored, and ride inside the saved session like the photographs.
-  Correcting a school's spelling parks its logo rather than losing it — type the
-  spelling back and it returns.
+- **School and organisation logos.** One panel covers both, because a school
+  badge and an organisation's seal are the same kind of thing. Its rows are not
+  typed — they are every school named on the roster or against a coach, and every
+  organisation named against a judge — so the only thing to do there is *Add
+  logo*. Columns show who each name is carrying: contestants, coaches, judges.
 
-  A school's logo also sits **behind the portraits** of its contestants and their
-  coach, washed back to 45% — on the introduction screens, on the 2nd and 3rd
-  placer cards and on the champion's. A photograph is cropped to fill its frame,
+  A school's logo sits beside that school's name on every introduction screen, the
+  coach's included. An organisation's logo sits beside its name on that judge's
+  screen. **A judge from one of the competing schools shares that school's logo —
+  it is one list, matched on the name the same way coaches are**, so spelling it
+  the same way is all it takes. Logos keep their transparency (a cut-out seal
+  stays cut out), are shrunk to 360px before they are stored, and ride inside the
+  saved session like the photographs. Correcting a name's spelling parks its logo
+  rather than losing it — type the spelling back and it returns.
+
+  A logo also sits **behind the portrait** of everyone it belongs to, washed back
+  to 45% — a school's behind its contestants and their coach, on the introduction
+  screens, the 2nd and 3rd placer cards and the champion's; an organisation's
+  behind its judge. A photograph is cropped to fill its frame,
   so it covers the crest; the numbered placeholder does not, which is where the
   crest does its work — a contestant whose photo never arrived gets their school's
   seal instead of a blank tile, with the number on a soft disc over it. The
@@ -179,10 +186,12 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   takes more than one screen before its coach. Turn the screens with `←` `→`.
 - **The Board of Judges.** A panel of their own on the Roster tab: a name, a role
   (*Chairman* or *Member*, the two the mechanics and PSQ Form 1 use), an optional
-  office or position, and a photo. **Board of Judges** is then a cue on the
-  Display tab that introduces them **one to a screen** — portrait, role, name and
-  office — on the same card the coaches get, so the two introductions read as one
-  piece of the ceremony.
+  position, an optional organisation, and a photo. **Board of Judges** is then a
+  cue on the Display tab that introduces them **one to a screen** — portrait,
+  role, name, position, then the organisation with its logo beside it — on the
+  same card the coaches get, so the two introductions read as one piece of the
+  ceremony. The organisation's logo is added in the logos panel below, and a judge
+  from a competing school simply shares that school's.
 
   The order of the rows is the order they are introduced in; the `▲` `▼` arrows
   on each row set it, which is how you put the chairman last if that is how the

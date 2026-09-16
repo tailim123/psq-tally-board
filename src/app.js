@@ -248,39 +248,49 @@
     });
     return out;
   }
-  /* Schools are not encoded anywhere — they are whatever was typed on the roster
-     and against the coaches. Only a logo needs somewhere to live, so state.schools
-     holds just the schools that have one, matched the same way coaches are. An
-     entry whose school is no longer typed anywhere is kept rather than pruned, so
-     correcting a spelling and typing it back brings the logo with it. */
-  function schools(){ return state.schools || (state.schools = []); }
-  function schoolEntry(name){
+  /* Institutions are not encoded anywhere — a school is whatever was typed on the
+     roster and against the coaches, an organisation whatever was typed against a
+     judge. The two are the same kind of thing as far as a logo goes, so one
+     registry holds both, keyed on the name the same way coaches are matched. An
+     entry whose name is no longer typed anywhere is kept rather than pruned, so
+     correcting a spelling and typing it back brings the logo with it.
+     (The state key stays `schools` so sessions saved before judges still open.) */
+  function logoStore(){ return state.schools || (state.schools = []); }
+  function logoEntry(name){
     var n = normSch(name);
     if(!n) return null;
-    return schools().filter(function(x){ return normSch(x.name)===n; })[0] || null;
+    return logoStore().filter(function(x){ return normSch(x.name)===n; })[0] || null;
   }
-  function schoolLogo(name){
-    var e = schoolEntry(name);
+  function logoFor(name){
+    var e = logoEntry(name);
     return e && isPhoto(e.logo) ? e.logo : null;
   }
-  function setSchoolLogo(name, uri){
-    var e = schoolEntry(name);
-    if(!e){ e = {name:String(name==null?"":name).trim(), logo:null}; schools().push(e); }
+  function setLogo(name, uri){
+    var e = logoEntry(name);
+    if(!e){ e = {name:String(name==null?"":name).trim(), logo:null}; logoStore().push(e); }
     e.logo = uri;
   }
-  function clearSchoolLogo(name){
+  function clearLogo(name){
     var n = normSch(name);
-    state.schools = schools().filter(function(x){ return normSch(x.name)!==n; });
+    state.schools = logoStore().filter(function(x){ return normSch(x.name)!==n; });
   }
-  // every school typed on the roster or against a coach, alphabetically
-  function schoolList(){
+  // every school and organisation named anywhere, alphabetically, with who uses it
+  function logoList(){
     var seen = {}, out = [];
-    state.contestants.concat(coaches()).forEach(function(x){
-      var n = normSch(x.school);
-      if(!n || seen["s"+n]) return;
-      seen["s"+n] = 1;
-      out.push({key:n, name:String(x.school).trim()});
-    });
+    function add(name, field){
+      var n = normSch(name);
+      if(!n) return;
+      var e = seen["s"+n];
+      if(!e){
+        e = seen["s"+n] = {key:n, name:String(name).trim(), contestants:0, coaches:0, judges:0};
+        out.push(e);
+      }
+      e[field]++;
+    }
+    named().forEach(function(c){ add(c.school, "contestants"); });
+    state.contestants.forEach(function(c){ if(!c.name.trim()) add(c.school, "contestants"); });
+    namedCoaches().forEach(function(k){ add(k.school, "coaches"); });
+    namedJudges().forEach(function(j){ add(j.org, "judges"); });
     out.sort(function(a,b){ return a.key<b.key ? -1 : 1; });
     return out;
   }
@@ -477,7 +487,8 @@
           JUDGE_ROLES.map(function(r){
             return '<option'+(j.role===r?" selected":"")+'>'+r+'</option>';
           }).join("")+'</select></td>'+
-        '<td class="pad"><input class="jin" data-jf="office" data-ji="'+i+'" value="'+esc(j.office||"")+'" placeholder="Office or position (optional)"></td>'+
+        '<td class="pad"><input class="jin" data-jf="office" data-ji="'+i+'" value="'+esc(j.office||"")+'" placeholder="Position (optional)"></td>'+
+        '<td class="pad"><input class="jin" data-jf="org" data-ji="'+i+'" value="'+esc(j.org||"")+'" placeholder="Organisation (optional)" list="schoolList"></td>'+
         '<td class="pad photocell">'+
           (has ? '<img class="thumb" src="'+j.photo+'" alt="'+esc(j.name)+'">'
                : '<span class="thumb none">'+esc(initials(j.name))+'</span>')+
@@ -495,30 +506,34 @@
 
     var body = js.length
       ? '<div class="scroll"><table><thead><tr><th class="c">Order</th><th>Name</th><th>Role</th>'+
-        '<th>Office or position</th><th class="c">Photo</th><th></th></tr></thead>'+
+        '<th>Position</th><th>Organisation</th><th class="c">Photo</th><th></th></tr></thead>'+
         '<tbody>'+rows+'</tbody></table></div>'
       : '<div class="empty-state"><p>No judges encoded yet. The Board of Judges oversees the contest '+
         'and its decision is final — encode them here to introduce them on screen.</p>'+
         '<button class="lbtn go" id="btnAddJudge">Add a judge</button></div>';
 
-    var ch = chairs(), note;
-    if(!namedJudges().length) note = "none encoded";
-    else if(!ch.length) note = namedJudges().length+" encoded · no chairman marked yet";
-    else if(ch.length>1) note = namedJudges().length+" encoded · "+ch.length+" are marked chairman";
-    else note = namedJudges().length+" encoded · chaired by "+ch[0].name;
-
     return '<div class="panel">'+
-      '<div class="panel-head"><h3>Board of Judges</h3><span class="note">'+esc(note)+
-      ' · introduced one to a screen, in this order</span>'+
+      '<div class="panel-head"><h3>Board of Judges</h3>'+
+      '<span class="note" id="judgeNote">'+esc(judgeHeadNote())+'</span>'+
       '<div class="right"><button class="lbtn" id="btnAddJudge2">Add a judge</button></div></div>'+
       body+
       '<div class="legend">The order here is the order they are introduced in — use the arrows to change it. '+
-      'The role and the office both show on their screen, under a portrait; a judge with no photo shows their initials. '+
+      'The role, the position and the organisation all show on their screen, under a portrait, and the organisation '+
+      'carries its logo if one has been added below. A judge with no photo shows their initials. '+
       'None of this touches the scoring, and PSQ Form 1 still leaves the Board’s signature blocks blank to be signed by hand.</div></div>';
   }
 
+  function judgeHeadNote(){
+    var ch = chairs(), n = namedJudges().length, note;
+    if(!n) note = "none encoded";
+    else if(!ch.length) note = n+" encoded · no chairman marked yet";
+    else if(ch.length>1) note = n+" encoded · "+ch.length+" are marked chairman";
+    else note = n+" encoded · chaired by "+ch[0].name;
+    return note+" · introduced one to a screen, in this order";
+  }
+
   function addJudge(){
-    judges().push({name:"", role:"Member", office:"", photo:null});
+    judges().push({name:"", role:"Member", office:"", org:"", photo:null});
     render();
     var el = document.querySelector('.jin[data-jf="name"][data-ji="'+(judges().length-1)+'"]');
     if(el) el.focus();
@@ -545,17 +560,15 @@
      The rows are derived from what has been typed, never entered by hand: the
      only thing this table stores is the logo. */
   function renderSchoolPanel(){
-    var list = schoolList();
+    var list = logoList();
     if(!list.length){
-      return '<div class="panel"><div class="panel-head"><h3>School logos</h3>'+
-        '<span class="note">a logo shows beside the school name when the contestants are introduced</span></div>'+
-        '<div class="empty-state"><p>No schools yet. Type a school against a contestant or a coach '+
-        'and it appears here for a logo.</p></div></div>';
+      return '<div class="panel"><div class="panel-head"><h3>School &amp; organisation logos</h3>'+
+        '<span class="note">a logo shows beside the name it belongs to when its people are introduced</span></div>'+
+        '<div class="empty-state"><p>Nothing to badge yet. Type a school against a contestant or a coach, '+
+        'or an organisation against a judge, and it appears here for a logo.</p></div></div>';
     }
     var rows = list.map(function(x,i){
-      var logo = schoolLogo(x.name);
-      var cn = named().filter(function(c){ return normSch(c.school)===x.key; }).length;
-      var kn = namedCoaches().filter(function(k){ return normSch(k.school)===x.key; }).length;
+      var logo = logoFor(x.name);
       return '<tr><td class="no pad">'+(i+1)+'</td>'+
         '<td class="pad nm">'+esc(x.name)+'</td>'+
         '<td class="pad photocell">'+
@@ -564,25 +577,28 @@
           '<button class="lbtn tiny" data-slogo="'+esc(x.name)+'">'+(logo?"Replace":"Add logo")+'</button>'+
           (logo ? '<button class="lbtn tiny danger" data-slogodel="'+esc(x.name)+'">Remove</button>' : '')+
         '</td>'+
-        '<td class="cum">'+cn+'</td><td class="cum">'+kn+'</td></tr>';
+        '<td class="cum">'+(x.contestants||"—")+'</td>'+
+        '<td class="cum">'+(x.coaches||"—")+'</td>'+
+        '<td class="cum">'+(x.judges||"—")+'</td></tr>';
     }).join("");
-    var withLogo = list.filter(function(x){ return schoolLogo(x.name); }).length;
+    var withLogo = list.filter(function(x){ return logoFor(x.name); }).length;
     return '<div class="panel">'+
-      '<div class="panel-head"><h3>School logos</h3><span class="note">'+
-      withLogo+' of '+list.length+' school'+(list.length===1?"":"s")+
-      ' with a logo · it shows beside the school name when the contestants are introduced</span></div>'+
-      '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>School</th>'+
-      '<th class="c">Logo</th><th class="c">Contestants</th><th class="c">Coaches</th>'+
+      '<div class="panel-head"><h3>School &amp; organisation logos</h3><span class="note">'+
+      withLogo+' of '+list.length+' with a logo · schools badge the contestants who are introduced under them, '+
+      'organisations badge their judge</span></div>'+
+      '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>School or organisation</th>'+
+      '<th class="c">Logo</th><th class="c">Contestants</th><th class="c">Coaches</th><th class="c">Judges</th>'+
       '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="legend">The list follows the schools typed above — there is nothing to add here by hand. '+
+      '<div class="legend">The list follows the names typed above — there is nothing to add here by hand. '+
       'Logos keep their transparency, are shrunk before they are stored and travel inside the saved session. '+
-      'Correcting a school’s spelling parks its logo rather than losing it; type the spelling back and it returns.</div></div>';
+      'Correcting a name’s spelling parks its logo rather than losing it; type the spelling back and it returns. '+
+      'A judge from one of the competing schools shares that school’s logo — it is one list.</div></div>';
   }
 
   /* The list of schools already typed, offered to both the roster and the
      coaches table, so the two spellings match and a coach finds their school. */
   function schoolOptions(){
-    return schoolList().map(function(x){ return '<option value="'+esc(x.name)+'">'; }).join("");
+    return logoList().map(function(x){ return '<option value="'+esc(x.name)+'">'; }).join("");
   }
 
   // what the roster shows in the Coach column — a name when the rule settles it,
@@ -728,8 +744,8 @@
         '<button class="lbtn go" id="btnAddCoach">Add a coach</button></div>';
 
     return '<div class="panel">'+
-      '<div class="panel-head"><h3>Coaches</h3><span class="note">'+namedCoaches().length+
-      ' encoded · one coach at a school claims all of its contestants</span>'+
+      '<div class="panel-head"><h3>Coaches</h3>'+
+      '<span class="note" id="coachNote">'+esc(coachHeadNote())+'</span>'+
       '<div class="right"><button class="lbtn" id="btnKPaste">Paste from Excel</button>'+
       '<button class="lbtn" id="btnAddCoach2">Add a coach</button></div></div>'+
       body+
@@ -742,6 +758,9 @@
       'Spell the school the same way in both tables; the box offers the ones already typed.</div></div>';
   }
 
+  function coachHeadNote(){
+    return namedCoaches().length+" encoded · one coach at a school claims all of its contestants";
+  }
   function coachLoad(k){
     return named().filter(function(c){ return coachOf(c)===k; }).length;
   }
@@ -755,17 +774,20 @@
       : '<span class="cwarn">no contestant from this school on the roster</span>';
   }
 
-  /* Editing a name or a school moves contestants between coaches, so the cells
-     that depend on it are refreshed in place rather than by a full redraw —
-     a redraw would take the operator's cursor out of the box they are typing in. */
-  function refreshCoachUI(){
-    // the schools panel and the school suggestions are both derived from the
-    // boxes being typed in, so they are rebuilt here rather than waiting for a
-    // full redraw that would take the cursor out of the box
+  /* Almost everything on this tab is derived from the boxes being typed into:
+     which coach a contestant falls under, the logo registry, the suggestions, the
+     counts in the panel headings. A full redraw would take the operator's cursor
+     out of the box mid-word, so the derived parts are refreshed in place instead.
+     Only panels with no inputs of their own are rebuilt wholesale. */
+  function refreshDerived(){
     var sp = $("schoolPanel");
     if(sp) sp.innerHTML = renderSchoolPanel();
     var dl = $("schoolList");
     if(dl) dl.innerHTML = schoolOptions();
+    var cn = $("coachNote");
+    if(cn) cn.textContent = coachHeadNote();
+    var jn = $("judgeNote");
+    if(jn) jn.textContent = judgeHeadNote();
     Array.prototype.forEach.call(document.querySelectorAll("td.coachcell"), function(td){
       var i = +td.dataset.ci;
       td.innerHTML = coachCell(state.contestants[i], i);
@@ -1317,11 +1339,23 @@
      up from the other cues, and the line saying what this screen is. The sub-line
      sits under the name rather than after it, so a long name and a logo both fit. */
   function schoolHead(school, sub){
-    var logo = schoolLogo(school);
+    var logo = logoFor(school);
     return '<div class="sect schead">'+
       (logo ? '<img class="slogo" src="'+logo+'" alt="">' : '')+
       '<div class="stxt"><div class="sname">'+esc(school || "No school given")+'</div>'+
       '<div class="ssub">'+sub+'</div></div></div>';
+  }
+
+  /* An organisation on a card: its logo, if one has been added, then its name.
+     The mark is small and sharp beside the text, where the crest behind the
+     portrait is large and washed back — and a photograph hides that crest, so
+     this is the one that always shows. */
+  function orgLine(org){
+    if(!org) return "";
+    var logo = logoFor(org);
+    return '<div class="orgline">'+
+      (logo ? '<img class="orgmark" src="'+logo+'" alt="">' : '')+
+      '<span>'+esc(org)+'</span></div>';
   }
 
   function sceneHTML(){
@@ -1412,6 +1446,7 @@
         '<div class="itxt"><div class="num">'+esc(jg.role || "Member")+'</div>'+
         '<div class="who">'+esc(jg.name)+'</div>'+
         (jg.office ? '<div class="sch">'+esc(jg.office)+'</div>' : '')+
+        orgLine(jg.org)+
         '</div></div></div>'+
         pagerHTML(pgj, 'Judge '+(disp.page+1)+' of '+pgj.pages)+'</div></div>';
     }
@@ -1707,7 +1742,7 @@
     if(tgt.kind==="s"){
       shrink(f, function(uri){
         if(!uri){ toast("Could not read that picture"); return; }
-        setSchoolLogo(tgt.school, uri);
+        setLogo(tgt.school, uri);
         render();
         toast("Logo added for "+tgt.school);
       }, {max:LOGO_MAX, alpha:true});
@@ -1731,7 +1766,7 @@
     // the school's crest sits behind whatever the frame holds. A photograph is
     // cropped to fill, so it covers the crest; the numbered placeholder does not,
     // which is where the crest earns its keep
-    var logo = schoolLogo(c.school);
+    var logo = logoFor(c.school || c.org);
     return '<div class="por'+(extra?" "+extra:"")+'">'+
       (logo ? '<i class="crest" style="background-image:url(&#39;'+logo+'&#39;)"></i>' : '')+
       (isPhoto(c.photo)
@@ -1872,7 +1907,7 @@
     var slEl = t.closest ? t.closest("[data-slogo]") : null;
     if(slEl){ pickPhoto("s", 0, slEl.dataset.slogo); return; }
     var slDel = t.closest ? t.closest("[data-slogodel]") : null;
-    if(slDel){ clearSchoolLogo(slDel.dataset.slogodel); render(); toast("Logo removed"); return; }
+    if(slDel){ clearLogo(slDel.dataset.slogodel); render(); toast("Logo removed"); return; }
     var kphEl = t.closest ? t.closest("[data-kphoto]") : null;
     if(kphEl){ pickPhoto("k", +kphEl.dataset.kphoto); return; }
     var kunEl = t.closest ? t.closest("[data-kunphoto]") : null;
@@ -1981,19 +2016,19 @@
     var t = e.target;
     if(t.classList && t.classList.contains("rin")){
       state.contestants[+t.dataset.i][t.dataset.f] = t.value;
-      renderTop(); renderTabs(); refreshCoachUI(); paintDisplay();
+      renderTop(); renderTabs(); refreshDerived(); paintDisplay();
       var note = document.querySelector(".panel-head .note");
       if(note) note.textContent = named().length+" of "+state.contestants.length+" slots filled";
       return;
     }
     if(t.classList && t.classList.contains("jin")){
       var jj = judges()[+t.dataset.ji];
-      if(jj){ jj[t.dataset.jf] = t.value; paintDisplay(); }
+      if(jj){ jj[t.dataset.jf] = t.value; refreshDerived(); paintDisplay(); }
       return;
     }
     if(t.classList && t.classList.contains("kin")){
       var kk = coaches()[+t.dataset.ki];
-      if(kk){ kk[t.dataset.kf] = t.value; refreshCoachUI(); paintDisplay(); }
+      if(kk){ kk[t.dataset.kf] = t.value; refreshDerived(); paintDisplay(); }
       return;
     }
     if(t.dataset && t.dataset.m){ state.meta[t.dataset.m] = t.value; renderTop(); paintDisplay(); }
@@ -2101,6 +2136,7 @@
           if(typeof j.name!=="string") j.name = "";
           if(JUDGE_ROLES.indexOf(j.role)<0) j.role = "Member";
           if(typeof j.office!=="string") j.office = "";
+          if(typeof j.org!=="string") j.org = "";
           if(!isPhoto(j.photo)) j.photo = null;
         });
         if(!Array.isArray(d.schools)) d.schools = [];              // sessions saved before logos existed

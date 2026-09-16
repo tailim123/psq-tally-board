@@ -253,6 +253,22 @@
   font-size:calc(var(--u)*1.25);color:var(--d-grass2);font-weight:700;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+/* an organisation on a card — its logo small and sharp beside the name, where
+   the crest behind the portrait is large and washed back */
+.dsp .icard .orgline{
+  display:flex;align-items:center;justify-content:center;
+  gap:calc(var(--u)*.8);margin-top:calc(var(--u)*.7);min-width:0;
+}
+.dsp .icard .orgmark{
+  flex:0 0 auto;height:calc(var(--u)*3);width:auto;max-width:calc(var(--u)*4.5);
+  object-fit:contain;background:#FFFFFF;border:2px solid var(--ink);
+  border-radius:calc(var(--u)*.4);padding:calc(var(--u)*.25);
+}
+.dsp .icard .orgline span{
+  font-size:calc(var(--u)*1.25);color:var(--d-grass2);font-weight:700;line-height:1.25;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;
+}
+
 /* one contestant on the screen — the formal, one-at-a-time introduction */
 .dsp .intro.solo .icard{
   flex-direction:row;align-items:center;text-align:left;
@@ -265,6 +281,9 @@
 .dsp .intro.solo .sch{
   font-size:calc(var(--u)*2.2);white-space:normal;margin-top:calc(var(--u)*1);line-height:1.3;
 }
+.dsp .intro.solo .orgline{justify-content:flex-start;gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.4)}
+.dsp .intro.solo .orgmark{height:calc(var(--u)*5.2);max-width:calc(var(--u)*8)}
+.dsp .intro.solo .orgline span{font-size:calc(var(--u)*1.8);white-space:normal;overflow:visible}
 
 /* ---- top 3 reveal ---- */
 .dsp .rev{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);align-items:stretch}
