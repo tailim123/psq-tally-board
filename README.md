@@ -107,6 +107,22 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   would put the contestants back in a tie. To fix a mis-tick, use *Show the marks
   again* on the result line; to re-run the whole tie-break, *Clear tie-break*.
   The audience screen keeps showing the result either way.
+- **Adding and deleting rows.** *Add 5 slots* appends blank contestants;
+  *Delete row* at the end of each roster line takes one away, and the Coaches
+  table has the same button. A row with a name, a photo or any mark asks first
+  and says what goes with it; an untouched blank row just goes. When the roster
+  starts at 22 and fewer turn up, *Delete N empty rows* clears the leftovers in
+  one go — it only ever touches rows with nothing entered against them.
+
+  Deleting a contestant **closes the gap**: a contestant's number *is* their slot,
+  so the rows below move up and everyone is renumbered from 1. Scores travel with
+  their contestant, and the two things recorded as numbers — the announced Round 3
+  cut, and any tie-break you have cleared away — are carried across the
+  renumbering. Delete someone who was in a settled tie-break and that result is
+  dropped rather than left describing a tie that no longer exists. The last
+  remaining row cannot be deleted. Because numbers shift, do this during setup;
+  mid-contest it would disagree with the numbers on the contestants' tables.
+
 - **Contestant photos.** The Roster tab has a Photo column — *Add photo* per
   contestant, *Replace* or *Remove* after that. Pictures are shrunk to 720px on
   the long side before they are stored, so a 10 MB phone photo becomes about

@@ -367,9 +367,12 @@
                : '<span class="thumb none">'+c.no+'</span>')+
           '<button class="lbtn tiny" data-photo="'+i+'">'+(has?"Replace":"Add photo")+'</button>'+
           (has ? '<button class="lbtn tiny danger" data-unphoto="'+i+'">Remove</button>' : '')+
-        '</td></tr>';
+        '</td>'+
+        '<td class="pad actions"><button class="lbtn tiny danger" data-cdel="'+i+
+          '" aria-label="Delete '+esc(c.name||("slot "+c.no))+'">Delete row</button></td></tr>';
     }).join("");
     var withPhotos = state.contestants.filter(function(c){ return isPhoto(c.photo); }).length;
+    var emptyN = emptyRows().length;
     return '<div class="panel">'+
       '<div class="setup">'+
         '<div class="field"><label for="mEd">Event</label><input id="mEd" data-m="edition" value="'+esc(state.meta.edition)+'"></div>'+
@@ -381,17 +384,20 @@
         ' slots filled · '+withPhotos+' with a photo</span>'+
         '<div class="right"><button class="lbtn" id="btnPaste">Paste from Excel</button>'+
         '<button class="lbtn" id="btnAdd">Add 5 slots</button>'+
+        (emptyN ? '<button class="lbtn" id="btnTrim">Delete '+emptyN+' empty row'+
+                  (emptyN===1?"":"s")+'</button>' : '')+
         '<button class="lbtn danger" id="btnClearAll">Clear all scores</button></div></div>'+
       coachWarnHTML()+
       '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Name</th><th>School</th>'+
-      '<th>Coach</th><th class="c">Photo</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<th>Coach</th><th class="c">Photo</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="paste" id="pasteBox"><p>Paste the name and school columns from the registration sheet — one contestant per line, tab or comma between the two.</p>'+
         '<textarea id="pasteText" placeholder="Juan dela Cruz&#9;Marinduque National High School"></textarea>'+
         '<div class="row"><button class="lbtn go" id="btnPasteGo">Load roster</button><button class="lbtn" id="btnPasteCancel">Cancel</button></div></div>'+
       '<div class="legend">Scores stay attached to the slot number, so correcting a spelling never disturbs a tally. '+
       'Photos are shrunk before they are stored and travel inside the saved session, so one .json file still carries the whole contest. '+
       'They appear on the Introduce contestants screen and on the winners’ cards. '+
-      'The Coach column fills itself from the school — it only asks when a school has sent more than one coach.</div></div>'+
+      'The Coach column fills itself from the school — it only asks when a school has sent more than one coach. '+
+      'Delete row takes a contestant off altogether; the rows below move up a number, since the number is the slot.</div></div>'+
       renderCoachPanel()+schoolDatalist();
   }
 
@@ -441,6 +447,89 @@
     return '<div id="coachWarn">'+h+'</div>';
   }
 
+  /* ---- adding and deleting roster rows ----
+     A contestant's number is their slot: c.no is the row's own position, and
+     the announced cut and the cleared tie-breaks are both recorded as numbers.
+     So deleting a row closes the gap and renumbers from 1, and everything that
+     was written down in numbers is carried across that renumbering rather than
+     left pointing at a number nobody has any more. */
+  function renumber(keep){
+    var map = {};
+    keep.forEach(function(c, ix){ map[c.no] = ix+1; });   // old number -> new
+    keep.forEach(function(c, ix){ c.no = ix+1; });
+    state.contestants = keep;
+    photoFor = null;                    // a file picker mid-flight no longer knows its row
+
+    if(state.cut){
+      state.cut = state.cut.map(function(n){ return map[n]; }).filter(Boolean);
+      if(!state.cut.length) state.cut = null;
+    }
+    // a cleared tie-break is signed by the numbers of everyone in it, so the
+    // signature moves too — and is dropped outright if one of them is gone,
+    // because that is no longer the tie the operator cleared away
+    state.sdAck = (state.sdAck||[]).map(function(a){
+      var half = String(a.sig).split(">");
+      var mem = half[0].split("-").map(Number).map(function(n){ return map[n]; });
+      var win = map[a.winner];
+      if(!win || mem.some(function(n){ return !n; })) return null;
+      mem.sort(function(x,y){ return x-y; });
+      return {sig:mem.join("-")+">"+win, winner:win, place:a.place, name:a.name};
+    }).filter(Boolean);
+  }
+
+  // a row nothing has been entered against — safe to take away in bulk
+  function emptyRows(){
+    return state.contestants.filter(function(c){
+      return !c.name.trim() && !c.school.trim() && !isPhoto(c.photo) &&
+             !c.r1.some(Boolean) && !c.r2.some(Boolean) && !c.r3.some(Boolean) &&
+             !c.sd.some(function(v){ return v; });
+    });
+  }
+
+  function removeContestant(i){
+    var c = state.contestants[i];
+    if(!c) return;
+    if(state.contestants.length<=1){ toast("The roster needs one row at least"); return; }
+    var marks = ["r1","r2","r3"].reduce(function(n,k){
+      return n + c[k].filter(Boolean).length;
+    }, 0);
+    var sdMarks = c.sd.filter(function(v){ return v; }).length;
+    var who = c.name.trim() || ("slot "+c.no);
+    var touched = c.name.trim() || c.school.trim() || isPhoto(c.photo) || marks || sdMarks;
+
+    if(touched){
+      var msg = "Delete "+who+" from the roster?";
+      if(marks || sdMarks){
+        msg += "\n\n"+
+          (marks ? marks+" ticked answer"+(marks===1?"":"s") : "")+
+          (marks && sdMarks ? " and " : "")+
+          (sdMarks ? sdMarks+" sudden-death mark"+(sdMarks===1?"":"s") : "")+
+          " go with them.";
+      }
+      if(isPhoto(c.photo)) msg += "\n\nTheir photo goes too.";
+      if(i < state.contestants.length-1){
+        msg += "\n\nThe rows below move up a number: No. "+(c.no+1)+" becomes No. "+c.no+
+               ", and so on. Scores stay with their contestant.";
+      }
+      if(!confirm(msg)) return;
+    }
+    renumber(state.contestants.filter(function(x){ return x!==c; }));
+    render();
+    toast(who+" deleted");
+  }
+
+  function trimEmpty(){
+    var empty = emptyRows();
+    if(!empty.length){ toast("No empty rows to delete"); return; }
+    if(empty.length===state.contestants.length){ toast("Every row is empty — nothing to keep"); return; }
+    if(!confirm("Delete "+empty.length+" empty row"+(empty.length===1?"":"s")+"?\n\n"+
+                "Nothing has been entered against them. The "+
+                (state.contestants.length-empty.length)+" rows that remain are renumbered from 1.")) return;
+    renumber(state.contestants.filter(function(c){ return empty.indexOf(c)<0; }));
+    render();
+    toast(empty.length+" empty row"+(empty.length===1?"":"s")+" deleted");
+  }
+
   /* ---- the coaches table ---- */
   function renderCoachPanel(){
     var ks = coaches();
@@ -457,7 +546,8 @@
         '</td>'+
         '<td class="cum" data-kc="'+i+'">'+coachLoad(k)+'</td>'+
         '<td class="pad knote" data-kn="'+i+'">'+coachNote(k)+'</td>'+
-        '<td class="pad"><button class="lbtn tiny danger" data-kdel="'+i+'">Remove</button></td></tr>';
+        '<td class="pad actions"><button class="lbtn tiny danger" data-kdel="'+i+
+          '" aria-label="Delete '+esc(k.name||("coach "+(i+1)))+'">Delete row</button></td></tr>';
     }).join("");
 
     var body = ks.length
@@ -525,12 +615,13 @@
     var k = coaches()[i];
     if(!k) return;
     var load = coachLoad(k);
-    if(k.name.trim() && !confirm("Remove "+k.name+" from the coaches?"+
+    if(k.name.trim() && !confirm("Delete "+k.name+" from the coaches?"+
         (load ? "\n\n"+load+" contestant"+(load===1?"":"s")+" listed under them will be left without a coach "+
                 "until another is encoded for the school." : ""))) return;
     coaches().splice(i,1);
+    photoFor = null;                    // a file picker mid-flight no longer knows its row
     state.contestants.forEach(function(c){ if(c.coachId===k.id) c.coachId = null; });
-    render(); toast("Coach removed");
+    render(); toast((k.name.trim()||"The coach")+" deleted");
   }
   function loadCoachPaste(){
     var lines = $("kPasteText").value.split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean);
@@ -1545,6 +1636,8 @@
     }
     var kdEl = t.closest ? t.closest("[data-kdel]") : null;
     if(kdEl){ removeCoach(+kdEl.dataset.kdel); return; }
+    var cdEl = t.closest ? t.closest("[data-cdel]") : null;
+    if(cdEl){ removeContestant(+cdEl.dataset.cdel); return; }
     var sortEl = t.closest ? t.closest("[data-sort]") : null;
     if(sortEl){ sortBy = sortEl.dataset.sort; disp.page = 0; render(); return; }
     var valEl = t.closest ? t.closest("[data-val]") : null;
@@ -1605,6 +1698,7 @@
       case "btnPaste": $("pasteBox").classList.add("show"); $("pasteText").focus(); break;
       case "btnPasteCancel": $("pasteBox").classList.remove("show"); break;
       case "btnPasteGo": loadPaste(); break;
+      case "btnTrim": trimEmpty(); break;
       case "btnAddCoach": case "btnAddCoach2": addCoach(); break;
       case "btnKPaste": $("kPasteBox").classList.add("show"); $("kPasteText").focus(); break;
       case "btnKPasteCancel": $("kPasteBox").classList.remove("show"); break;
