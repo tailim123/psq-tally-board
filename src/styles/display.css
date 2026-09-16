@@ -229,37 +229,6 @@
   font-size:calc(var(--u)*2.2);white-space:normal;margin-top:calc(var(--u)*1);line-height:1.3;
 }
 
-/* ---- introduction of students and coaches ----
-   One school to a screen: the coach on a bar across the top, their contestants
-   filling whatever height is left. The bar takes what it needs and the portrait
-   row takes the rest, so two contestants and six read the same way. */
-.dsp .schl{
-  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
-  gap:calc(var(--u)*1.6);width:100%;
-}
-.dsp .coach{
-  flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--u)*2);
-  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.9);
-  box-shadow:0 3px 0 var(--ink);padding:calc(var(--u)*1.1) calc(var(--u)*2);
-}
-.dsp .coach .por{
-  width:calc(var(--u)*6);flex:0 0 auto;aspect-ratio:3/4;border-width:3px;
-  box-shadow:0 3px 0 var(--ink);
-}
-.dsp .coach .por .noimg{font-size:calc(var(--u)*2)}
-.dsp .coach .ctxt{min-width:0}
-.dsp .coach .lbl{
-  font-family:var(--pix);font-size:calc(var(--u)*1.1);color:var(--d-olive);letter-spacing:.04em;
-}
-.dsp .coach .who{
-  font-size:calc(var(--u)*2.4);font-weight:850;line-height:1.15;margin-top:calc(var(--u)*.5);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.dsp .stus{
-  display:grid;gap:calc(var(--u)*1.4);flex:1 1 auto;min-height:0;
-  grid-auto-rows:minmax(0,1fr);justify-content:center;width:100%;
-}
-
 /* ---- top 3 reveal ---- */
 .dsp .rev{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);align-items:stretch}
 /* the champion is not on this screen, so the two placers get the room */

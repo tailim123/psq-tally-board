@@ -490,37 +490,6 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   font-size:calc(var(--u)*2.2);white-space:normal;margin-top:calc(var(--u)*1);line-height:1.3;
 }
 
-/* ---- introduction of students and coaches ----
-   One school to a screen: the coach on a bar across the top, their contestants
-   filling whatever height is left. The bar takes what it needs and the portrait
-   row takes the rest, so two contestants and six read the same way. */
-.dsp .schl{
-  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
-  gap:calc(var(--u)*1.6);width:100%;
-}
-.dsp .coach{
-  flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--u)*2);
-  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.9);
-  box-shadow:0 3px 0 var(--ink);padding:calc(var(--u)*1.1) calc(var(--u)*2);
-}
-.dsp .coach .por{
-  width:calc(var(--u)*6);flex:0 0 auto;aspect-ratio:3/4;border-width:3px;
-  box-shadow:0 3px 0 var(--ink);
-}
-.dsp .coach .por .noimg{font-size:calc(var(--u)*2)}
-.dsp .coach .ctxt{min-width:0}
-.dsp .coach .lbl{
-  font-family:var(--pix);font-size:calc(var(--u)*1.1);color:var(--d-olive);letter-spacing:.04em;
-}
-.dsp .coach .who{
-  font-size:calc(var(--u)*2.4);font-weight:850;line-height:1.15;margin-top:calc(var(--u)*.5);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.dsp .stus{
-  display:grid;gap:calc(var(--u)*1.4);flex:1 1 auto;min-height:0;
-  grid-auto-rows:minmax(0,1fr);justify-content:center;width:100%;
-}
-
 /* ---- top 3 reveal ---- */
 .dsp .rev{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);align-items:stretch}
 /* the champion is not on this screen, so the two placers get the room */
@@ -910,10 +879,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   }
 
   /* The introduction runs school by school, alphabetically. A school with one
-     coach is one screen; a school with several takes a screen per coach, so the
+     coach is one group; a school with several is split a group per coach, so the
      pairing the audience sees is the one the operator encoded and never a
-     guess. Contestants at such a school with no coach picked come last, on a
-     screen of their own — the console has been asking for them all along. */
+     guess. Contestants at such a school with no coach picked come last, in a
+     group of their own — the console has been asking for them all along. */
   function introGroups(){
     var buckets = [], index = {};
     named().slice().sort(function(a,b){ return a.no-b.no; }).forEach(function(c){
@@ -944,6 +913,22 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       });
       var rest = b.students.filter(function(c){ return placed.indexOf(c)<0; });
       if(rest.length) out.push({school:b.school, coach:null, students:rest});
+    });
+    return out;
+  }
+
+  /* The screens that introduction actually turns into: a school's contestants
+     first — at Portraits per page, so a big school takes more than one screen —
+     and then the coach who brought them. A group with no coach encoded simply
+     has no coach screen after it. */
+  function introScreens(){
+    var out = [], n = Math.max(1, introPer);
+    introGroups().forEach(function(g){
+      for(var i=0;i<g.students.length;i+=n){
+        out.push({kind:"students", school:g.school, coach:g.coach,
+                  students:g.students.slice(i, i+n), from:i, of:g.students.length});
+      }
+      if(g.coach) out.push({kind:"coach", school:g.school, coach:g.coach});
     });
     return out;
   }
@@ -1491,20 +1476,18 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   /* ===================== display control desk ===================== */
   /* The number key is written down rather than taken from the position, so a
-     cue can be added without the whole keypad shifting under the operator. The
-     champion card is the one cue with no number: R walks the declaration to it,
-     and it has its own button beside the reveals. */
+     cue can be added or dropped without the whole keypad shifting under the
+     operator. */
   var CUES = [
     {id:"standby",     k:"1", t:"Title card",        d:"Event name, province, date"},
     {id:"mechanics",   k:"2", t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
-    {id:"introduce",   k:"3", t:"Introduce contestants", d:"Portraits, names and schools"},
-    {id:"schools",     k:"4", t:"Students & coaches", d:"School by school, A–Z, each with its coach"},
-    {id:"round",       k:"5", t:"Round scores",      d:"By contestant number, for the read-out"},
-    {id:"advancing",   k:"6", t:"Advancing to R3",   d:"Who made the cut after Round 2"},
-    {id:"leaderboard", k:"7", t:"Leaderboard",       d:"Ranked, current standings"},
-    {id:"tiebreak",    k:"8", t:"Sudden death",      d:"Live tie-break marks"},
-    {id:"reveal",      k:"9", t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
-    {id:"champion",    k:"",  t:"Champion card",     d:"Full-screen winner, on its own"},
+    {id:"introduce",   k:"3", t:"Introduce contestants", d:"School by school, each followed by their coach"},
+    {id:"round",       k:"4", t:"Round scores",      d:"By contestant number, for the read-out"},
+    {id:"advancing",   k:"5", t:"Advancing to R3",   d:"Who made the cut after Round 2"},
+    {id:"leaderboard", k:"6", t:"Leaderboard",       d:"Ranked, current standings"},
+    {id:"tiebreak",    k:"7", t:"Sudden death",      d:"Live tie-break marks"},
+    {id:"reveal",      k:"8", t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
+    {id:"champion",    k:"9", t:"Champion card",     d:"Full-screen winner, on its own"},
     {id:"blank",       k:"0", t:"Blank the screen",  d:"Holding slate between segments"}
   ];
   function cueName(id){ var c=CUES.filter(function(x){return x.id===id;})[0]; return c?c.t:id; }
@@ -1522,7 +1505,6 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     var pages = pl ? Math.max(1, Math.ceil(pl.length/per())) : 1;
     var mech = disp.cue==="mechanics";
     var intro = disp.cue==="introduce";
-    var sch = disp.cue==="schools";
     var photos = named().filter(function(c){ return isPhoto(c.photo); }).length;
     var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2]].map(function(r){
       return '<button class="lbtn'+(disp.cue==="reveal" && disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
@@ -1534,7 +1516,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '<button class="lbtn" data-goto="roster">Choose the missing coaches</button>'+
         '<span class="note">'+need.length+' contestant'+(need.length===1?"":"s")+
         ' come'+(need.length===1?"s":"")+' from a school with more than one coach and none picked \u2014 '+
-        'the students and coaches screen introduces them without one.</span></div>'
+        'the introduction runs them without a coach screen.</span></div>'
       : "";
 
     // the Round 3 cut, offered here because the operator is on this tab while the
@@ -1584,26 +1566,24 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
             return '<button class="lbtn'+(disp.cols===v[1]?" on":"")+'" data-cols="'+v[1]+'">'+v[0]+'</button>';
           }).join("")+
           '<span class="note">Tiles read downwards, then across.</span></div>'+
-        (mech||sch
-          ? '<div class="deskrow"><span class="lab">Per page</span><span class="note">'+
-            (mech ? 'The mechanics run one screen at a time.'
-                  : 'One school at a time, alphabetically. A school that has sent two or more coaches '+
-                    'takes a screen per coach, so every contestant is introduced beside the right one.')+
-            '</span></div>'
+        (mech
+          ? '<div class="deskrow"><span class="lab">Per page</span>'+
+            '<span class="note">The mechanics run one screen at a time.</span></div>'
           : '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
             (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
               return '<button class="lbtn'+((intro?introPer:perPage)===v?" on":"")+'" data-per="'+v+'">'+v+'</button>';
             }).join("")+
-            (intro?'<span class="note">One per page introduces them individually.</span>':'')+'</div>')+
+            (intro?'<span class="note">How many of a school\u2019s contestants share a screen before their '+
+                   'coach follows. One introduces them individually.</span>':'')+'</div>')+
         '<div class="deskrow"><span class="lab">Page</span>'+
           '<button class="lbtn" data-pg="-1"'+(!pl||disp.page===0?" disabled":"")+'>\u25c0 Previous</button>'+
           '<button class="lbtn" data-pg="1"'+(!pl||disp.page>=pages-1?" disabled":"")+'>Next \u25b6</button>'+
           '<span class="note">'+(pl
             ? (mech ? (pl.length+" mechanics screens \u00b7 showing screen "+(disp.page+1)+" of "+pages)
-              : (sch ? (pl.length+" screen"+(pl.length===1?"":"s")+" \u00b7 school by school \u00b7 showing "+
-                        (disp.page+1)+" of "+pages)
-                     : (pl.length+" contestants \u00b7 "+per()+" per page \u00b7 showing page "+
-                        (disp.page+1)+" of "+pages)))
+              : (intro ? (pl.length+" screen"+(pl.length===1?"":"s")+" \u00b7 school by school, each followed "+
+                          "by their coach \u00b7 showing "+(disp.page+1)+" of "+pages)
+                       : (pl.length+" contestants \u00b7 "+per()+" per page \u00b7 showing page "+
+                          (disp.page+1)+" of "+pages)))
             : "This cue is a single screen")+'</span></div>'+
         '<div class="deskrow"><span class="lab">Reveal</span>'+rev+
           '<button class="lbtn" data-reveal="0">Hide both</button>'+
@@ -1614,6 +1594,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       'On this tab, the number badge on each cue picks it, left and right arrows turn the page, and R walks the declaration — '+
       '3rd placer, 2nd placer, then the champion’s card.'+
       (photos<named().length ? ' <b>'+(named().length-photos)+' contestants have no photo yet</b> — add them on the Roster tab; the introduction screen shows their number instead.' : '')+
+      (namedCoaches().filter(function(k){ return !isPhoto(k.photo); }).length
+        ? ' Coaches without a photo show their initials on their screen.' : '')+
       '</div></div>';
   }
 
@@ -1655,9 +1637,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   // the mechanics cue pages one screen at a time; portraits and score tiles
   // page at their own counts, since a portrait needs far more room than a score
+  // the mechanics and the introduction are both already built one screen to an
+  // entry, so they page one at a time; Portraits per page shapes the
+  // introduction when its screens are built, not when they are turned
   function per(){
-    if(disp.cue==="mechanics" || disp.cue==="schools") return 1;
-    if(disp.cue==="introduce") return introPer;
+    if(disp.cue==="mechanics" || disp.cue==="introduce") return 1;
     return perPage;
   }
 
@@ -1685,8 +1669,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   function pagedList(){
     var s2 = standings();
     if(disp.cue==="mechanics") return mechPages();
-    if(disp.cue==="introduce") return named();
-    if(disp.cue==="schools") return introGroups();
+    if(disp.cue==="introduce") return introScreens();
     if(disp.cue==="round") return roundList(disp.round);
     if(disp.cue==="advancing") return hasMarks("r2") ? qualifiers() : [];
     if(disp.cue==="leaderboard") return s2.rows;
@@ -1819,58 +1802,40 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '</div></div></div>';
     }
 
+    /* Introducing the contestants: a school's own contestants, then the coach
+       who brought them, then on to the next school in alphabetical order. The
+       heading carries the school, so the cards do not repeat it. */
     if(disp.cue==="introduce"){
-      var pgi = pageOf(list.slice().sort(function(a,b){ return a.no-b.no; }));
-      var n = pgi.slice.length;
-      // one row: the screen is wide and short, so tall narrow cards suit portraits
-      var cols = Math.max(1, n);
-      var body = list.length
-        ? '<div class="intro'+(n===1?" solo":"")+'" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+
-          pgi.slice.map(function(c){
-            return '<div class="icard">'+portrait(c)+
-              '<div class="itxt"><div class="num">No. '+c.no+'</div>'+
-              '<div class="who">'+esc(c.name)+'</div>'+
-              '<div class="sch">'+esc(c.school||"")+'</div></div></div>';
-          }).join("")+'</div>'+pagerHTML(pgi)
-        : '<div class="none">No contestants yet</div>';
-      return '<div class="dsp">'+dspHead("Meet the contestants")+
-        '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
-        '<div class="sect">The contestants<small>'+list.length+' from '+
-        (function(){
-          var sch = {}; list.forEach(function(c){ if(c.school) sch[c.school]=1; });
-          var n2 = Object.keys(sch).length;
-          return n2 ? (n2+" school"+(n2===1?"":"s")) : "the province";
-        })()+'</small></div>'+body+'</div></div>';
-    }
-
-    /* Introduction of students and coaches — one school at a time, in
-       alphabetical order, each contestant beside the coach who brought them. */
-    if(disp.cue==="schools"){
-      var gps = introGroups();
-      if(!gps.length) return '<div class="dsp">'+dspHead("Students and coaches")+
+      var screens = introScreens();
+      if(!screens.length) return '<div class="dsp">'+dspHead("Contestants and coaches")+
         '<div class="body"><div class="none">No contestants yet</div></div></div>';
-      var pgg = pageOf(gps), g = pgg.slice[0];
-      var ns = g.students.length;
-      // one row up to four, then two rows — a portrait needs height above all
-      var scol = ns>4 ? Math.ceil(ns/2) : ns;
-      var coachBar = g.coach
-        ? '<div class="coach">'+portrait(g.coach)+
-          '<div class="ctxt"><div class="lbl">Coach</div>'+
-          '<div class="who">'+esc(g.coach.name)+'</div></div></div>'
-        : '';
-      return '<div class="dsp">'+dspHead("Students and coaches")+
-        '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
-        '<div class="sect">'+esc(g.school || "No school given")+
-        '<small>'+ns+' contestant'+(ns===1?"":"s")+'</small></div>'+
-        '<div class="schl">'+coachBar+
-          '<div class="stus" style="grid-template-columns:repeat('+scol+',minmax(0,1fr))">'+
-          g.students.map(function(c){
+      var pgi = pageOf(screens), sc = pgi.slice[0];
+      var body, sub;
+      if(sc.kind==="coach"){
+        sub = "their coach";
+        body = '<div class="intro solo" style="grid-template-columns:repeat(1,minmax(0,1fr))">'+
+          '<div class="icard">'+portrait(sc.coach)+
+          '<div class="itxt"><div class="num">Coach</div>'+
+          '<div class="who">'+esc(sc.coach.name)+'</div></div></div></div>';
+      } else {
+        var n = sc.students.length;
+        // one row: the screen is wide and short, so tall narrow cards suit portraits
+        sub = sc.of > n
+          ? (n===1 ? ('contestant '+(sc.from+1)+' of '+sc.of)
+                   : ('contestants '+(sc.from+1)+'\u2013'+(sc.from+n)+' of '+sc.of))
+          : (n+' contestant'+(n===1?"":"s"));
+        body = '<div class="intro'+(n===1?" solo":"")+'" style="grid-template-columns:repeat('+
+          Math.max(1,n)+',minmax(0,1fr))">'+
+          sc.students.map(function(c){
             return '<div class="icard">'+portrait(c)+
               '<div class="itxt"><div class="num">No. '+c.no+'</div>'+
               '<div class="who">'+esc(c.name)+'</div></div></div>';
-          }).join("")+'</div>'+
-        '</div>'+
-        pagerHTML(pgg, 'Screen '+(disp.page+1)+' of '+pgg.pages)+'</div></div>';
+          }).join("")+'</div>';
+      }
+      return '<div class="dsp">'+dspHead("Contestants and coaches")+
+        '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
+        '<div class="sect">'+esc(sc.school || "No school given")+'<small>'+sub+'</small></div>'+
+        body+pagerHTML(pgi, 'Screen '+(disp.page+1)+' of '+pgi.pages)+'</div></div>';
     }
 
     if(disp.cue==="round"){
