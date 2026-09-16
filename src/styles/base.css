@@ -180,6 +180,8 @@ td.knote{min-width:200px}
 td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
 .thumb{width:34px;height:45px;object-fit:cover;border:2.5px solid var(--ink);border-radius:5px;background:#E7EDF7;flex:0 0 auto}
 .thumb.none{display:flex;align-items:center;justify-content:center;font-family:var(--pix);font-size:10px;color:#9AA9BE}
+/* a school logo is not a portrait — square, and shown whole rather than cropped */
+.thumb.logo{width:45px;height:45px;object-fit:contain;background:#fff;padding:2px}
 .lbtn.tiny{padding:5px 9px;font-size:11px}
 /* the delete-row column sits at the right edge and never wraps */
 td.actions{width:1%;white-space:nowrap;text-align:right}

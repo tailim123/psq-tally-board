@@ -73,6 +73,7 @@ docs/
 | scoring | `rt`, `cum12`, `grand`, `qualifiers`, `sdStreak`, `standings`, `unresolved` |
 | console header | `renderTop`, `renderTabs` — the Top 3 strip and tab bar |
 | coaches | `coachesAt`, `coachOf`, `unassigned`, `introGroups` — who coaches whom |
+| schools | `schoolList`, `schoolLogo` — the schools typed so far, and their logos |
 | console views | `renderRoster`, `renderCoachPanel`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
 | portraits | `shrink`, `pickPhoto`, `portrait` — photos in, and how they are drawn |
 | audience screen | `sceneHTML`, `fit`, `paintDisplay`, `openDisplay` |
@@ -81,8 +82,8 @@ docs/
 | session | `saveSession`, restore, `exportCsv` |
 
 State is one plain object, `state`, holding `meta`, `cut` (the announced Round 3
-cut, once there is one), `coaches` and `contestants` — each of which carries its
-`photo` as a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
+cut, once there is one), `coaches`, `schools` (only those a logo was added for)
+and `contestants` — each of which carries its `photo` as a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
 deliberately kept out of it so the saved session file stays about the contest,
 not about the projector.
 
@@ -142,10 +143,20 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   and matching ignores case and extra spaces. Editing either school re-derives
   the pairing, so a coach who moves never drags a contestant with them.
 
+- **School logos.** Under the Coaches table is a **School logos** panel. Its rows
+  are not typed — they are every school already named on the roster or against a
+  coach — so the only thing to do there is *Add logo*. The logo then sits beside
+  that school's name on every introduction screen, the coach's included. Logos
+  keep their transparency (a cut-out seal stays cut out), are shrunk to 360px
+  before they are stored, and ride inside the saved session like the photographs.
+  Correcting a school's spelling parks its logo rather than losing it — type the
+  spelling back and it returns.
+
 - **Introduce contestants** runs **school by school, in alphabetical order**:
   a school's contestants first, then a screen for the coach who brought them,
-  then on to the next school. The school's name is the heading, so the cards
-  carry the number and the name and nothing else. A school that has sent two or
+  then on to the next school. The school's logo and name are the heading — the
+  name a size larger than the other cues carry — so the cards below need only the
+  number and the contestant's name. A school that has sent two or
   more coaches is split a group per coach — that coach's contestants, then that
   coach — so nobody is introduced beside the wrong one; contestants there with no
   coach picked come last within the school and get no coach screen. A school with

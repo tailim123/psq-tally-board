@@ -141,6 +141,23 @@
 }
 .dsp .sect small{font-family:var(--font);font-size:calc(var(--u)*1.4);font-weight:700;color:#fff;text-shadow:1px 1px 0 var(--sky-3);margin-left:calc(var(--u)*1.4)}
 
+/* the introduction's heading: the school's logo, then its name a size up from
+   the other cues, with the line about the screen tucked under it */
+.dsp .sect.schead{
+  display:flex;align-items:center;gap:calc(var(--u)*1.6);min-width:0;
+}
+.dsp .schead .slogo{
+  flex:0 0 auto;height:calc(var(--u)*6);width:auto;max-width:calc(var(--u)*9);
+  object-fit:contain;background:#FFFFFF;border:3px solid var(--ink);
+  border-radius:calc(var(--u)*.6);padding:calc(var(--u)*.5);box-shadow:0 3px 0 var(--ink);
+}
+.dsp .schead .stxt{min-width:0}
+.dsp .schead .sname{font-size:calc(var(--u)*2.3);line-height:1.25}
+.dsp .schead .ssub{
+  font-family:var(--font);font-size:calc(var(--u)*1.4);font-weight:700;color:#fff;
+  text-shadow:1px 1px 0 var(--sky-3);margin-top:calc(var(--u)*.5);
+}
+
 /* ---- score lines ---- */
 .dsp .grid{display:grid;gap:calc(var(--u)*.8) calc(var(--u)*1.6);
   grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;overflow:hidden;width:100%}

@@ -23,6 +23,7 @@
     cut:null,          // once the Round 3 cut is announced, the frozen list of contestant numbers
     sdAck:[],          // tie-breaks the operator has seen resolved and cleared away
     coaches:[],        // {id, name, school, photo} — one entry per registered coach
+    schools:[],        // {name, logo} — only the schools a logo has been added for
     contestants:[]
   };
   for(var i=1;i<=22;i++) state.contestants.push(blankC(i));
@@ -246,6 +247,43 @@
     });
     return out;
   }
+  /* Schools are not encoded anywhere — they are whatever was typed on the roster
+     and against the coaches. Only a logo needs somewhere to live, so state.schools
+     holds just the schools that have one, matched the same way coaches are. An
+     entry whose school is no longer typed anywhere is kept rather than pruned, so
+     correcting a spelling and typing it back brings the logo with it. */
+  function schools(){ return state.schools || (state.schools = []); }
+  function schoolEntry(name){
+    var n = normSch(name);
+    if(!n) return null;
+    return schools().filter(function(x){ return normSch(x.name)===n; })[0] || null;
+  }
+  function schoolLogo(name){
+    var e = schoolEntry(name);
+    return e && isPhoto(e.logo) ? e.logo : null;
+  }
+  function setSchoolLogo(name, uri){
+    var e = schoolEntry(name);
+    if(!e){ e = {name:String(name==null?"":name).trim(), logo:null}; schools().push(e); }
+    e.logo = uri;
+  }
+  function clearSchoolLogo(name){
+    var n = normSch(name);
+    state.schools = schools().filter(function(x){ return normSch(x.name)!==n; });
+  }
+  // every school typed on the roster or against a coach, alphabetically
+  function schoolList(){
+    var seen = {}, out = [];
+    state.contestants.concat(coaches()).forEach(function(x){
+      var n = normSch(x.school);
+      if(!n || seen["s"+n]) return;
+      seen["s"+n] = 1;
+      out.push({key:n, name:String(x.school).trim()});
+    });
+    out.sort(function(a,b){ return a.key<b.key ? -1 : 1; });
+    return out;
+  }
+
   function initials(s){
     var p = String(s==null?"":s).trim().split(/\s+/).filter(Boolean);
     if(!p.length) return "?";
@@ -414,21 +452,53 @@
       'They appear on the Introduce contestants screen and on the winners’ cards. '+
       'The Coach column fills itself from the school — it only asks when a school has sent more than one coach. '+
       'Delete row takes a contestant off altogether; the rows below move up a number, since the number is the slot.</div></div>'+
-      renderCoachPanel()+schoolDatalist();
+      renderCoachPanel()+
+      '<div id="schoolPanel">'+renderSchoolPanel()+'</div>'+
+      '<datalist id="schoolList">'+schoolOptions()+'</datalist>';
+  }
+
+  /* ---- school logos ----
+     The rows are derived from what has been typed, never entered by hand: the
+     only thing this table stores is the logo. */
+  function renderSchoolPanel(){
+    var list = schoolList();
+    if(!list.length){
+      return '<div class="panel"><div class="panel-head"><h3>School logos</h3>'+
+        '<span class="note">a logo shows beside the school name when the contestants are introduced</span></div>'+
+        '<div class="empty-state"><p>No schools yet. Type a school against a contestant or a coach '+
+        'and it appears here for a logo.</p></div></div>';
+    }
+    var rows = list.map(function(x,i){
+      var logo = schoolLogo(x.name);
+      var cn = named().filter(function(c){ return normSch(c.school)===x.key; }).length;
+      var kn = namedCoaches().filter(function(k){ return normSch(k.school)===x.key; }).length;
+      return '<tr><td class="no pad">'+(i+1)+'</td>'+
+        '<td class="pad nm">'+esc(x.name)+'</td>'+
+        '<td class="pad photocell">'+
+          (logo ? '<img class="thumb logo" src="'+logo+'" alt="">'
+                : '<span class="thumb logo none">—</span>')+
+          '<button class="lbtn tiny" data-slogo="'+esc(x.name)+'">'+(logo?"Replace":"Add logo")+'</button>'+
+          (logo ? '<button class="lbtn tiny danger" data-slogodel="'+esc(x.name)+'">Remove</button>' : '')+
+        '</td>'+
+        '<td class="cum">'+cn+'</td><td class="cum">'+kn+'</td></tr>';
+    }).join("");
+    var withLogo = list.filter(function(x){ return schoolLogo(x.name); }).length;
+    return '<div class="panel">'+
+      '<div class="panel-head"><h3>School logos</h3><span class="note">'+
+      withLogo+' of '+list.length+' school'+(list.length===1?"":"s")+
+      ' with a logo · it shows beside the school name when the contestants are introduced</span></div>'+
+      '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>School</th>'+
+      '<th class="c">Logo</th><th class="c">Contestants</th><th class="c">Coaches</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="legend">The list follows the schools typed above — there is nothing to add here by hand. '+
+      'Logos keep their transparency, are shrunk before they are stored and travel inside the saved session. '+
+      'Correcting a school’s spelling parks its logo rather than losing it; type the spelling back and it returns.</div></div>';
   }
 
   /* The list of schools already typed, offered to both the roster and the
      coaches table, so the two spellings match and a coach finds their school. */
-  function schoolDatalist(){
-    var seen = {}, out = [];
-    state.contestants.concat(coaches()).forEach(function(x){
-      var n = normSch(x.school);
-      if(!n || seen["s"+n]) return;
-      seen["s"+n] = 1; out.push(x.school.trim());
-    });
-    out.sort(function(a,b){ return normSch(a)<normSch(b) ? -1 : 1; });
-    return '<datalist id="schoolList">'+
-      out.map(function(v){ return '<option value="'+esc(v)+'">'; }).join("")+'</datalist>';
+  function schoolOptions(){
+    return schoolList().map(function(x){ return '<option value="'+esc(x.name)+'">'; }).join("");
   }
 
   // what the roster shows in the Coach column — a name when the rule settles it,
@@ -605,6 +675,13 @@
      that depend on it are refreshed in place rather than by a full redraw —
      a redraw would take the operator's cursor out of the box they are typing in. */
   function refreshCoachUI(){
+    // the schools panel and the school suggestions are both derived from the
+    // boxes being typed in, so they are rebuilt here rather than waiting for a
+    // full redraw that would take the cursor out of the box
+    var sp = $("schoolPanel");
+    if(sp) sp.innerHTML = renderSchoolPanel();
+    var dl = $("schoolList");
+    if(dl) dl.innerHTML = schoolOptions();
     Array.prototype.forEach.call(document.querySelectorAll("td.coachcell"), function(td){
       var i = +td.dataset.ci;
       td.innerHTML = coachCell(state.contestants[i], i);
@@ -1145,6 +1222,17 @@
     ];
   }
 
+  /* The introduction's heading: the school's logo if it has one, its name a size
+     up from the other cues, and the line saying what this screen is. The sub-line
+     sits under the name rather than after it, so a long name and a logo both fit. */
+  function schoolHead(school, sub){
+    var logo = schoolLogo(school);
+    return '<div class="sect schead">'+
+      (logo ? '<img class="slogo" src="'+logo+'" alt="">' : '')+
+      '<div class="stxt"><div class="sname">'+esc(school || "No school given")+'</div>'+
+      '<div class="ssub">'+sub+'</div></div></div>';
+  }
+
   function sceneHTML(){
     var s = standings(), list = named();
 
@@ -1213,7 +1301,7 @@
       }
       return '<div class="dsp">'+dspHead("Contestants and coaches")+
         '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
-        '<div class="sect">'+esc(sc.school || "No school given")+'<small>'+sub+'</small></div>'+
+        schoolHead(sc.school, sub)+
         body+pagerHTML(pgi, 'Screen '+(disp.page+1)+' of '+pgi.pages)+'</div></div>';
     }
 
@@ -1455,26 +1543,36 @@
      PHOTO_MAX on its long side before it is stored. A 4 MB phone photo comes
      out around 80 KB, so a full roster adds a couple of megabytes, not sixty. */
   var PHOTO_MAX = 720;
+  var LOGO_MAX = 360;             // a school seal is line art, not a photograph
   var photoFor = null;            // {kind:"c"|"k", i:index} — who the file picker is filling
 
   function isPhoto(v){ return typeof v==="string" && /^data:image\//.test(v); }
 
-  function shrink(file, done){
+  /* opts.max caps the long side, opts.alpha keeps transparency — a school seal
+     is usually cut out, and flattening it onto white would box it in. A logo is
+     line art, so PNG at 360px costs less than the photographs do. */
+  function shrink(file, done, opts){
+    opts = opts || {};
+    var max = opts.max || PHOTO_MAX;
     var fr = new FileReader();
     fr.onload = function(){
       var img = new Image();
       img.onload = function(){
         var w = img.naturalWidth, h = img.naturalHeight;
         if(!w || !h){ done(null); return; }
-        var sc = Math.min(1, PHOTO_MAX/Math.max(w,h));
+        var sc = Math.min(1, max/Math.max(w,h));
         var cv = document.createElement("canvas");
         cv.width = Math.max(1, Math.round(w*sc));
         cv.height = Math.max(1, Math.round(h*sc));
         var cx = cv.getContext("2d");
-        cx.fillStyle = "#fff";                       // flatten transparency
-        cx.fillRect(0,0,cv.width,cv.height);
+        if(!opts.alpha){
+          cx.fillStyle = "#fff";                     // flatten transparency
+          cx.fillRect(0,0,cv.width,cv.height);
+        }
         cx.drawImage(img, 0, 0, cv.width, cv.height);
-        try{ done(cv.toDataURL("image/jpeg", 0.85)); }catch(err){ done(null); }
+        try{
+          done(opts.alpha ? cv.toDataURL("image/png") : cv.toDataURL("image/jpeg", 0.85));
+        }catch(err){ done(null); }
       };
       img.onerror = function(){ done(null); };
       img.src = fr.result;
@@ -1483,13 +1581,27 @@
     fr.readAsDataURL(file);
   }
 
-  function pickPhoto(kind, i){ photoFor = {kind:kind, i:i}; $("photoIn").click(); }
+  // schools are addressed by name, not by row: the derived list can reshuffle
+  // while the file dialog is open
+  function pickPhoto(kind, i, school){
+    photoFor = {kind:kind, i:i, school:school};
+    $("photoIn").click();
+  }
 
   $("photoIn").addEventListener("change", function(e){
     var f = e.target.files[0], tgt = photoFor;
     e.target.value = ""; photoFor = null;
     if(!f || !tgt) return;
     if(!/^image\//.test(f.type)){ toast("That file isn't a picture"); return; }
+    if(tgt.kind==="s"){
+      shrink(f, function(uri){
+        if(!uri){ toast("Could not read that picture"); return; }
+        setSchoolLogo(tgt.school, uri);
+        render();
+        toast("Logo added for "+tgt.school);
+      }, {max:LOGO_MAX, alpha:true});
+      return;
+    }
     shrink(f, function(uri){
       if(!uri){ toast("Could not read that picture"); return; }
       var who = tgt.kind==="k" ? coaches()[tgt.i] : state.contestants[tgt.i];
@@ -1627,6 +1739,10 @@
       state.contestants[ci].photo = null; render(); toast("Photo removed");
       return;
     }
+    var slEl = t.closest ? t.closest("[data-slogo]") : null;
+    if(slEl){ pickPhoto("s", 0, slEl.dataset.slogo); return; }
+    var slDel = t.closest ? t.closest("[data-slogodel]") : null;
+    if(slDel){ clearSchoolLogo(slDel.dataset.slogodel); render(); toast("Logo removed"); return; }
     var kphEl = t.closest ? t.closest("[data-kphoto]") : null;
     if(kphEl){ pickPhoto("k", +kphEl.dataset.kphoto); return; }
     var kunEl = t.closest ? t.closest("[data-kunphoto]") : null;
@@ -1838,6 +1954,10 @@
         if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
         if(!Array.isArray(d.sdAck)) d.sdAck = [];
         if(!Array.isArray(d.coaches)) d.coaches = [];              // sessions saved before coaches existed
+        if(!Array.isArray(d.schools)) d.schools = [];              // sessions saved before logos existed
+        d.schools = d.schools.filter(function(x){
+          return x && typeof x.name==="string" && isPhoto(x.logo);
+        });
         sdPop = null;
         var kids = [];
         d.coaches.forEach(function(k,ix){
