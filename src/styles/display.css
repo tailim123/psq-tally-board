@@ -46,6 +46,41 @@
 }
 .dsp .body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding-top:calc(var(--u)*1.6)}
 
+/* ---- running the deck ----
+   The slide is the content. None of the board's chrome belongs over the RTC's
+   artwork, so the sky, the skyline and the padding all stand down. */
+.dsp.run{padding:0;background:#000;display:block;position:relative}
+.dsp.run::before,.dsp.run::after{display:none}
+.dsp.run>*{position:absolute}
+.dsp .slideimg{
+  inset:0;width:100%;height:100%;object-fit:contain;display:block;
+  z-index:0;background:#000;
+}
+/* the clock rides in a corner, legible against any slide the RTC sends */
+.dsp .clock{
+  z-index:2;top:calc(var(--u)*2);right:calc(var(--u)*2);min-width:calc(var(--u)*13);
+  text-align:center;font-family:var(--pix);font-size:calc(var(--u)*5);line-height:1;
+  color:var(--ink);background:var(--d-yellow);border:5px solid var(--ink);
+  border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.4) calc(var(--u)*1.6) calc(var(--u)*1);
+  box-shadow:0 6px 0 var(--ink);
+}
+.dsp .clock em{
+  display:block;font-family:var(--font);font-style:normal;font-weight:800;
+  font-size:calc(var(--u)*1.1);letter-spacing:.08em;margin-top:calc(var(--u)*.8);
+  color:var(--d-olive);text-transform:uppercase;
+}
+.dsp .clock.low{background:var(--d-red);color:#fff}
+.dsp .clock.low em{color:#FFD9D2}
+.dsp .clock.done{background:#C9D9F5;color:#2C4A8F}
+.dsp .clock.done em{color:#2C4A8F}
+.dsp .timeup{
+  z-index:3;left:0;right:0;bottom:0;
+  text-align:center;font-family:var(--pix);font-size:calc(var(--u)*5);line-height:1.2;
+  color:#fff;background:rgba(208,52,28,.95);border-top:6px solid var(--ink);
+  padding:calc(var(--u)*1.6) 0 calc(var(--u)*1.8);
+  text-shadow:4px 4px 0 rgba(0,0,0,.45);letter-spacing:.06em;
+}
+
 /* ---- title card ---- */
 .dsp .hero{text-align:center}
 .dsp .hero .logo{height:calc(var(--u)*7);background:var(--logo) no-repeat center/contain;margin-bottom:calc(var(--u)*2.4)}

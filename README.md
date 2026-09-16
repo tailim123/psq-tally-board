@@ -40,8 +40,23 @@ typeface will fall back to a monospace face until you serve it.
 ```
 build.py                       bundles src/ into dist/ — run after every edit
 src/
-  index.html                   page shell; links the two stylesheets and the script
-  app.js                       all application code, one IIFE, no dependencies
+  index.html                   page shell; links the stylesheets and lists the script parts in load order
+  js/                          the application, in twelve parts — fragments of one closure, not modules
+    00-state.js                constants, the state object, the two tiny helpers
+    10-scoring.js              rounds, the cut, placings, sudden death
+    20-people.js               coaches, school and organisation logos, judges
+    25-deck.js                 the RTC's slides as pictures, and what each one is
+    78-autosave.js             keeping a copy, and being honest about whether it worked
+    35-run.js                  the run state machine, the clock, the live region, the Run tab
+    30-console.js              the operator's header, tabs and tab views
+    40-desk.js                 the display control desk
+    50-display.js              the audience screen: scenes, fit, the pop-up window
+    55-portraits.js            photographs in, and how a portrait is drawn
+    60-flow.js                 the Round 3 cut, the tie-break pop-up, render()
+    70-events.js               the delegated handlers, and the roster paste
+    75-session.js              save, open, and the download helper
+    80-form1.js                the Form 1 workbook writer, and the plain CSV
+    90-boot.js                 the toast, the window hooks, and the first render
   styles/
     base.css                   design tokens + the operator console
     display.css                the audience screen (everything under .dsp)
@@ -54,19 +69,33 @@ dist/
 docs/
   scoring-rules.md             how the mechanics map onto the code
   form-1-mapping.md            how the Excel export maps onto the office template
+  question-runner.md           design for running the quiz itself — proposal, not built
 ```
 
-### Two things the build depends on
+### Four things the build depends on
 
 1. The `<style>` elements keep their `id="baseStyle"` and `id="dspStyle"`. The app
    reads them by id to clone the CSS into the audience window.
-2. `app.js` must not contain a literal `</script>`. The build fails loudly if it does.
+2. No part may contain a literal `</script>`. The build fails loudly if one does.
+3. **`index.html` is the only place the load order lives.** `build.py` reads the
+   `<script src>` tags between the `<!-- app: -->` markers and concatenates those
+   files, in that order, inside one `(function(){ "use strict"; … })()`. Add a part
+   by creating the file *and* listing it; a file in `src/js/` that nothing lists
+   fails the build rather than being silently dropped.
+4. **Every part opens with `"use strict";`.** Live Server loads the parts as twelve
+   separate scripts, so each needs its own directive to be as strict as the bundle;
+   `build.py` strips the duplicates and fails if one is missing. Without this,
+   development would be the more forgiving of the two environments and a mistake
+   would surface first in the file that goes to the venue.
+
+The parts are **fragments of one closure, not modules.** They share scope and call
+each other freely; none of them is meaningful on its own.
 
 ---
 
 ## How the code is organised
 
-`app.js` reads top to bottom in these sections:
+The parts read top to bottom in these sections:
 
 | Section | What lives there |
 | --- | --- |
@@ -75,6 +104,8 @@ docs/
 | coaches | `coachesAt`, `coachOf`, `unassigned`, `introGroups` — who coaches whom |
 | logos | `logoList`, `logoFor` — every school and organisation named, and its logo |
 | judges | `judges`, `namedJudges` — the Board of Judges, in the order introduced |
+| deck | `slides`, `qIndexOf`, `deckProblems` — the RTC's slides and their tags |
+| run | `ask`, `remaining`, `startTicking` — the state machine and the clock |
 | console views | `renderRoster`, `renderCoachPanel`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
 | portraits | `shrink`, `pickPhoto`, `portrait` — photos in, and how they are drawn |
 | audience screen | `sceneHTML`, `fit`, `paintDisplay`, `openDisplay` |
@@ -98,8 +129,32 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
 - **The tally grid never reorders.** Rows are locked to contestant-number order so
   they cannot move while the operator is ticking boxes. Score ordering exists only
   on the audience screen.
-- **There is no autosave.** Press **Save session** between rounds; it writes a
-  `.json` you can reopen with **Open session**. A browser refresh loses the tally.
+- **Autosave, and what it is worth.** The board keeps a copy of the contest in the
+  browser every few seconds and offers it back if the page is reopened with work
+  unsaved. It never restores silently — a bar across the top says what it found
+  and when, and you choose *Restore it* or *Start fresh*.
+
+  **Check the indicator in the top bar**, beside the display light. *Autosaving*
+  means the whole session including photographs and slides is being kept.
+  *Autosaving the tally only* means this browser would not take the pictures, so
+  the roster and the tally are kept and photographs and slides would need
+  re-importing — everything that cannot be reconstructed from a folder of files.
+  *No autosave* means nothing is being kept and you are on your own. The board
+  proves the storage works at startup by writing a record and reading it back, so
+  the indicator reflects what actually happened, not what was hoped for.
+
+  **None of that replaces Save session.** Press it between rounds; it writes a
+  `.json` you can reopen with **Open session**, carry to another machine, and
+  hand over as the record. The autosave protects against an accident on this
+  machine, not against the machine.
+
+- **Refreshing the page.** The board refuses `F5` and `Ctrl+R` while there is
+  anything to lose, and the browser's own "leave site?" warning covers closing the
+  tab. Neither is absolute — `Ctrl+W` and the toolbar's reload button cannot be
+  intercepted by a page — which is why the autosave exists rather than being a
+  nicety. Running the console full-screen (`F11`) takes the reload button off the
+  screen entirely, and is worth doing for the same reason you do it on the
+  audience window.
 - **The audience window is a pop-up.** Browsers may block it the first time. Allow
   pop-ups for the file, then click again.
 - **When a tie-break resolves**, a pop-up names who took the place and who is
@@ -224,6 +279,53 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   who is playing; if a mark does change, a banner says so and you can *Undo the
   cut* and re-apply. Applying it clears any Round 3 marks already ticked for an
   eliminated contestant.
+- **The deck.** The RTC sends the questions as a PowerPoint deck. The board does
+  not read the `.pptx`: a `.pptx` holds layout XML, not rendered slides, so
+  reproducing one faithfully would mean implementing PowerPoint. Instead **export
+  the deck to pictures once, in preparation** — *File → Export → Change File Type
+  → PNG → Save → All Slides* — and import the folder on the **Deck** tab. The
+  audience then sees exactly what the RTC designed, pixel for pixel, with nothing
+  re-typed and nothing to mis-read. `Slide2` sorts before `Slide10`, and each
+  picture is shrunk on the way in, whichever of PNG or JPEG comes out smaller.
+
+  Tag the slides on the same tab: click a thumbnail, shift-click for a range, then
+  say what they are. Most decks run question, answer, question, answer, so
+  *Alternate Q / A* across a range does nearly all of it in one click. **Question
+  numbers are never typed** — a question slide's number is its position among the
+  question slides of its round, so it cannot fall out of step. A banner says when a
+  round has more question slides than it has boxes to tally. *Export deck* writes
+  a `.json` you can re-import next time without converting the pictures again.
+
+- **The Run tab** appears once a deck is loaded, and is where the contest is
+  actually run from: the slide you are on, its clock and its controls, a strip of
+  that round's questions you can jump about in, and **the one column of the tally
+  this question needs** — the same boxes the round grids hold, narrowed to what is
+  on screen. An **answer slide tallies its own question**, which is when the
+  Quizmaster reads each contestant's answer out and the ticking really happens, so
+  you are not switching tabs mid-round. Round 3 lists only the contestants who
+  made the cut; sudden death lists only the tied group, clicked once for correct
+  and twice for wrong, exactly as the Tie-break tab does.
+
+- **Running a question.** On the Display tab, *Put the deck on screen*. From then
+  on the slide owns the display — no header, no skyline, nothing of the board's
+  over the RTC's artwork — and the cues carry on working for when it does not.
+  `←` `→` step the slides, **Space** starts and pauses the clock, **Enter** calls
+  TIME, **Esc** leaves the deck. The clock rides in a corner and turns red for the
+  last five seconds; at zero a chime sounds and a TIME IS UP band crosses the foot
+  of the screen, leaving the question and its choices readable while the answers
+  are collected.
+
+  **A tally button owns the keyboard while it has focus.** The grid has always
+  been driven by the arrows and space, and the deck wants the same keys — so with
+  a tally box focused, space ticks the box rather than pausing a running clock in
+  front of an audience. Click off the tally and the deck keys come back.
+
+  **While the clock runs the next slide is locked.** In a deck that runs question
+  then answer, an early `→` is exactly the accident that invalidates a question.
+  The clock itself is a deadline, not a countdown that ticks down: pausing stores
+  what is left and resuming sets a fresh deadline, so the time allowed is exact
+  even if the board is busy.
+
 - **Shortcuts:** `T` returns to the title card and `M` shows the contest
   mechanics, from anywhere. On the Display tab each cue carries its own number in
   the corner — press it to pick that cue — `←` `→` turn the page, and `R` walks

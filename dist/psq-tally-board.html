@@ -58,6 +58,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--navy);outline-o
 .livedot{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:#fff;font-weight:700;text-shadow:1px 1px 0 var(--sky-3)}
 .livedot i{width:10px;height:10px;background:#2B3D5C;border:2px solid var(--ink);display:inline-block}
 .livedot.on i{background:var(--grass)}
+/* whether the board is really keeping anything — a storage that silently does
+   nothing would be worse than none, so this never guesses */
+.savedot{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  color:#fff;text-shadow:1px 1px 0 var(--sky-3)}
+.savedot i{width:10px;height:10px;border:2px solid var(--ink);display:inline-block;background:#2B3D5C}
+.savedot.idb i{background:var(--grass)}
+.savedot.local i{background:var(--gold)}
+.savedot.none i{background:var(--red)}
+.savedot.none span{color:#FFE2DC}
 
 /* ---------------- podium strip ---------------- */
 .podium-wrap{
@@ -194,6 +203,42 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
 /* the delete-row column sits at the right edge and never wraps */
 td.actions{width:1%;white-space:nowrap;text-align:right}
 
+/* ---------------- the deck ---------------- */
+.slides{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:12px;padding:15px;background:#F6F9FF;border-top:3px solid var(--ink);
+}
+.slide{
+  display:block;padding:0;background:#fff;
+  border:3px solid var(--ink);border-radius:9px;box-shadow:0 3px 0 var(--ink);
+  text-align:left;line-height:0;
+}
+/* the thumbnail, its number and its tag stack inside this, not inside the
+   <button> itself — a button lays its own children out, and an absolutely
+   positioned child of one shrink-wraps rather than stretching */
+.slide .inner{position:relative;display:flex;flex-direction:column;gap:6px;padding:7px}
+.slide:hover{background:var(--cream-2)}
+.slide.on{background:var(--yellow);box-shadow:0 3px 0 var(--ink),0 0 0 3px var(--navy)}
+/* a question slide is the one that carries a clock, so it reads differently */
+.slide.isq{box-shadow:0 3px 0 var(--ink),inset 0 5px 0 var(--grass)}
+.slide.isq.on{box-shadow:0 3px 0 var(--ink),inset 0 5px 0 var(--grass),0 0 0 3px var(--navy)}
+.slide img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#E7EDF7;border:2px solid #C9D3E2;border-radius:4px}
+.slide .sn{
+  position:absolute;top:10px;left:10px;font-family:var(--pix);font-size:9px;line-height:1;
+  color:var(--ink);background:rgba(255,255,255,.88);border:2px solid var(--ink);
+  border-radius:4px;padding:3px 4px;
+}
+.slide .chip{
+  display:block;font-size:11px;font-weight:750;line-height:1.5;text-align:center;
+  border:2px solid var(--ink);border-radius:5px;padding:2px 4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.slide .chip.cq{background:var(--grass)}
+.slide .chip.ca{background:#DCE9FF}
+.slide .chip.co{background:#EDF1F7;color:#9AA9BE}
+.empty-state .fine{font-size:12px;font-weight:600;color:var(--muted);margin:0 0 14px}
+.empty-state code{background:#EDF1F7;border:1px solid #C9D3E2;border-radius:4px;padding:1px 4px}
+
 .empty-state{padding:44px 20px;text-align:center;color:var(--muted);font-weight:600}
 .empty-state p{margin:0 0 14px}
 
@@ -253,6 +298,55 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .preview .pv-bar .btn+.btn{margin-left:8px}
 .preview .frame{flex:1;border:4px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--sky)}
 
+/* ---------------- the Run tab ---------------- */
+.runstage{display:flex;gap:15px;padding:15px;background:#F6F9FF;border-bottom:3px solid var(--ink);flex-wrap:wrap}
+.runslide{flex:0 0 300px;max-width:100%}
+.runslide img{width:100%;aspect-ratio:16/9;object-fit:contain;background:#E7EDF7;
+  border:3px solid var(--ink);border-radius:8px;box-shadow:0 3px 0 var(--ink)}
+.runside{flex:1;min-width:260px;display:flex;flex-direction:column;gap:12px}
+.runclock{
+  font-family:var(--pix);font-size:40px;line-height:1;text-align:center;
+  background:var(--yellow);border:3px solid var(--ink);border-radius:10px;
+  box-shadow:0 4px 0 var(--ink);padding:16px 10px 12px;
+}
+.runclock em{display:block;font-family:var(--font);font-style:normal;font-size:11px;
+  font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--olive);margin-top:10px}
+.runclock.low{background:var(--red);color:#fff}
+.runclock.low em{color:#FFD9D2}
+.runclock.done{background:#C9D9F5;color:var(--sky-deep)}
+.runclock.done em{color:var(--sky-deep)}
+.runclock.off{background:#EDF1F7;color:#9AA9BE;box-shadow:0 3px 0 #C9D3E2;border-color:#C9D3E2}
+.runclock.off em{color:#9AA9BE}
+.runbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+.qstrip{display:flex;gap:6px;flex-wrap:wrap;align-items:center;
+  padding:11px 15px;background:#F6F9FF;border-bottom:3px solid var(--ink)}
+.qstrip .lab{font-size:11px;color:var(--olive);font-weight:800;text-transform:uppercase;margin-right:4px}
+.qstrip .note{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px}
+.qdot{width:30px;height:30px;border:2.5px solid var(--ink);border-radius:6px;background:#fff;
+  font-weight:800;font-size:12px;box-shadow:0 2px 0 var(--ink)}
+.qdot.done{background:var(--grass)}
+.qdot.on{background:var(--navy);color:#fff}
+.panel-head.tallyhead{border-top:3px solid var(--ink)}
+
+/* the tick for the question on screen — bigger than a grid cell, because it is
+   the one thing being clicked while the audience waits */
+.rtick{width:56px;height:38px;border:2.5px solid var(--ink);border-radius:7px;background:#fff;
+  color:#C3CEDB;font-size:19px;font-weight:800;line-height:1;margin:4px;box-shadow:0 3px 0 var(--ink)}
+.rtick:hover{background:var(--cream-2)}
+.rtick.on{background:var(--grass);color:var(--ink)}
+.rtick.wrong{background:var(--red);color:#fff}
+
+/* ---------------- the autosave offer ---------------- */
+.restorebar{display:none}
+.restorebar.show{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:11px 18px;background:var(--yellow);border-bottom:4px solid var(--ink);
+  font-size:13px;font-weight:650;color:var(--ink);
+}
+.restorebar b{font-weight:850}
+.restorebar span{flex:1;min-width:280px}
+
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--cream);color:var(--ink);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .18s;z-index:90}
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -309,6 +403,41 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   padding:calc(var(--u)*.6) calc(var(--u)*1.2);box-shadow:0 3px 0 var(--ink);
 }
 .dsp .body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding-top:calc(var(--u)*1.6)}
+
+/* ---- running the deck ----
+   The slide is the content. None of the board's chrome belongs over the RTC's
+   artwork, so the sky, the skyline and the padding all stand down. */
+.dsp.run{padding:0;background:#000;display:block;position:relative}
+.dsp.run::before,.dsp.run::after{display:none}
+.dsp.run>*{position:absolute}
+.dsp .slideimg{
+  inset:0;width:100%;height:100%;object-fit:contain;display:block;
+  z-index:0;background:#000;
+}
+/* the clock rides in a corner, legible against any slide the RTC sends */
+.dsp .clock{
+  z-index:2;top:calc(var(--u)*2);right:calc(var(--u)*2);min-width:calc(var(--u)*13);
+  text-align:center;font-family:var(--pix);font-size:calc(var(--u)*5);line-height:1;
+  color:var(--ink);background:var(--d-yellow);border:5px solid var(--ink);
+  border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.4) calc(var(--u)*1.6) calc(var(--u)*1);
+  box-shadow:0 6px 0 var(--ink);
+}
+.dsp .clock em{
+  display:block;font-family:var(--font);font-style:normal;font-weight:800;
+  font-size:calc(var(--u)*1.1);letter-spacing:.08em;margin-top:calc(var(--u)*.8);
+  color:var(--d-olive);text-transform:uppercase;
+}
+.dsp .clock.low{background:var(--d-red);color:#fff}
+.dsp .clock.low em{color:#FFD9D2}
+.dsp .clock.done{background:#C9D9F5;color:#2C4A8F}
+.dsp .clock.done em{color:#2C4A8F}
+.dsp .timeup{
+  z-index:3;left:0;right:0;bottom:0;
+  text-align:center;font-family:var(--pix);font-size:calc(var(--u)*5);line-height:1.2;
+  color:#fff;background:rgba(208,52,28,.95);border-top:6px solid var(--ink);
+  padding:calc(var(--u)*1.6) 0 calc(var(--u)*1.8);
+  text-shadow:4px 4px 0 rgba(0,0,0,.45);letter-spacing:.06em;
+}
 
 /* ---- title card ---- */
 .dsp .hero{text-align:center}
@@ -645,6 +774,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     <span class="m3" id="markSub"></span>
   </div>
   <div class="bar-actions">
+    <span class="savedot" id="saveDot"></span>
     <span class="livedot" id="liveDot"><i></i><span id="liveTxt">Display closed</span></span>
     <button class="btn" id="btnTitle">Back to title</button>
     <button class="btn" id="btnPreview">Preview</button>
@@ -654,8 +784,12 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     <button class="btn" id="btnSave">Save session</button>
     <input type="file" id="fileIn" accept=".json" style="display:none">
     <input type="file" id="photoIn" accept="image/*" style="display:none">
+    <input type="file" id="slidesIn" accept="image/*" multiple style="display:none">
+    <input type="file" id="deckIn" accept=".json" style="display:none">
   </div>
 </div>
+
+<div class="restorebar" id="restoreBar"></div>
 
 <div class="podium-wrap">
   <div class="podium-head">
@@ -709,7 +843,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     sdAck:[],          // tie-breaks the operator has seen resolved and cleared away
     coaches:[],        // {id, name, school, photo} — one entry per registered coach
     schools:[],        // {name, logo} — only the schools a logo has been added for
-    judges:[],         // {name, role, office, photo} — the Board of Judges, in the order introduced
+    judges:[],         // {name, role, office, org, photo} — the Board of Judges, in introduction order
+    deck:{name:"", slides:[]},   // the RTC's slides as pictures, and what each one is
     contestants:[]
   };
   for(var i=1;i<=22;i++) state.contestants.push(blankC(i));
@@ -1049,6 +1184,336 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     return out;
   }
 
+
+  /* ===================== the deck =====================
+     The Regional Technical Committee sends the questions as a PowerPoint deck.
+     A .pptx holds layout XML, not rendered slides, so the board does not read it:
+     the operator exports the deck to pictures once, in preparation, and imports
+     the pictures. What the audience sees is then exactly what the RTC designed.
+
+     The board needs to know almost nothing about a slide — only which ones are
+     questions, so it can arm the right clock and line the tally up with the right
+     box. Everything else is the picture's business. */
+
+  var SLIDE_MAX = 1600;             // long side; a projector rarely exceeds 1920
+  var DEFAULT_SECONDS = 15;
+  var ROUNDS = ["r1", "r2", "r3", "sd"];
+
+  var deckSel = [];                 // slide indices selected in the console
+  var deckAnchor = null;            // where a shift-click range starts from
+  var deckSeconds = DEFAULT_SECONDS;
+
+  function deck(){ return state.deck || (state.deck = {name:"", slides:[]}); }
+  function slides(){ return deck().slides || (deck().slides = []); }
+  function hasDeck(){ return slides().length > 0; }
+  function roundName(r){ return r === "sd" ? "Tie-break" : (LABEL[r] || "—"); }
+  function boxesFor(r){ return r === "sd" ? state.meta.sdCount : QN; }
+
+  /* A question slide's number is its position among the question slides of its
+     round. Deriving it rather than storing it means it cannot fall out of step
+     with the deck when a slide is retagged or the deck is re-imported. */
+  function qIndexOf(i){
+    var s = slides()[i];
+    if(!s || s.role !== "question" || !s.round) return 0;
+    var n = 0;
+    for(var j = 0; j <= i; j++){
+      var t = slides()[j];
+      if(t.role === "question" && t.round === s.round) n++;
+    }
+    return n;
+  }
+  function qSlides(round){
+    return slides().filter(function(s){ return s.role === "question" && s.round === round; });
+  }
+  // the slide that asks question q of a round, or null — this is the join
+  // between the deck and the tally
+  function slideForQuestion(round, q){
+    var found = null;
+    slides().forEach(function(s, i){
+      if(!found && s.role === "question" && s.round === round && qIndexOf(i) === q) found = i;
+    });
+    return found;
+  }
+
+  /* What the operator still has to put right. A round with no question slides at
+     all is not a problem — it just has not been tagged yet. */
+  function deckProblems(){
+    var out = [];
+    ROUNDS.forEach(function(r){
+      var n = qSlides(r).length, want = boxesFor(r);
+      if(!n) return;
+      if(n > want){
+        out.push({bad:true, msg:n + " slides are tagged " + roundName(r) + " questions, but that round " +
+                  "only has " + want + " boxes to tally — the last " + (n - want) + " cannot be scored"});
+      } else if(n < want){
+        out.push({bad:false, msg:roundName(r) + ": " + n + " of " + want + " questions tagged so far"});
+      }
+    });
+    var untagged = slides().filter(function(s){ return s.role === "question" && !s.round; }).length;
+    if(untagged){
+      out.push({bad:true, msg:untagged + " slide" + (untagged === 1 ? " is" : "s are") +
+                " tagged as a question but belong to no round"});
+    }
+    return out;
+  }
+
+  /* ---- importing ---- */
+
+  // "Slide2.png" must sort before "Slide10.png", which plain string order does not
+  function natKey(name){
+    return String(name).replace(/\d+/g, function(d){
+      var p = "0000000000" + d;
+      return p.slice(p.length - Math.max(10, d.length));
+    });
+  }
+
+  var deckBusy = null;              // {done, total} while an import is running
+
+  function importSlides(fileList, done){
+    var files = Array.prototype.slice.call(fileList).filter(function(f){
+      return /^image\//.test(f.type);
+    });
+    if(!files.length){ toast("No pictures in that selection"); return; }
+    files.sort(function(a, b){
+      var ka = natKey(a.name), kb = natKey(b.name);
+      return ka < kb ? -1 : (ka > kb ? 1 : 0);
+    });
+
+    var out = [], i = 0, skipped = 0;
+    deckBusy = {done:0, total:files.length};
+    render();
+    (function next(){
+      if(i >= files.length){
+        deckBusy = null;
+        done(out, skipped);
+        return;
+      }
+      deckBusy = {done:i, total:files.length};
+      var el = $("deckProgress");
+      if(el) el.textContent = "Reading slide " + (i + 1) + " of " + files.length + "…";
+      // one at a time: thirty-five canvases at once would stall the tab
+      shrink(files[i], function(uri){
+        if(uri) out.push({image:uri, role:"other", round:null, seconds:null});
+        else skipped++;
+        i++;
+        setTimeout(next, 0);        // let the console repaint between slides
+      }, {max:SLIDE_MAX, best:true});
+    })();
+  }
+
+  function takeSlides(list, skipped){
+    deck().slides = list;
+    deckSel = []; deckAnchor = null;
+    render();
+    toast(list.length + " slide" + (list.length === 1 ? "" : "s") + " imported" +
+          (skipped ? " · " + skipped + " could not be read" : ""));
+  }
+
+  function clearDeck(){
+    if(!hasDeck()) return;
+    if(!confirm("Remove all " + slides().length + " slides?\n\n" +
+                "The tally, the roster and everything else are untouched. " +
+                "With no deck loaded the board works exactly as it did before one was imported.")) return;
+    deck().slides = []; deck().name = "";
+    deckSel = []; deckAnchor = null;
+    render(); toast("Deck cleared");
+  }
+
+  function exportDeck(){
+    if(!hasDeck()){ toast("No slides to export"); return; }
+    dl("psq-deck-" + stamp() + ".json", JSON.stringify(deck()), "application/json");
+    toast("Deck exported — import it again to skip the picture conversion");
+  }
+
+  // a deck file is only a deck: it never carries scores, so opening one cannot
+  // disturb a contest in progress
+  function loadDeckFile(text){
+    try{
+      var d = JSON.parse(text);
+      if(!d || !Array.isArray(d.slides)) throw new Error("bad");
+      var clean = d.slides.filter(function(s){ return s && isPhoto(s.image); }).map(function(s){
+        return {
+          image:   s.image,
+          role:    (s.role === "question" || s.role === "answer") ? s.role : "other",
+          round:   ROUNDS.indexOf(s.round) >= 0 ? s.round : null,
+          seconds: (typeof s.seconds === "number" && s.seconds > 0) ? Math.round(s.seconds) : null
+        };
+      });
+      if(!clean.length) throw new Error("empty");
+      deck().name = typeof d.name === "string" ? d.name : "";
+      deck().slides = clean;
+      deckSel = []; deckAnchor = null;
+      render();
+      toast(clean.length + " slides loaded from the deck file");
+    }catch(err){ toast("That file isn't a saved deck"); }
+  }
+
+  /* ---- selecting and tagging ---- */
+
+  function selectSlide(i, shift){
+    if(shift && deckAnchor !== null){
+      var a = Math.min(deckAnchor, i), b = Math.max(deckAnchor, i);
+      deckSel = [];
+      for(var j = a; j <= b; j++) deckSel.push(j);
+    } else {
+      var at = deckSel.indexOf(i);
+      if(at >= 0) deckSel.splice(at, 1);
+      else deckSel.push(i);
+      deckAnchor = i;
+    }
+    render();
+  }
+  function selectAll(on){
+    deckSel = [];
+    if(on) slides().forEach(function(_s, i){ deckSel.push(i); });
+    deckAnchor = null;
+    render();
+  }
+  function selected(){
+    return deckSel.slice().sort(function(a, b){ return a - b; })
+      .filter(function(i){ return slides()[i]; });
+  }
+
+  function tagSelection(role){
+    var sel = selected();
+    if(!sel.length){ toast("Select some slides first"); return; }
+    sel.forEach(function(i){
+      var s = slides()[i];
+      s.role = role;
+      if(role === "question" && !s.seconds) s.seconds = deckSeconds;
+      if(role === "other"){ s.round = null; s.seconds = null; }
+    });
+    render();
+  }
+  function roundSelection(round){
+    var sel = selected();
+    if(!sel.length){ toast("Select some slides first"); return; }
+    sel.forEach(function(i){
+      var s = slides()[i];
+      s.round = round;
+      if(round && s.role === "other") s.role = "question";
+      if(s.role === "question" && !s.seconds) s.seconds = deckSeconds;
+    });
+    render();
+  }
+  function secondsSelection(n){
+    var sel = selected();
+    if(!sel.length){ toast("Select some slides first"); return; }
+    sel.forEach(function(i){
+      if(slides()[i].role === "question") slides()[i].seconds = n;
+    });
+    render(); toast("Set to " + n + " seconds");
+  }
+  // most quiz decks run question, answer, question, answer — say so once
+  function alternateSelection(){
+    var sel = selected();
+    if(sel.length < 2){ toast("Select the range first"); return; }
+    sel.forEach(function(i, k){
+      var s = slides()[i];
+      s.role = k % 2 === 0 ? "question" : "answer";
+      if(s.role === "question" && !s.seconds) s.seconds = deckSeconds;
+    });
+    render(); toast("Alternated across " + sel.length + " slides");
+  }
+
+  /* ---- the Deck tab ---- */
+
+  function deckChip(i){
+    var s = slides()[i];
+    if(s.role === "question"){
+      var q = qIndexOf(i);
+      return '<span class="chip cq">' + (s.round ? roundName(s.round) : "no round") +
+        (q ? " Q" + q : "") + ' · ' + (s.seconds || DEFAULT_SECONDS) + 's</span>';
+    }
+    if(s.role === "answer"){
+      return '<span class="chip ca">' + (s.round ? roundName(s.round) + " " : "") + 'answer</span>';
+    }
+    return '<span class="chip co">—</span>';
+  }
+
+  function renderDeck(){
+    var sl = slides(), sel = selected();
+
+    if(deckBusy){
+      return '<div class="panel"><div class="panel-head"><h3>Deck</h3></div>' +
+        '<div class="empty-state"><p id="deckProgress">Reading slide ' + (deckBusy.done + 1) +
+        ' of ' + deckBusy.total + '…</p>' +
+        '<p class="fine">Each picture is shrunk as it comes in. Large decks take a moment.</p>' +
+        '</div></div>';
+    }
+
+    var head = '<div class="panel-head"><h3>Deck</h3><span class="note">' +
+      (sl.length ? sl.length + ' slides · ' + qSlides("r1").length + '/' + qSlides("r2").length +
+                   '/' + qSlides("r3").length + '/' + qSlides("sd").length +
+                   ' questions tagged for Rounds 1, 2, 3 and the tie-break'
+                 : 'no slides yet') + '</span>' +
+      '<div class="right">' +
+        '<button class="lbtn" id="btnSlides">' + (sl.length ? "Replace slides" : "Import slides") + '</button>' +
+        '<button class="lbtn" id="btnDeckOpen">Open deck file</button>' +
+        (sl.length ? '<button class="lbtn" id="btnDeckSave">Export deck</button>' +
+                     '<button class="lbtn danger" id="btnDeckClear">Clear deck</button>' : '') +
+      '</div></div>';
+
+    if(!sl.length){
+      return '<div class="panel">' + head +
+        '<div class="empty-state">' +
+        '<p>Export the RTC’s PowerPoint to pictures, then import them here.</p>' +
+        '<p class="fine">In PowerPoint: <b>File → Export → Change File Type → PNG → Save → All Slides</b>. ' +
+        'Pick the whole folder in one go; <code>Slide2</code> is sorted before <code>Slide10</code>.</p>' +
+        '<button class="lbtn go" id="btnSlides2">Import slides</button></div>' +
+        deckLegend() + '</div>';
+    }
+
+    var problems = deckProblems().map(function(p){
+      return '<div class="banner ' + (p.bad ? "warn" : "info") + '">' + esc(p.msg) + '</div>';
+    }).join("");
+
+    var tools = '<div class="desk">' +
+      '<div class="deskrow" style="margin-top:0;padding-top:0;border-top:0">' +
+        '<span class="lab">Selected</span>' +
+        '<span class="note"><b>' + sel.length + '</b> of ' + sl.length + ' slides' +
+        (sel.length ? '' : ' — click a thumbnail, shift-click for a range') + '</span>' +
+        '<button class="lbtn" id="btnDeckAll">Select all</button>' +
+        '<button class="lbtn" id="btnDeckNone"' + (sel.length ? '' : ' disabled') + '>Clear selection</button>' +
+      '</div>' +
+      '<div class="deskrow"><span class="lab">Tag as</span>' +
+        ['question,Question', 'answer,Answer', 'other,Not a question'].map(function(v){
+          var p = v.split(",");
+          return '<button class="lbtn" data-dtag="' + p[0] + '">' + p[1] + '</button>';
+        }).join("") +
+        '<button class="lbtn" id="btnDeckAlt">Alternate Q / A</button>' +
+        '<span class="note">A deck that runs question, answer, question, answer is one click.</span></div>' +
+      '<div class="deskrow"><span class="lab">Round</span>' +
+        ROUNDS.map(function(r){
+          return '<button class="lbtn" data-dround="' + r + '">' + roundName(r) + '</button>';
+        }).join("") +
+        '<button class="lbtn" data-dround="">None</button>' +
+        '<span class="note">Question numbers follow from the order — they are never typed.</span></div>' +
+      '<div class="deskrow"><span class="lab">Seconds</span>' +
+        [10, 15, 20, 30, 45, 60].map(function(n){
+          return '<button class="lbtn' + (deckSeconds === n ? " on" : "") + '" data-dsec="' + n + '">' + n + '</button>';
+        }).join("") +
+        '<span class="note">Sets the limit on the selected question slides, and the default for new ones.</span></div>' +
+    '</div>';
+
+    var grid = '<div class="slides">' + sl.map(function(s, i){
+      return '<button class="slide' + (deckSel.indexOf(i) >= 0 ? " on" : "") +
+        (s.role === "question" ? " isq" : "") + '" data-slide="' + i + '">' +
+        '<span class="inner">' +
+        '<span class="sn">' + (i + 1) + '</span>' +
+        '<img src="' + s.image + '" alt="Slide ' + (i + 1) + '">' +
+        deckChip(i) + '</span></button>';
+    }).join("") + '</div>';
+
+    return '<div class="panel">' + head + problems + tools + grid + deckLegend() + '</div>';
+  }
+
+  function deckLegend(){
+    return '<div class="legend">The board shows the RTC’s slides as pictures, so the audience sees exactly ' +
+      'what was designed — nothing is re-typed and nothing can be mis-read. Only the slides tagged as ' +
+      '<b>questions</b> carry a clock and a tally; everything else simply shows. ' +
+      'With no deck loaded the board works exactly as it did before one was imported.</div>';
+  }
   /* ===================== console header ===================== */
   function renderTop(){
     $("markTitle").textContent = state.meta.edition;
@@ -1091,8 +1556,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   function renderTabs(){
     var u = pendingTies();
-    var defs = [["roster","Roster"],["r1","Round 1"],["r2","Round 2"],["r3","Round 3"],
-                ["sd","Tie-break"],["standings","Standings"],["display","Display"]];
+    var defs = [["roster","Roster"],["deck","Deck"]];
+    if(hasDeck()) defs.push(["run","Run"]);
+    defs = defs.concat([["r1","Round 1"],["r2","Round 2"],["r3","Round 3"],
+                ["sd","Tie-break"],["standings","Standings"],["display","Display"]]);
     $("tabs").innerHTML = defs.map(function(d){
       return '<button class="tab'+(tab===d[0]?" on":"")+'" data-tab="'+d[0]+'">'+d[1]+
         (d[0]==="sd"&&u?'<span class="dot"></span>':'')+'</button>';
@@ -1716,6 +2183,431 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       '<div class="legend">Places follow Section D.2: cumulative score, then Round 1, then Round 2, then sudden death.</div></div>';
   }
 
+
+  /* ===================== running the deck =====================
+     Everything else in this board happens at human speed: the operator clicks and
+     the screen repaints. A clock does not. Repainting the whole audience scene ten
+     times a second to move one digit would rebuild the DOM ten times a second and
+     cancel every animation mid-flight, so the clock has a path of its own —
+     writeClock() puts one string into one cached node, in each document, and only
+     when the displayed second actually changes. Nothing else knows it exists. */
+
+  var ask = {
+    slide:  0,
+    phase:  "off",     // off | armed | running | paused | timeup
+    endsAt: null,      // ms timestamp, only while running
+    remain: 0          // ms left, meaningful when armed, paused or timed out
+  };
+  var chimeOn = true;
+
+  function runLive(){ return ask.phase !== "off" && hasDeck(); }
+  function curSlide(){ return slides()[ask.slide] || null; }
+  function isQuestionSlide(){
+    var s = curSlide();
+    return !!(s && s.role === "question");
+  }
+
+  /* The clock is a deadline, never a countdown that ticks down. A setInterval
+     that decrements drifts, and a fifteen-second question that really ran
+     seventeen seconds is a protest waiting to happen — with this board as the
+     thing the protest is argued against. */
+  function remaining(){
+    if(ask.phase === "running") return Math.max(0, ask.endsAt - Date.now());
+    return ask.remain;
+  }
+  function fullMs(){
+    var s = curSlide();
+    return ((s && s.seconds) || DEFAULT_SECONDS) * 1000;
+  }
+  function fmtClock(sec){
+    if(sec < 60) return String(sec);
+    var m = Math.floor(sec / 60), r = sec % 60;
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  /* ---- moving about ---- */
+
+  function armSlide(){
+    ask.phase = "armed";
+    ask.endsAt = null;
+    ask.remain = isQuestionSlide() ? fullMs() : 0;
+    stopTicking();
+  }
+  function runEnter(i){
+    if(!hasDeck()){ toast("Import the slides first"); return; }
+    ask.slide = Math.max(0, Math.min(slides().length - 1, i == null ? ask.slide : i));
+    armSlide();
+    render();
+  }
+  function runLeave(){
+    ask.phase = "off";
+    stopTicking();
+    render();
+    toast("Back to the cues — the deck is off the screen");
+  }
+  function runStep(d){
+    // While the clock runs the next slide is the answer to the question on
+    // screen. Showing it early is exactly the accident that invalidates a
+    // question, and the Board's decision on that is final.
+    if(ask.phase === "running"){ toast("Stop the clock first — the answer is the next slide"); return; }
+    var to = ask.slide + d;
+    if(to < 0 || to >= slides().length) return;
+    ask.slide = to;
+    armSlide();
+    render();
+  }
+
+  /* ---- the clock ---- */
+
+  function runGo(){
+    if(!isQuestionSlide()){ toast("This slide has no clock — tag it as a question first"); return; }
+    if(ask.phase === "running") return;
+    if(ask.phase === "timeup") ask.remain = fullMs();
+    if(!ask.remain) ask.remain = fullMs();
+    ask.endsAt = Date.now() + ask.remain;
+    ask.phase = "running";
+    render();
+    startTicking();
+  }
+  function runPause(){
+    if(ask.phase !== "running") return;
+    ask.remain = remaining();
+    ask.endsAt = null;
+    ask.phase = "paused";
+    stopTicking();
+    render();
+  }
+  function runToggle(){
+    if(ask.phase === "running") runPause();
+    else runGo();
+  }
+  // the Quizmaster calls TIME before the deadline
+  function runTime(){
+    if(ask.phase !== "running" && ask.phase !== "paused") return;
+    timeUp();
+  }
+  function runReset(){
+    if(!isQuestionSlide()) return;
+    armSlide();
+    render();
+    toast("Clock reset to " + Math.round(fullMs() / 1000) + " seconds");
+  }
+  function timeUp(){
+    ask.phase = "timeup";
+    ask.remain = 0;
+    ask.endsAt = null;
+    stopTicking();
+    render();
+    chime();
+  }
+
+  /* ---- the live region ---- */
+
+  var tickHandle = null;
+  var shownSec = null;          // what is currently written, so we write once a second
+
+  function clockNodes(){
+    var out = [], el = $("clockFace");
+    if(el) out.push(el);
+    if(winRef && !winRef.closed){
+      try{
+        var w = winRef.document.getElementById("clockFace");
+        if(w) out.push(w);
+      }catch(err){}
+    }
+    return out;
+  }
+  /* The last seconds turn the clock red. That state has to be set here rather
+     than at render time: between starting the clock and the deadline there is no
+     repaint at all, which is the whole point of the live region. */
+  function writeClock(sec){
+    var text = fmtClock(sec);
+    var low = ask.phase === "running" && sec <= 5;
+    clockNodes().forEach(function(el){
+      el.textContent = text;
+      var box = el.parentNode;
+      if(box && box.classList) box.classList.toggle("low", low);
+    });
+  }
+  /* A timer, not an animation. requestAnimationFrame would be the tidier choice
+     for something that paints, but the browser throttles it hard the moment this
+     window stops being the focused one — and the operator clicks the audience
+     window all the time. The clock would freeze and TIME IS UP would arrive late.
+     An interval keeps running; at 100ms it costs nothing, and the deadline
+     arithmetic means a throttled tick loses accuracy in the display for a moment,
+     never in the time actually allowed. */
+  function tickOnce(){
+    var ms = remaining(), sec = Math.ceil(ms / 1000);
+    if(sec !== shownSec){ shownSec = sec; writeClock(sec); }
+    if(ask.phase === "running" && ms <= 0) timeUp();
+  }
+  function startTicking(){
+    if(tickHandle !== null) return;
+    shownSec = null;
+    tickHandle = window.setInterval(tickOnce, 100);
+    tickOnce();
+  }
+  function stopTicking(){
+    if(tickHandle !== null) window.clearInterval(tickHandle);
+    tickHandle = null;
+    shownSec = null;
+  }
+
+  /* The Timekeeper signals the end of the time allowed, so a sound at zero is
+     faithful rather than decorative. Built from an oscillator: no asset, nothing
+     to load, still one file. */
+  var audio = null;
+  function chime(){
+    if(!chimeOn) return;
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return;
+      audio = audio || new AC();
+      if(audio.state === "suspended") audio.resume();
+      var t0 = audio.currentTime;
+      [[880, 0], [660, 0.24]].forEach(function(p){
+        var osc = audio.createOscillator(), gain = audio.createGain(), at = t0 + p[1];
+        osc.type = "square";
+        osc.frequency.setValueAtTime(p[0], at);
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.22, at + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.21);
+        osc.connect(gain); gain.connect(audio.destination);
+        osc.start(at); osc.stop(at + 0.23);
+      });
+    }catch(err){}                 // a venue with no audio device is not an error
+  }
+
+  /* ---- the audience scene ----
+     The slide is the content, so the board's own chrome gets out of its way:
+     no header, no skyline, nothing of ours over the RTC's artwork. */
+  function runSceneHTML(){
+    var s = curSlide();
+    if(!s) return '<div class="dsp run"><div class="none">No slide</div></div>';
+    var q = s.role === "question";
+    var sec = Math.ceil(remaining() / 1000);
+    var low = q && ask.phase === "running" && sec <= 5;
+    shownSec = null;              // the markup below carries the value; start fresh
+    return '<div class="dsp run">' +
+      '<img class="slideimg" src="' + s.image + '" alt="">' +
+      (q ? '<div class="clock' + (low ? " low" : "") + (ask.phase === "timeup" ? " done" : "") + '">' +
+           '<span id="clockFace">' + fmtClock(sec) + '</span>' +
+           '<em>' + (ask.phase === "running" ? "seconds left"
+                   : (ask.phase === "paused" ? "paused"
+                   : (ask.phase === "timeup" ? "time is up" : "seconds"))) + '</em></div>' : '') +
+      (ask.phase === "timeup" ? '<div class="timeup">TIME IS UP</div>' : '') +
+      '</div>';
+  }
+
+  /* ---- the operator's controls, on the display desk ---- */
+  function runDeskRow(){
+    if(!hasDeck()) return "";
+    var s = curSlide(), n = slides().length;
+    var q = isQuestionSlide();
+    var where = "Slide " + (ask.slide + 1) + " of " + n +
+      (s && s.role === "question" ? " · " + roundName(s.round) + " Q" + qIndexOf(ask.slide) +
+        " · " + ((s.seconds || DEFAULT_SECONDS)) + "s"
+       : (s && s.role === "answer" ? " · answer" : " · not a question"));
+
+    var live = runLive();
+    return '<div class="deskrow"><span class="lab">Deck</span>' +
+      '<button class="lbtn' + (live ? " on" : " go") + '" id="btnRunEnter">' +
+        (live ? "Deck is on screen" : "Put the deck on screen") + '</button>' +
+      (live ? '<button class="lbtn" id="btnRunLeave">Back to the cues</button>' : '') +
+      '<span class="note">' + esc(where) + '</span></div>' +
+      (live
+        ? '<div class="deskrow"><span class="lab">Slide</span>' +
+            '<button class="lbtn" id="btnRunPrev"' + (ask.slide === 0 ? " disabled" : "") + '>◀ Previous</button>' +
+            '<button class="lbtn" id="btnRunNext"' + (ask.slide >= n - 1 ? " disabled" : "") + '>Next ▶</button>' +
+            '<span class="lab" style="margin-left:14px">Clock</span>' +
+            '<button class="lbtn ' + (ask.phase === "running" ? "" : "go") + '" id="btnRunGo"' +
+              (q ? "" : " disabled") + '>' +
+              (ask.phase === "running" ? "Pause" : (ask.phase === "paused" ? "Resume" : "Start")) + '</button>' +
+            '<button class="lbtn" id="btnRunTime"' +
+              (ask.phase === "running" || ask.phase === "paused" ? "" : " disabled") + '>Call TIME</button>' +
+            '<button class="lbtn" id="btnRunReset"' + (q ? "" : " disabled") + '>Reset</button>' +
+            '<button class="lbtn' + (chimeOn ? " on" : "") + '" id="btnChime">Chime</button>' +
+            '<span class="note">' +
+              (ask.phase === "running" ? "The next slide is locked while the clock runs — it is the answer."
+               : "Space starts and pauses the clock, ← → step the slides, Enter calls TIME, Esc leaves the deck.") +
+            '</span></div>'
+        : "");
+  }
+
+  /* ---- the Run tab ----
+     The operator's home during the contest: the slide they are on, the clock,
+     and the one column of the tally that this question needs — the same boxes
+     the round grids write to, narrowed to the question on screen. */
+
+  /* Which question the tally should show. An answer slide counts as its own
+     question's, because that is when the Quizmaster reads each contestant's
+     answer out and the ticking actually happens. */
+  function runTallyTarget(){
+    var i = ask.slide, s = slides()[i];
+    if(!s) return null;
+    if(s.role === "answer"){
+      for(var j = i - 1; j >= 0; j--){
+        var p = slides()[j];
+        if(p.role === "question"){ i = j; s = p; break; }
+        if(p.role === "answer") return null;    // two answers running: ambiguous
+      }
+    }
+    if(!s || s.role !== "question" || !s.round) return null;
+    var q = qIndexOf(i);
+    if(!q || q > boxesFor(s.round)) return null;
+    return {round:s.round, q:q, idx:q - 1, slide:i};
+  }
+
+  // who is answering: everyone, the announced cut in Round 3, the tied group in
+  // sudden death — the same rule the round grids follow
+  function runAnswerers(round){
+    if(round === "sd"){
+      var out = [], p = pendingTies() || [];
+      p.forEach(function(g){
+        g.members.forEach(function(c){ if(out.indexOf(c) < 0) out.push(c); });
+      });
+      return out;
+    }
+    return roundList(round).slice().sort(function(a, b){ return a.no - b.no; });
+  }
+
+  function runMarkOf(c, t){
+    return t.round === "sd" ? c.sd[t.idx] : !!c[t.round][t.idx];
+  }
+  function runToggleTick(ci){
+    var t = runTallyTarget(), c = state.contestants[ci];
+    if(!t || !c) return;
+    if(t.round === "sd"){
+      var v = c.sd[t.idx];
+      var was = sigsNow();
+      c.sd[t.idx] = (v === null || v === undefined) ? "c" : (v === "c" ? "w" : null);
+      if(c.sd[t.idx] === "w"){
+        for(var z = t.idx + 1; z < state.meta.sdCount; z++) c.sd[z] = null;
+      }
+      checkSdResolved(was);
+    } else {
+      c[t.round][t.idx] = !c[t.round][t.idx];
+    }
+    render();
+    var el = document.querySelector('.rtick[data-rtick="' + ci + '"]');
+    if(el) el.focus();
+  }
+  function runClearQuestion(){
+    var t = runTallyTarget();
+    if(!t) return;
+    if(!confirm("Clear every mark for " + roundName(t.round) + " question " + t.q + "?")) return;
+    runAnswerers(t.round).forEach(function(c){
+      if(t.round === "sd") c.sd[t.idx] = null;
+      else c[t.round][t.idx] = false;
+    });
+    render();
+    toast("Cleared question " + t.q);
+  }
+
+  function renderRun(){
+    if(!hasDeck()){
+      return '<div class="panel"><div class="panel-head"><h3>Run</h3></div>' +
+        '<div class="empty-state"><p>No deck loaded. This tab drives the slides and tallies ' +
+        'the question on screen.</p><button class="lbtn go" data-goto="deck">Go to the deck</button>' +
+        '</div></div>';
+    }
+    var s = curSlide(), t = runTallyTarget(), live = runLive(), n = slides().length;
+    var what = !s ? "—"
+      : (s.role === "question" ? roundName(s.round || "") + " question " + qIndexOf(ask.slide)
+      : (s.role === "answer" ? "answer" : "not a question"));
+
+    var head = '<div class="panel-head"><h3>Run</h3>' +
+      '<span class="note">Slide ' + (ask.slide + 1) + ' of ' + n + ' · ' + esc(what) +
+      (s && s.role === "question" ? ' · ' + (s.seconds || DEFAULT_SECONDS) + 's' : '') + '</span>' +
+      '<div class="right">' +
+        (live ? '<button class="lbtn" id="btnRunLeave">Back to the cues</button>'
+              : '<button class="lbtn go" id="btnRunEnter">Put the deck on screen</button>') +
+      '</div></div>';
+
+    var isQ = !!(s && s.role === "question");
+    var sec = live ? Math.ceil(remaining() / 1000) : Math.round(fullMs() / 1000);
+    var clockCls = ask.phase === "timeup" ? " done"
+      : ((sec <= 5 && ask.phase === "running") ? " low" : "");
+    var stage = '<div class="runstage">' +
+      '<div class="runslide">' + (s ? '<img src="' + s.image + '" alt="">' : '') + '</div>' +
+      '<div class="runside">' +
+        (isQ
+          ? '<div class="runclock' + clockCls + '">' + fmtClock(sec) + '<em>' +
+            (!live ? "not on screen"
+             : (ask.phase === "running" ? "seconds left"
+             : (ask.phase === "paused" ? "paused"
+             : (ask.phase === "timeup" ? "time is up" : "seconds")))) + '</em></div>'
+          : '<div class="runclock off">—<em>no clock</em></div>') +
+        '<div class="runbtns">' +
+          '<button class="lbtn" id="btnRunPrev"' + (ask.slide === 0 ? " disabled" : "") + '>◀ Previous</button>' +
+          '<button class="lbtn" id="btnRunNext"' + (ask.slide >= n - 1 ? " disabled" : "") + '>Next ▶</button>' +
+          '<button class="lbtn ' + (ask.phase === "running" ? "" : "go") + '" id="btnRunGo"' +
+            (isQ && live ? "" : " disabled") + '>' +
+            (ask.phase === "running" ? "Pause" : (ask.phase === "paused" ? "Resume" : "Start clock")) + '</button>' +
+          '<button class="lbtn" id="btnRunTime"' +
+            (ask.phase === "running" || ask.phase === "paused" ? "" : " disabled") + '>Call TIME</button>' +
+          '<button class="lbtn" id="btnRunReset"' + (isQ ? "" : " disabled") + '>Reset</button>' +
+        '</div>' +
+      '</div></div>';
+
+    // the questions of this round, as a strip you can jump about in
+    var strip = "";
+    if(t){
+      var total = qSlides(t.round).length, who0 = runAnswerers(t.round), dots = [];
+      for(var k = 1; k <= total; k++){
+        var idx = k - 1;
+        var anyMark = who0.some(function(c){
+          return t.round === "sd" ? c.sd[idx] : c[t.round][idx];
+        });
+        dots.push('<button class="qdot' + (k === t.q ? " on" : "") + (anyMark ? " done" : "") +
+          '" data-rjump="' + k + '">' + k + '</button>');
+      }
+      strip = '<div class="qstrip"><span class="lab">' + esc(roundName(t.round)) + '</span>' +
+        dots.join("") + '<span class="note">Jump to any question of this round.</span></div>';
+    }
+
+    var tally;
+    if(!t){
+      tally = '<div class="empty-state"><p>This slide is not a question, so there is nothing to tally. ' +
+        'Step to a question slide, or tag this one on the Deck tab.</p></div>';
+    } else {
+      var who = runAnswerers(t.round);
+      if(!who.length){
+        tally = '<div class="empty-state"><p>' + (t.round === "sd"
+          ? "No tie-break is open, so nobody is answering these."
+          : "No contestants on the roster yet.") + '</p></div>';
+      } else {
+        var ticked = who.filter(function(c){ return runMarkOf(c, t); }).length;
+        var rows = who.map(function(c){
+          var v = runMarkOf(c, t), ci = state.contestants.indexOf(c);
+          var cls = t.round === "sd" ? (v === "c" ? " on" : (v === "w" ? " wrong" : ""))
+                                     : (v ? " on" : "");
+          var mark = t.round === "sd" ? (v === "c" ? "✓" : (v === "w" ? "✗" : ""))
+                                      : (v ? "✓" : "");
+          return '<tr><td class="no pad">' + c.no + '</td>' +
+            '<td class="nm pad">' + esc(c.name) + '</td>' +
+            '<td class="sch pad">' + esc(c.school || "—") + '</td>' +
+            '<td class="q"><button class="rtick' + cls + '" data-rtick="' + ci +
+              '" aria-pressed="' + (cls ? "true" : "false") +
+              '" aria-label="' + esc(c.name) + '">' + mark + '</button></td></tr>';
+        }).join("");
+        tally = '<div class="panel-head tallyhead">' +
+          '<h3>' + esc(roundName(t.round)) + ' · question ' + t.q + '</h3>' +
+          '<span class="note">' + ticked + ' of ' + who.length + ' marked' +
+          (t.round === "sd" ? " · click once for correct, twice for wrong" : " correct") + '</span>' +
+          '<div class="right"><button class="lbtn danger" id="btnRunClearQ">Clear this question</button>' +
+          '</div></div>' +
+          '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Name</th><th>School</th>' +
+          '<th class="c">Correct</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      }
+    }
+
+    return '<div class="panel">' + head + stage + strip + tally +
+      '<div class="legend">These are the same boxes the round tabs hold — this is one column of them, ' +
+      'for the question on screen. An answer slide tallies its own question, which is when the Quizmaster ' +
+      'reads the answers out. While a tally button has focus the arrows and space belong to the tally, ' +
+      'not to the deck.</div></div>';
+  }
   /* ===================== display control desk ===================== */
   /* The number key is written down rather than taken from the position, so a
      cue can be added or dropped without the whole keypad shifting under the
@@ -1798,6 +2690,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
           }).join("")+
           '<span class="note">The big figure on each tile. The other number stays under it in small type'+
           (sortBy==="score" ? ", and the on-screen order follows whichever you pick" : "")+'.</span></div>'+
+        runDeskRow()+
         coachRow+
         cutRow+
         '<div class="deskrow"><span class="lab">Round order on screen</span>'+
@@ -2044,6 +2937,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   }
 
   function sceneHTML(){
+    // one rule: while the deck is on screen it owns the display, and every cue
+    // below carries on working untouched for when it is not
+    if(runLive()) return runSceneHTML();
+
     var s = standings(), list = named();
 
     if(disp.cue==="blank") return '<div class="dsp"></div>';
@@ -2402,7 +3299,14 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         }
         cx.drawImage(img, 0, 0, cv.width, cv.height);
         try{
-          done(opts.alpha ? cv.toDataURL("image/png") : cv.toDataURL("image/jpeg", 0.85));
+          if(opts.alpha){ done(cv.toDataURL("image/png")); return; }
+          var jpg = cv.toDataURL("image/jpeg", 0.85);
+          if(!opts.best){ done(jpg); return; }
+          /* A slide is mostly flat colour and lettering, where PNG is both smaller
+             and cleaner than JPEG — but a slide with a photograph behind it is the
+             other way about. Encode both and keep whichever came out smaller. */
+          var png = cv.toDataURL("image/png");
+          done(png.length <= jpg.length ? png : jpg);
         }catch(err){ done(null); }
       };
       img.onerror = function(){ done(null); };
@@ -2443,6 +3347,28 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       toast("Photo added for "+(who.name ||
         (tgt.kind==="k" ? "the coach" : (tgt.kind==="j" ? "the judge" : "slot "+who.no))));
     });
+  });
+
+  $("slidesIn").addEventListener("change", function(e){
+    // copy before clearing the input: e.target.files is live, and resetting the
+    // value empties the very list we are about to read
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = "";
+    if(!files.length) return;
+    if(hasDeck() && !confirm("Replace the " + slides().length + " slides already loaded?\n\n" +
+                             "Their tags go with them. The tally is untouched.")) return;
+    importSlides(files, takeSlides);
+  });
+
+  $("deckIn").addEventListener("change", function(e){
+    var f = e.target.files[0];
+    e.target.value = "";
+    if(!f) return;
+    if(hasDeck() && !confirm("Replace the " + slides().length + " slides already loaded?")) return;
+    var r = new FileReader();
+    r.onload = function(){ loadDeckFile(r.result); };
+    r.onerror = function(){ toast("Could not read that file"); };
+    r.readAsText(f);
   });
 
   /* Portrait for the audience screen. With no photo it falls back to the
@@ -2530,9 +3456,12 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   /* ===================== render ===================== */
   function render(){
+    markDirty();
     renderTop(); renderTabs();
     var v = $("view");
     if(tab==="roster") v.innerHTML = renderRoster();
+    else if(tab==="deck") v.innerHTML = renderDeck();
+    else if(tab==="run") v.innerHTML = renderRun();
     else if(tab==="standings") v.innerHTML = renderStandings();
     else if(tab==="sd") v.innerHTML = renderSd();
     else if(tab==="display") v.innerHTML = renderDesk();
@@ -2589,6 +3518,23 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(jmvEl && !jmvEl.disabled){ moveJudge(+jmvEl.dataset.jmove, +jmvEl.dataset.dir); return; }
     var jdEl = t.closest ? t.closest("[data-jdel]") : null;
     if(jdEl){ removeJudge(+jdEl.dataset.jdel); return; }
+    var rtEl = t.closest ? t.closest("[data-rtick]") : null;
+    if(rtEl){ runToggleTick(+rtEl.dataset.rtick); return; }
+    var rjEl = t.closest ? t.closest("[data-rjump]") : null;
+    if(rjEl){
+      var tgt = runTallyTarget();
+      var at = tgt ? slideForQuestion(tgt.round, +rjEl.dataset.rjump) : null;
+      if(at !== null && at !== undefined) runEnter(at);
+      return;
+    }
+    var sldEl = t.closest ? t.closest("[data-slide]") : null;
+    if(sldEl){ selectSlide(+sldEl.dataset.slide, e.shiftKey); return; }
+    var dtagEl = t.closest ? t.closest("[data-dtag]") : null;
+    if(dtagEl){ tagSelection(dtagEl.dataset.dtag); return; }
+    var drnEl = t.closest ? t.closest("[data-dround]") : null;
+    if(drnEl){ roundSelection(drnEl.dataset.dround || null); return; }
+    var dsecEl = t.closest ? t.closest("[data-dsec]") : null;
+    if(dsecEl){ deckSeconds = +dsecEl.dataset.dsec; secondsSelection(deckSeconds); return; }
     var slEl = t.closest ? t.closest("[data-slogo]") : null;
     if(slEl){ pickPhoto("s", 0, slEl.dataset.slogo); return; }
     var slDel = t.closest ? t.closest("[data-slogodel]") : null;
@@ -2666,6 +3612,23 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       case "btnPasteCancel": $("pasteBox").classList.remove("show"); break;
       case "btnPasteGo": loadPaste(); break;
       case "btnTrim": trimEmpty(); break;
+      case "btnSlides": case "btnSlides2": $("slidesIn").click(); break;
+      case "btnRunEnter": runEnter(null); break;
+      case "btnRunLeave": runLeave(); break;
+      case "btnRunPrev": runStep(-1); break;
+      case "btnRunNext": runStep(1); break;
+      case "btnRunGo": runToggle(); break;
+      case "btnRunTime": runTime(); break;
+      case "btnRunReset": runReset(); break;
+      case "btnRunClearQ": runClearQuestion(); break;
+      case "btnChime": chimeOn = !chimeOn; render();
+        toast(chimeOn ? "Chime on" : "Chime off"); break;
+      case "btnDeckOpen": $("deckIn").click(); break;
+      case "btnDeckSave": exportDeck(); break;
+      case "btnDeckClear": clearDeck(); break;
+      case "btnDeckAll": selectAll(true); break;
+      case "btnDeckNone": selectAll(false); break;
+      case "btnDeckAlt": alternateSelection(); break;
       case "btnAddCoach": case "btnAddCoach2": addCoach(); break;
       case "btnAddJudge": case "btnAddJudge2": addJudge(); break;
       case "btnKPaste": $("kPasteBox").classList.add("show"); $("kPasteText").focus(); break;
@@ -2691,6 +3654,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         $("preview").classList.add("show"); paintDisplay(); break;
       case "btnClosePreview": $("preview").classList.remove("show"); break;
       case "btnSave": saveSession(); break;
+      case "btnRestoreYes": acceptRestore(); break;
+      case "btnRestoreNo": declineRestore(); break;
       case "btnOpen": $("fileIn").click(); break;
       case "btnForm1": exportForm1(); break;
       case "btnCsv": exportCsv(); break;
@@ -2699,6 +3664,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   document.addEventListener("input", function(e){
     var t = e.target;
+    markDirty();          // the light paths below deliberately skip render()
     if(t.classList && t.classList.contains("rin")){
       state.contestants[+t.dataset.i][t.dataset.f] = t.value;
       renderTop(); renderTabs(); refreshDerived(); paintDisplay();
@@ -2738,6 +3704,32 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   document.addEventListener("keydown", function(e){
     if(e.key==="Escape" && $("preview").classList.contains("show")){ $("preview").classList.remove("show"); return; }
+    /* F5 and Ctrl+R are cancellable; Ctrl+W, Ctrl+N and the toolbar button are
+       not, which is why the autosave exists rather than this being the defence. */
+    if(e.key==="F5" || ((e.ctrlKey||e.metaKey) && (e.key==="r" || e.key==="R"))){
+      if(atRisk()){
+        e.preventDefault();
+        toast("Reload blocked while the contest is live — the board autosaves, but reopen it deliberately");
+        return;
+      }
+    }
+    var typingNow = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||""));
+    /* A tally cell owns the keyboard while it has focus. The grid has always been
+       driven by the arrows and space, and the deck wants the same keys — so with
+       a cell focused, space must tick the box rather than pause a running clock
+       in front of an audience. Click off the grid and the deck keys return. */
+    var a0 = document.activeElement;
+    var onTally = !!(a0 && a0.classList &&
+                     (a0.classList.contains("qbtn") || a0.classList.contains("rtick")));
+    // otherwise, while the deck is on screen its keys come first — the operator
+    // is running the contest from them, not navigating the console
+    if(runLive() && !typingNow && !onTally && !e.ctrlKey && !e.metaKey){
+      if(e.key===" " || e.key==="Spacebar"){ e.preventDefault(); runToggle(); return; }
+      if(e.key==="ArrowLeft"){ e.preventDefault(); runStep(-1); return; }
+      if(e.key==="ArrowRight"){ e.preventDefault(); runStep(1); return; }
+      if(e.key==="Enter"){ e.preventDefault(); runTime(); return; }
+      if(e.key==="Escape"){ e.preventDefault(); runLeave(); return; }
+    }
     var typing = /^(INPUT|TEXTAREA)$/.test((e.target.tagName||""));
     if(!typing && !e.ctrlKey && !e.metaKey && (e.key==="t" || e.key==="T")){
       disp.reveal = 0; setCue("standby"); toast("Back to the title card"); return;
@@ -2803,51 +3795,402 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
        JSON.stringify(state,null,2),"application/json");
     toast("Session saved to your downloads");
   }
+
+  /* Make a loaded object safe to install as the state, whatever it has been
+     through — an older save, a hand-edited file, a half-written snapshot. Throws
+     if it is not a session at all. One function, because it is used by both the
+     Open session button and the autosave restore, and those two drifting apart
+     would be a bug nobody would notice until the wrong one was used. */
+  function normaliseSession(d){
+    if(!d || typeof d !== "object" || !Array.isArray(d.contestants)) throw new Error("not a session");
+    d.meta = d.meta || {};
+    if(!d.meta.sdCount) d.meta.sdCount = 5;
+    if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
+    if(!Array.isArray(d.sdAck)) d.sdAck = [];
+    if(!Array.isArray(d.coaches)) d.coaches = [];              // sessions saved before coaches existed
+
+    // sessions saved before the deck existed, and any half-formed slide in one
+    if(!d.deck || typeof d.deck !== "object" || !Array.isArray(d.deck.slides)){
+      d.deck = {name:"", slides:[]};
+    }
+    d.deck.slides = d.deck.slides.filter(function(s){ return s && isPhoto(s.image); });
+    d.deck.slides.forEach(function(s){
+      if(s.role !== "question" && s.role !== "answer") s.role = "other";
+      if(["r1","r2","r3","sd"].indexOf(s.round) < 0) s.round = null;
+      if(typeof s.seconds !== "number" || !(s.seconds > 0)) s.seconds = null;
+    });
+
+    if(!Array.isArray(d.judges)) d.judges = [];                // sessions saved before the board existed
+    d.judges = d.judges.filter(function(j){ return j && typeof j==="object"; });
+    d.judges.forEach(function(j){
+      if(typeof j.name!=="string") j.name = "";
+      if(JUDGE_ROLES.indexOf(j.role)<0) j.role = "Member";
+      if(typeof j.office!=="string") j.office = "";
+      if(typeof j.org!=="string") j.org = "";
+      if(!isPhoto(j.photo)) j.photo = null;
+    });
+
+    if(!Array.isArray(d.schools)) d.schools = [];              // sessions saved before logos existed
+    d.schools = d.schools.filter(function(x){
+      return x && typeof x.name==="string" && isPhoto(x.logo);
+    });
+
+    var kids = [];
+    d.coaches.forEach(function(k,ix){
+      if(!k.id || kids.indexOf(k.id)>=0) k.id = "k"+(ix+1)+"-"+ix;
+      if(typeof k.name!=="string") k.name = "";
+      if(typeof k.school!=="string") k.school = "";
+      if(!isPhoto(k.photo)) k.photo = null;
+      kids.push(k.id);
+    });
+    d.contestants.forEach(function(c){
+      if(!c.sd || typeof c.sd[0]==="boolean") c.sd = new Array(d.meta.sdCount).fill(null);
+      if(!isPhoto(c.photo)) c.photo = null;   // only ever put a data: image in an <img src>
+      // a chosen coach who is no longer in the file goes back to following the school
+      if(typeof c.coachId!=="string" || kids.indexOf(c.coachId)<0) c.coachId = null;
+    });
+    return d;
+  }
+
+  function installSession(d){
+    sdPop = null;
+    ask.phase = "off";            // never come back with the clock half-run
+    stopTicking();
+    deckSel = []; deckAnchor = null;
+    state = d;
+    render();
+  }
+
   $("fileIn").addEventListener("change", function(e){
     var f = e.target.files[0]; if(!f) return;
     var r = new FileReader();
     r.onload = function(){
       try{
-        var d = JSON.parse(r.result);
-        if(!d.contestants) throw new Error("bad");
-        d.meta = d.meta || {};
-        if(!d.meta.sdCount) d.meta.sdCount = 5;
-        if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
-        if(!Array.isArray(d.sdAck)) d.sdAck = [];
-        if(!Array.isArray(d.coaches)) d.coaches = [];              // sessions saved before coaches existed
-        if(!Array.isArray(d.judges)) d.judges = [];                // sessions saved before the board existed
-        d.judges = d.judges.filter(function(j){ return j && typeof j==="object"; });
-        d.judges.forEach(function(j){
-          if(typeof j.name!=="string") j.name = "";
-          if(JUDGE_ROLES.indexOf(j.role)<0) j.role = "Member";
-          if(typeof j.office!=="string") j.office = "";
-          if(typeof j.org!=="string") j.org = "";
-          if(!isPhoto(j.photo)) j.photo = null;
-        });
-        if(!Array.isArray(d.schools)) d.schools = [];              // sessions saved before logos existed
-        d.schools = d.schools.filter(function(x){
-          return x && typeof x.name==="string" && isPhoto(x.logo);
-        });
-        sdPop = null;
-        var kids = [];
-        d.coaches.forEach(function(k,ix){
-          if(!k.id || kids.indexOf(k.id)>=0) k.id = "k"+(ix+1)+"-"+ix;
-          if(typeof k.name!=="string") k.name = "";
-          if(typeof k.school!=="string") k.school = "";
-          if(!isPhoto(k.photo)) k.photo = null;
-          kids.push(k.id);
-        });
-        d.contestants.forEach(function(c){
-          if(!c.sd || typeof c.sd[0]==="boolean") c.sd = new Array(d.meta.sdCount).fill(null);
-          if(!isPhoto(c.photo)) c.photo = null;   // only ever put a data: image in an <img src>
-          // a chosen coach who is no longer in the file goes back to following the school
-          if(typeof c.coachId!=="string" || kids.indexOf(c.coachId)<0) c.coachId = null;
-        });
-        state = d; render(); toast("Session restored");
+        installSession(normaliseSession(JSON.parse(r.result)));
+        toast("Session restored");
       }catch(err){ toast("That file isn't a saved PSQ session"); }
     };
     r.readAsText(f); e.target.value="";
   });
+
+  /* ===================== autosave =====================
+     A tally sheet could be rebuilt from the Examiners' paper, which is why this
+     board went so long without an autosave. Now that it owns the questions and
+     the clock as well, a refreshed tab, a sleeping laptop or a kicked power strip
+     is a different order of problem — and none of those fire beforeunload, so no
+     amount of guarding the keyboard helps.
+
+     Two things shape the design.
+
+     First: this board ships as a file on a flash drive, and browsers treat a
+     file:// page as an origin of its own with its own rules about storage. What
+     works there differs by browser and by version, and a storage that silently
+     does nothing is worse than none at all — the operator would believe they were
+     covered. So nothing is assumed: at boot the board actually writes a record,
+     reads it back, and only claims to be autosaving if that round trip worked.
+     Whatever it finds, it says so on screen.
+
+     Second: not everything is worth the same. Photographs, logos and the slides
+     are megabytes, and every one of them still exists in the folder they were
+     imported from. A half-tallied Round 2 exists nowhere else. So when the only
+     storage available is a small one, the tally is what gets kept. */
+
+  var DB_NAME = "psq-tally-board", DB_STORE = "snapshot";
+  /* The probe must never write where the snapshot lives. localStorage is a single
+     key, so a probe that used LS_KEY would destroy the session it is about to be
+     asked to restore — at boot, before anything had read it. */
+  var LS_KEY = "psq-tally-board", LS_PROBE = "psq-tally-board:probe";
+  var SAVE_EVERY = 5000, PROBE_MS = 2500;
+
+  var saveMode = "none";      // none | idb | local — decided by a real round trip
+  var dbConn = null;
+  var snapDirty = false, snapPending = false, deckSaved = null;
+  var restoreOffer = null;
+
+  /* ---- IndexedDB, if it will actually take a record ---- */
+
+  function idbOpen(cb){
+    if(dbConn) return cb(dbConn);
+    var settled = false, rq;
+    var give = function(d){ if(!settled){ settled = true; cb(d); } };
+    // an open request that never settles is a real possibility on some origins,
+    // so the probe is on a timer rather than trusting it to answer
+    setTimeout(function(){ give(null); }, PROBE_MS);
+    try{ rq = indexedDB.open(DB_NAME, 1); }catch(err){ return give(null); }
+    rq.onupgradeneeded = function(){
+      var d = rq.result;
+      if(!d.objectStoreNames.contains(DB_STORE)) d.createObjectStore(DB_STORE, {keyPath:"key"});
+    };
+    rq.onsuccess = function(){ dbConn = rq.result; give(dbConn); };
+    rq.onerror = function(){ give(null); };
+    rq.onblocked = function(){ give(null); };
+  }
+  function idbPut(records, then){
+    idbOpen(function(d){
+      if(!d) return then && then(false);
+      try{
+        var tx = d.transaction(DB_STORE, "readwrite"), st = tx.objectStore(DB_STORE);
+        records.forEach(function(r){ st.put(r); });
+        tx.oncomplete = function(){ then && then(true); };
+        tx.onerror = function(){ then && then(false); };
+        tx.onabort = function(){ then && then(false); };
+      }catch(err){ then && then(false); }
+    });
+  }
+  function idbGet(keys, then){
+    idbOpen(function(d){
+      if(!d) return then(null);
+      try{
+        var tx = d.transaction(DB_STORE, "readonly"), st = tx.objectStore(DB_STORE), got = {};
+        keys.forEach(function(k){
+          var g = st.get(k);
+          g.onsuccess = function(){ got[k] = g.result; };
+        });
+        tx.oncomplete = function(){ then(got); };
+        tx.onerror = function(){ then(null); };
+      }catch(err){ then(null); }
+    });
+  }
+
+  /* ---- localStorage, as the small fallback ---- */
+
+  function lsPutAt(key, obj){
+    try{ localStorage.setItem(key, JSON.stringify(obj)); return true; }
+    catch(err){ return false; }        // quota, or storage refused outright
+  }
+  function lsGetAt(key){
+    try{
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(err){ return null; }
+  }
+  function lsPut(obj){ return lsPutAt(LS_KEY, obj); }
+  function lsGet(){ return lsGetAt(LS_KEY); }
+
+  /* Everything that cannot be reconstructed from a folder of files. The pictures
+     are dropped: they are heavy, and the operator still has them. */
+  function slimContest(){
+    return {
+      slim:     true,
+      meta:     state.meta,
+      cut:      state.cut,
+      sdAck:    state.sdAck,
+      schools:  [],
+      coaches:  coaches().map(function(k){
+                  return {id:k.id, name:k.name, school:k.school, photo:null}; }),
+      judges:   judges().map(function(j){
+                  return {name:j.name, role:j.role, office:j.office, org:j.org, photo:null}; }),
+      deck:     {name:"", slides:[]},
+      contestants: state.contestants.map(function(c){
+                  return {no:c.no, name:c.name, school:c.school, coachId:c.coachId,
+                          photo:null, r1:c.r1, r2:c.r2, r3:c.r3, sd:c.sd}; })
+    };
+  }
+
+  /* ---- writing ---- */
+
+  function markDirty(){ snapDirty = true; }
+
+  function deckMark(){
+    return slides().length + ":" + slides().map(function(s){
+      return [s.role, s.round, s.seconds].join("|");
+    }).join(",");
+  }
+
+  function snapshotNow(){
+    if(saveMode === "none" || snapPending) return;
+    snapPending = true;
+
+    if(saveMode === "local"){
+      lsPut({key:"contest", at:Date.now(), data:slimContest()});
+      snapPending = false;
+      return;
+    }
+    var contest = {};
+    for(var k in state){
+      if(k !== "deck" && Object.prototype.hasOwnProperty.call(state, k)) contest[k] = state[k];
+    }
+    var records = [{key:"contest", at:Date.now(), data:contest}];
+    // the deck is megabytes and changes almost never; it only goes in when it has
+    var mark = deckMark();
+    if(mark !== deckSaved) records.push({key:"deck", at:Date.now(), data:state.deck});
+    idbPut(records, function(ok){
+      snapPending = false;
+      if(ok) deckSaved = mark;
+      else { saveMode = "none"; paintSaveDot(); }   // it worked at boot and does not now
+    });
+  }
+
+  // both stores, always: which one this load chose is not which one the last
+  // load wrote to (see readAnySnapshot)
+  function clearSnapshot(){
+    deckSaved = null;
+    try{ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_PROBE); }catch(err){}
+    idbOpen(function(d){
+      if(!d) return;
+      try{ d.transaction(DB_STORE, "readwrite").objectStore(DB_STORE).clear(); }catch(err){}
+    });
+  }
+
+  /* Read both stores and take the newer.
+
+     The store is picked per load by probing it, and that probe can honestly come
+     out differently twice running: a cold IndexedDB open on a tired venue laptop
+     can take longer than the probe waits, so the same board may write to
+     IndexedDB one morning and to localStorage the next. Looking only in the
+     store this load happens to have chosen would then quietly miss the snapshot —
+     which is the one failure this whole feature exists to prevent. */
+  function readAnySnapshot(then){
+    var found = [], pending = 2;
+    function finish(){ if(--pending) return;
+      found.sort(function(a, b){ return (b.at || 0) - (a.at || 0); });
+      then(found[0] || null);
+    }
+    var rec = lsGet();
+    if(rec && rec.key === "contest" && rec.data){
+      found.push({contest:rec.data, at:rec.at, deck:null, from:"local"});
+    }
+    finish();
+    idbGet(["contest", "deck"], function(got){
+      if(got && got.contest && got.contest.data){
+        found.push({contest:got.contest.data, at:got.contest.at,
+                    deck:(got.deck && got.deck.data) || null, from:"idb"});
+      }
+      finish();
+    });
+  }
+
+  /* ---- coming back ---- */
+
+  function worthRestoring(c){
+    if(!c || !Array.isArray(c.contestants)) return false;
+    var named = c.contestants.filter(function(x){ return x && (x.name || "").trim() !== ""; }).length;
+    var marks = c.contestants.some(function(x){
+      return x && (["r1","r2","r3"].some(function(k){ return (x[k] || []).some(Boolean); }) ||
+                   (x.sd || []).some(function(v){ return v; }));
+    });
+    return !!(named || marks);
+  }
+  function whenStr(ms){
+    var d = new Date(ms), p = function(n){ return (n < 10 ? "0" : "") + n; };
+    var sameDay = d.toDateString() === new Date().toDateString();
+    return (sameDay ? "" : d.toDateString() + ", ") + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function showRestoreBar(offer){
+    restoreOffer = offer;
+    var c = offer.contest, sl = (offer.deck && offer.deck.slides || []).length;
+    var n = c.contestants.filter(function(x){ return x && (x.name || "").trim() !== ""; }).length;
+    var bar = $("restoreBar");
+    bar.innerHTML =
+      '<span><b>The board closed with work unsaved.</b> ' + n + ' contestant' + (n === 1 ? "" : "s") +
+      (sl ? ', ' + sl + ' slide' + (sl === 1 ? "" : "s") : "") +
+      ', last kept at ' + esc(whenStr(offer.at)) + '.' +
+      (c.slim ? ' <i>Photographs and slides were not kept — re-import them.</i>' : '') + '</span>' +
+      '<button class="btn primary" id="btnRestoreYes">Restore it</button>' +
+      '<button class="btn" id="btnRestoreNo">Start fresh</button>';
+    bar.classList.add("show");
+  }
+  function hideRestoreBar(){
+    restoreOffer = null;
+    var bar = $("restoreBar");
+    bar.classList.remove("show"); bar.innerHTML = "";
+  }
+  function acceptRestore(){
+    if(!restoreOffer) return;
+    var offer = restoreOffer;
+    try{
+      var d = offer.contest;
+      d.deck = offer.deck || {name:"", slides:[]};
+      installSession(normaliseSession(d));
+      hideRestoreBar();
+      deckSaved = deckMark();
+      toast("Restored from the autosave" + (d.slim ? " — photographs and slides need re-importing" : ""));
+    }catch(err){
+      hideRestoreBar();
+      toast("That autosave could not be read");
+    }
+  }
+  function declineRestore(){
+    clearSnapshot();
+    hideRestoreBar();
+    toast("Starting fresh — the autosave has been cleared");
+  }
+
+  /* ---- what the operator is told ---- */
+
+  function saveModeText(){
+    if(saveMode === "idb") return "Autosaving";
+    if(saveMode === "local") return "Autosaving the tally only";
+    return "No autosave — save by hand";
+  }
+  function paintSaveDot(){
+    var el = $("saveDot");
+    if(!el) return;
+    el.className = "savedot " + saveMode;
+    el.innerHTML = '<i></i><span>' + saveModeText() + '</span>';
+    el.title = saveMode === "idb"
+      ? "The whole session, including photographs and slides, is being kept in this browser."
+      : (saveMode === "local"
+        ? "This browser would not take the pictures, so only the roster and the tally are being kept. Photographs and slides would need re-importing."
+        : "This browser is not letting the board keep anything. Press Save session between rounds.");
+  }
+
+  /* ---- boot ---- */
+
+  /* Prove the storage works before claiming it does: write a record, read it
+     back, and only then call it autosaving. */
+  function pickStore(then){
+    var probe = {key:"__probe", at:Date.now(), data:{ok:1}};
+    idbPut([probe], function(ok){
+      if(!ok) return tryLocal();
+      idbGet(["__probe"], function(got){
+        if(got && got.__probe && got.__probe.data && got.__probe.data.ok === 1){
+          saveMode = "idb"; return then();
+        }
+        tryLocal();
+      });
+    });
+    function tryLocal(){
+      if(lsPutAt(LS_PROBE, {at:Date.now(), ok:1})){
+        var back = lsGetAt(LS_PROBE);
+        try{ localStorage.removeItem(LS_PROBE); }catch(err){}
+        if(back && back.ok === 1){ saveMode = "local"; return then(); }
+      }
+      saveMode = "none";
+      then();
+    }
+  }
+
+  function autosaveInit(){
+    pickStore(function(){
+      paintSaveDot();
+      var offer = null;
+
+      function afterLook(){
+        if(offer && worthRestoring(offer.contest)) showRestoreBar(offer);
+        else if(saveMode !== "none") deckSaved = deckMark();
+        // writing starts only once the offer has been read, so a snapshot is
+        // never overwritten by the empty board sitting on top of it
+        setInterval(function(){
+          if(restoreOffer || !snapDirty || saveMode === "none") return;
+          snapDirty = false;
+          snapshotNow();
+        }, SAVE_EVERY);
+      }
+
+      if(saveMode === "none"){
+        toast("This browser will not let the board autosave — press Save session between rounds");
+      }
+      readAnySnapshot(function(found){ offer = found; afterLook(); });
+    });
+  }
+
+  /* ---- is there anything to lose? ---- */
+  function atRisk(){
+    return named().length > 0 || hasDeck() ||
+           hasMarks("r1") || hasMarks("r2") || hasMarks("r3") || hasSd();
+  }
   /* ===== PSQ Form 1 workbook writer (mirrors the office Excel template) ===== */
   var CRC = (function(){
     var t = new Int32Array(256);
@@ -3191,8 +4534,14 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     clearTimeout(tT); tT=setTimeout(function(){ el.classList.remove("show"); },2200); }
 
   window.addEventListener("beforeunload", function(e){
+    if(atRisk()){ e.preventDefault(); e.returnValue=""; }
+  });
+  /* The audience window is torn down only once the page is genuinely going away.
+     Doing it in beforeunload — as this used to — blacked out the projector before
+     the operator had even answered the browser's dialog, so catching yourself and
+     clicking "stay" still cost you the screen. */
+  window.addEventListener("pagehide", function(){
     if(winRef && !winRef.closed) winRef.close();
-    if(named().length){ e.preventDefault(); e.returnValue=""; }
   });
   window.addEventListener("resize", function(){ paintDisplay(); });
   setInterval(function(){
@@ -3200,8 +4549,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   }, 1500);
 
   render();
+  autosaveInit();
 })();
-
 </script>
 </body>
 </html>

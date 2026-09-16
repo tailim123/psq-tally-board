@@ -16,6 +16,7 @@
     <span class="m3" id="markSub"></span>
   </div>
   <div class="bar-actions">
+    <span class="savedot" id="saveDot"></span>
     <span class="livedot" id="liveDot"><i></i><span id="liveTxt">Display closed</span></span>
     <button class="btn" id="btnTitle">Back to title</button>
     <button class="btn" id="btnPreview">Preview</button>
@@ -25,8 +26,12 @@
     <button class="btn" id="btnSave">Save session</button>
     <input type="file" id="fileIn" accept=".json" style="display:none">
     <input type="file" id="photoIn" accept="image/*" style="display:none">
+    <input type="file" id="slidesIn" accept="image/*" multiple style="display:none">
+    <input type="file" id="deckIn" accept=".json" style="display:none">
   </div>
 </div>
+
+<div class="restorebar" id="restoreBar"></div>
 
 <div class="podium-wrap">
   <div class="podium-head">
@@ -53,6 +58,22 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="app.js"></script>
+<!-- app: build.py replaces this whole block with one inlined <script> -->
+<script src="js/00-state.js"></script>
+<script src="js/10-scoring.js"></script>
+<script src="js/20-people.js"></script>
+<script src="js/25-deck.js"></script>
+<script src="js/30-console.js"></script>
+<script src="js/35-run.js"></script>
+<script src="js/40-desk.js"></script>
+<script src="js/50-display.js"></script>
+<script src="js/55-portraits.js"></script>
+<script src="js/60-flow.js"></script>
+<script src="js/70-events.js"></script>
+<script src="js/75-session.js"></script>
+<script src="js/78-autosave.js"></script>
+<script src="js/80-form1.js"></script>
+<script src="js/90-boot.js"></script>
+<!-- /app -->
 </body>
 </html>
