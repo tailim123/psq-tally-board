@@ -170,6 +170,19 @@ td.st{font-size:12px}
 .rin:hover{border-color:#C9D3E2}
 .rin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
 
+/* roster coach cell — a name when the school settles it, a chooser when not */
+td.coachcell{min-width:200px;font-size:12.5px}
+.csel{
+  border:2.5px solid var(--ink);border-radius:6px;padding:5px 8px;background:#fff;
+  font-weight:650;max-width:100%;
+}
+.csel.need{background:#FCE2DC;border-color:#8E2413;color:#8E2413}
+.cmute{color:var(--muted);font-weight:600;font-style:italic}
+.cwarn{color:#8E2413;font-weight:650;font-size:11.5px}
+.conly{font-weight:700;display:block;line-height:1.3}
+.conly em{display:block;font-style:normal;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+td.knote{min-width:200px}
+
 /* roster photo cell */
 td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
 .thumb{width:34px;height:45px;object-fit:cover;border:2.5px solid var(--ink);border-radius:5px;background:#E7EDF7;flex:0 0 auto}
@@ -218,6 +231,12 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
 .cue:active{transform:translateY(4px);box-shadow:0 0 0}
 .cue.on{background:var(--yellow)}
 .cue b{display:block;font-size:13.5px;font-weight:800}
+/* the number key that picks this cue, so the operator never has to count */
+.cue .k{
+  float:right;font-style:normal;font-family:var(--pix);font-size:9px;line-height:1;
+  color:var(--muted);border:2px solid #C9D3E2;border-radius:4px;padding:3px 4px;margin-left:8px;
+}
+.cue.on .k{color:#7A5E00;border-color:#C9A61E}
 .cue span{font-size:11.5px;color:var(--muted);font-weight:600}
 .cue.on span{color:#7A5E00}
 .deskrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:15px;border-top:2px dashed #C9D3E2}
@@ -469,6 +488,37 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
   font-size:calc(var(--u)*2.2);white-space:normal;margin-top:calc(var(--u)*1);line-height:1.3;
 }
 
+/* ---- introduction of students and coaches ----
+   One school to a screen: the coach on a bar across the top, their contestants
+   filling whatever height is left. The bar takes what it needs and the portrait
+   row takes the rest, so two contestants and six read the same way. */
+.dsp .schl{
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+  gap:calc(var(--u)*1.6);width:100%;
+}
+.dsp .coach{
+  flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--u)*2);
+  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.9);
+  box-shadow:0 3px 0 var(--ink);padding:calc(var(--u)*1.1) calc(var(--u)*2);
+}
+.dsp .coach .por{
+  width:calc(var(--u)*6);flex:0 0 auto;aspect-ratio:3/4;border-width:3px;
+  box-shadow:0 3px 0 var(--ink);
+}
+.dsp .coach .por .noimg{font-size:calc(var(--u)*2)}
+.dsp .coach .ctxt{min-width:0}
+.dsp .coach .lbl{
+  font-family:var(--pix);font-size:calc(var(--u)*1.1);color:var(--d-olive);letter-spacing:.04em;
+}
+.dsp .coach .who{
+  font-size:calc(var(--u)*2.4);font-weight:850;line-height:1.15;margin-top:calc(var(--u)*.5);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dsp .stus{
+  display:grid;gap:calc(var(--u)*1.4);flex:1 1 auto;min-height:0;
+  grid-auto-rows:minmax(0,1fr);justify-content:center;width:100%;
+}
+
 /* ---- top 3 reveal ---- */
 .dsp .rev{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);align-items:stretch}
 /* the champion is not on this screen, so the two placers get the room */
@@ -612,7 +662,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
   var LABEL = {r1:"Round 1", r2:"Round 2", r3:"Round 3"};
 
   function blankC(no){
-    return {no:no, name:"", school:"", photo:null,
+    return {no:no, name:"", school:"", photo:null, coachId:null,
             r1:new Array(QN).fill(false),
             r2:new Array(QN).fill(false),
             r3:new Array(QN).fill(false),
@@ -627,6 +677,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
           sdCount:5},
     cut:null,          // once the Round 3 cut is announced, the frozen list of contestant numbers
     sdAck:[],          // tie-breaks the operator has seen resolved and cleared away
+    coaches:[],        // {id, name, school, photo} — one entry per registered coach
     contestants:[]
   };
   for(var i=1;i<=22;i++) state.contestants.push(blankC(i));
@@ -805,6 +856,96 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     return "tied — needs a tie-break";
   }
 
+  /* ===================== coaches =====================
+     A coach is encoded once, with the school they bring. Which coach a
+     contestant is under then follows from the school rather than from a second
+     piece of data entry: one coach there and every contestant of that school is
+     theirs. Two or more at the same school is the only case nobody can infer,
+     so that — and only that — is what the roster asks about. */
+  function normSch(s){ return String(s==null?"":s).trim().toLowerCase().replace(/\s+/g," "); }
+  function coaches(){ return state.coaches || (state.coaches = []); }
+  function namedCoaches(){ return coaches().filter(function(k){ return k.name.trim()!==""; }); }
+  function coachesAt(school){
+    var n = normSch(school);
+    if(!n) return [];
+    return namedCoaches().filter(function(k){ return normSch(k.school)===n; });
+  }
+  function newCoachId(){
+    var used = coaches().map(function(k){ return k.id; }), n = 1;
+    while(used.indexOf("k"+n)>=0) n++;
+    return "k"+n;
+  }
+  /* The coach a contestant is under, or null when the school has nobody encoded
+     — or has several and none has been picked. A chosen coach is only honoured
+     while they are still at the contestant's school, so editing either school
+     re-derives rather than leaving a contestant under someone else's school. */
+  function coachOf(c){
+    var at = coachesAt(c.school);
+    if(!at.length) return null;
+    if(c.coachId){
+      var pick = at.filter(function(k){ return k.id===c.coachId; })[0];
+      if(pick) return pick;
+    }
+    return at.length===1 ? at[0] : null;
+  }
+  function coachName(c){ var k = coachOf(c); return k ? k.name : ""; }
+  function needsCoach(c){ return coachesAt(c.school).length>1 && !coachOf(c); }
+  function unassigned(){ return named().filter(needsCoach); }
+  // schools on the roster that no coach has been encoded for
+  function coachlessSchools(){
+    var out = [], seen = {};
+    named().forEach(function(c){
+      var n = normSch(c.school);
+      if(!n || seen["s"+n] || coachesAt(c.school).length) return;
+      seen["s"+n] = 1; out.push(c.school);
+    });
+    return out;
+  }
+  function initials(s){
+    var p = String(s==null?"":s).trim().split(/\s+/).filter(Boolean);
+    if(!p.length) return "?";
+    return (p[0].charAt(0) + (p.length>1 ? p[p.length-1].charAt(0) : "")).toUpperCase();
+  }
+
+  /* The introduction runs school by school, alphabetically. A school with one
+     coach is one screen; a school with several takes a screen per coach, so the
+     pairing the audience sees is the one the operator encoded and never a
+     guess. Contestants at such a school with no coach picked come last, on a
+     screen of their own — the console has been asking for them all along. */
+  function introGroups(){
+    var buckets = [], index = {};
+    named().slice().sort(function(a,b){ return a.no-b.no; }).forEach(function(c){
+      var key = normSch(c.school);
+      var b = index["s"+key];                        // prefixed, so a school named "constructor" is just a school
+      if(!b){ b = index["s"+key] = {key:key, school:c.school||"", students:[]}; buckets.push(b); }
+      b.students.push(c);
+    });
+    // alphabetical by school, with any contestant who has no school given last
+    buckets.sort(function(a,b){
+      if(!a.key !== !b.key) return a.key ? -1 : 1;
+      return a.key<b.key ? -1 : (a.key>b.key ? 1 : 0);
+    });
+
+    var out = [];
+    buckets.forEach(function(b){
+      var at = coachesAt(b.school);
+      if(at.length<2){
+        out.push({school:b.school, coach:at[0]||null, students:b.students});
+        return;
+      }
+      var placed = [];
+      at.slice().sort(function(x,y){ return normSch(x.name)<normSch(y.name) ? -1 : 1; }).forEach(function(k){
+        var mine = b.students.filter(function(c){ return coachOf(c)===k; });
+        if(!mine.length) return;
+        out.push({school:b.school, coach:k, students:mine});
+        placed = placed.concat(mine);
+      });
+      var rest = b.students.filter(function(c){ return placed.indexOf(c)<0; });
+      if(rest.length) out.push({school:b.school, coach:null, students:rest});
+    });
+    return out;
+  }
+
   /* ===================== console header ===================== */
   function renderTop(){
     $("markTitle").textContent = state.meta.edition;
@@ -874,7 +1015,8 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
       var has = isPhoto(c.photo);
       return '<tr><td class="no pad">'+c.no+'</td>'+
         '<td class="pad"><input class="rin" data-f="name" data-i="'+i+'" value="'+esc(c.name)+'" placeholder="Contestant name"></td>'+
-        '<td class="pad"><input class="rin" data-f="school" data-i="'+i+'" value="'+esc(c.school)+'" placeholder="School"></td>'+
+        '<td class="pad"><input class="rin" data-f="school" data-i="'+i+'" value="'+esc(c.school)+'" placeholder="School" list="schoolList"></td>'+
+        '<td class="pad coachcell" data-ci="'+i+'">'+coachCell(c,i)+'</td>'+
         '<td class="pad photocell">'+
           (has ? '<img class="thumb" src="'+c.photo+'" alt="'+esc(c.name)+'">'
                : '<span class="thumb none">'+c.no+'</span>')+
@@ -895,14 +1037,174 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
         '<div class="right"><button class="lbtn" id="btnPaste">Paste from Excel</button>'+
         '<button class="lbtn" id="btnAdd">Add 5 slots</button>'+
         '<button class="lbtn danger" id="btnClearAll">Clear all scores</button></div></div>'+
+      coachWarnHTML()+
       '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Name</th><th>School</th>'+
-      '<th class="c">Photo</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<th>Coach</th><th class="c">Photo</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="paste" id="pasteBox"><p>Paste the name and school columns from the registration sheet — one contestant per line, tab or comma between the two.</p>'+
         '<textarea id="pasteText" placeholder="Juan dela Cruz&#9;Marinduque National High School"></textarea>'+
         '<div class="row"><button class="lbtn go" id="btnPasteGo">Load roster</button><button class="lbtn" id="btnPasteCancel">Cancel</button></div></div>'+
       '<div class="legend">Scores stay attached to the slot number, so correcting a spelling never disturbs a tally. '+
       'Photos are shrunk before they are stored and travel inside the saved session, so one .json file still carries the whole contest. '+
-      'They appear on the Introduce contestants screen and on the winners’ cards.</div></div>';
+      'They appear on the Introduce contestants screen and on the winners’ cards. '+
+      'The Coach column fills itself from the school — it only asks when a school has sent more than one coach.</div></div>'+
+      renderCoachPanel()+schoolDatalist();
+  }
+
+  /* The list of schools already typed, offered to both the roster and the
+     coaches table, so the two spellings match and a coach finds their school. */
+  function schoolDatalist(){
+    var seen = {}, out = [];
+    state.contestants.concat(coaches()).forEach(function(x){
+      var n = normSch(x.school);
+      if(!n || seen["s"+n]) return;
+      seen["s"+n] = 1; out.push(x.school.trim());
+    });
+    out.sort(function(a,b){ return normSch(a)<normSch(b) ? -1 : 1; });
+    return '<datalist id="schoolList">'+
+      out.map(function(v){ return '<option value="'+esc(v)+'">'; }).join("")+'</datalist>';
+  }
+
+  // what the roster shows in the Coach column — a name when the rule settles it,
+  // a chooser only when the school has sent more than one coach
+  function coachCell(c, i){
+    if(!normSch(c.school)) return '<span class="cmute">Enter a school first</span>';
+    var at = coachesAt(c.school);
+    if(!at.length) return '<span class="cmute">No coach encoded for this school</span>';
+    if(at.length===1) return '<span class="conly">'+esc(at[0].name)+
+      '<em>the only coach for this school</em></span>';
+    var k = coachOf(c);
+    return '<select class="csel'+(k?"":" need")+'" data-coach="'+i+'" aria-label="Coach for '+
+      esc(c.name||("slot "+c.no))+'">'+
+      '<option value=""'+(k?"":" selected")+'>Choose one of '+at.length+'…</option>'+
+      at.map(function(x){
+        return '<option value="'+esc(x.id)+'"'+(k&&k.id===x.id?" selected":"")+'>'+esc(x.name)+'</option>';
+      }).join("")+'</select>';
+  }
+
+  function coachWarnHTML(){
+    var need = unassigned(), none = coachlessSchools(), h = "";
+    if(need.length){
+      h += '<div class="banner warn">'+need.length+' contestant'+(need.length===1?"":"s")+
+        ' come'+(need.length===1?"s":"")+' from a school that has sent more than one coach, so the coach has to be '+
+        'chosen: '+esc(need.map(function(c){ return c.name || ("No. "+c.no); }).join(", "))+
+        '. Until then the introduction screen shows them without one.</div>';
+    }
+    if(none.length){
+      h += '<div class="banner info">No coach encoded yet for '+esc(none.join(", "))+
+        '. Add them below and every contestant of that school follows automatically.</div>';
+    }
+    return '<div id="coachWarn">'+h+'</div>';
+  }
+
+  /* ---- the coaches table ---- */
+  function renderCoachPanel(){
+    var ks = coaches();
+    var rows = ks.map(function(k,i){
+      var has = isPhoto(k.photo);
+      return '<tr><td class="no pad">'+(i+1)+'</td>'+
+        '<td class="pad"><input class="kin" data-kf="name" data-ki="'+i+'" value="'+esc(k.name)+'" placeholder="Coach name"></td>'+
+        '<td class="pad"><input class="kin" data-kf="school" data-ki="'+i+'" value="'+esc(k.school)+'" placeholder="School" list="schoolList"></td>'+
+        '<td class="pad photocell">'+
+          (has ? '<img class="thumb" src="'+k.photo+'" alt="'+esc(k.name)+'">'
+               : '<span class="thumb none">'+esc(initials(k.name))+'</span>')+
+          '<button class="lbtn tiny" data-kphoto="'+i+'">'+(has?"Replace":"Add photo")+'</button>'+
+          (has ? '<button class="lbtn tiny danger" data-kunphoto="'+i+'">Remove</button>' : '')+
+        '</td>'+
+        '<td class="cum" data-kc="'+i+'">'+coachLoad(k)+'</td>'+
+        '<td class="pad knote" data-kn="'+i+'">'+coachNote(k)+'</td>'+
+        '<td class="pad"><button class="lbtn tiny danger" data-kdel="'+i+'">Remove</button></td></tr>';
+    }).join("");
+
+    var body = ks.length
+      ? '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Coach</th><th>School</th>'+
+        '<th class="c">Photo</th><th class="c">Contestants</th><th>Status</th><th></th></tr></thead>'+
+        '<tbody>'+rows+'</tbody></table></div>'
+      : '<div class="empty-state"><p>No coaches encoded yet. The introduction screen names a contestant’s coach once there is one for their school.</p>'+
+        '<button class="lbtn go" id="btnAddCoach">Add a coach</button></div>';
+
+    return '<div class="panel">'+
+      '<div class="panel-head"><h3>Coaches</h3><span class="note">'+namedCoaches().length+
+      ' encoded · one coach at a school claims all of its contestants</span>'+
+      '<div class="right"><button class="lbtn" id="btnKPaste">Paste from Excel</button>'+
+      '<button class="lbtn" id="btnAddCoach2">Add a coach</button></div></div>'+
+      body+
+      '<div class="paste" id="kPasteBox"><p>Paste the coaches from the registration sheet — one per line, name then school, tab or comma between the two.</p>'+
+        '<textarea id="kPasteText" placeholder="Maria Santos&#9;Marinduque National High School"></textarea>'+
+        '<div class="row"><button class="lbtn go" id="btnKPasteGo">Add these coaches</button>'+
+        '<button class="lbtn" id="btnKPasteCancel">Cancel</button></div></div>'+
+      '<div class="legend">A school with one coach needs nothing else — every contestant of that school is listed under them. '+
+      'A school that has sent two or more puts a chooser in the roster’s Coach column instead, because only you know who coached whom. '+
+      'Spell the school the same way in both tables; the box offers the ones already typed.</div></div>';
+  }
+
+  function coachLoad(k){
+    return named().filter(function(c){ return coachOf(c)===k; }).length;
+  }
+  function coachNote(k){
+    if(!k.name.trim()) return '<span class="cmute">Give the coach a name</span>';
+    if(!normSch(k.school)) return '<span class="cmute">Give the school</span>';
+    var at = coachesAt(k.school);
+    if(at.length>1) return '<span class="cwarn">'+at.length+' coaches at this school — pick per contestant above</span>';
+    return coachLoad(k)
+      ? '<span class="cmute">every contestant of this school</span>'
+      : '<span class="cwarn">no contestant from this school on the roster</span>';
+  }
+
+  /* Editing a name or a school moves contestants between coaches, so the cells
+     that depend on it are refreshed in place rather than by a full redraw —
+     a redraw would take the operator's cursor out of the box they are typing in. */
+  function refreshCoachUI(){
+    Array.prototype.forEach.call(document.querySelectorAll("td.coachcell"), function(td){
+      var i = +td.dataset.ci;
+      td.innerHTML = coachCell(state.contestants[i], i);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("td[data-kc]"), function(td){
+      var k = coaches()[+td.dataset.kc];
+      if(k) td.textContent = coachLoad(k);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("td[data-kn]"), function(td){
+      var k = coaches()[+td.dataset.kn];
+      if(k) td.innerHTML = coachNote(k);
+    });
+    var w = $("coachWarn"), fresh = document.createElement("div");
+    if(w){ fresh.innerHTML = coachWarnHTML(); w.innerHTML = fresh.firstChild.innerHTML; }
+  }
+
+  function addCoach(){
+    coaches().push({id:newCoachId(), name:"", school:"", photo:null});
+    render();
+    var el = document.querySelector('.kin[data-kf="name"][data-ki="'+(coaches().length-1)+'"]');
+    if(el) el.focus();
+  }
+  function removeCoach(i){
+    var k = coaches()[i];
+    if(!k) return;
+    var load = coachLoad(k);
+    if(k.name.trim() && !confirm("Remove "+k.name+" from the coaches?"+
+        (load ? "\n\n"+load+" contestant"+(load===1?"":"s")+" listed under them will be left without a coach "+
+                "until another is encoded for the school." : ""))) return;
+    coaches().splice(i,1);
+    state.contestants.forEach(function(c){ if(c.coachId===k.id) c.coachId = null; });
+    render(); toast("Coach removed");
+  }
+  function loadCoachPaste(){
+    var lines = $("kPasteText").value.split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean);
+    if(!lines.length){ toast("Nothing to load"); return; }
+    var added = 0;
+    lines.forEach(function(ln){
+      var parts = ln.split(/\t|\s{2,}|,/);
+      var nm = (parts[0]||"").trim(), sc = parts.slice(1).join(", ").trim();
+      if(!nm) return;
+      var dupe = coaches().some(function(k){
+        return k.name.trim().toLowerCase()===nm.toLowerCase() && normSch(k.school)===normSch(sc);
+      });
+      if(dupe) return;
+      coaches().push({id:newCoachId(), name:nm, school:sc, photo:null});
+      added++;
+    });
+    $("kPasteBox").classList.remove("show"); $("kPasteText").value="";
+    render();
+    toast(added ? added+" coach"+(added===1?"":"es")+" added" : "Those coaches were already on the list");
   }
 
   function leadersLine(k, list){
@@ -1095,17 +1397,22 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
   }
 
   /* ===================== display control desk ===================== */
+  /* The number key is written down rather than taken from the position, so a
+     cue can be added without the whole keypad shifting under the operator. The
+     champion card is the one cue with no number: R walks the declaration to it,
+     and it has its own button beside the reveals. */
   var CUES = [
-    {id:"standby",     t:"Title card",        d:"Event name, province, date"},
-    {id:"mechanics",   t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
-    {id:"introduce",   t:"Introduce contestants", d:"Portraits, names and schools"},
-    {id:"round",       t:"Round scores",      d:"By contestant number, for the read-out"},
-    {id:"advancing",   t:"Advancing to R3",   d:"Who made the cut after Round 2"},
-    {id:"leaderboard", t:"Leaderboard",       d:"Ranked, current standings"},
-    {id:"tiebreak",    t:"Sudden death",      d:"Live tie-break marks"},
-    {id:"reveal",      t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
-    {id:"champion",    t:"Champion card",     d:"Full-screen winner, on its own"},
-    {id:"blank",       t:"Blank the screen",  d:"Holding slate between segments"}
+    {id:"standby",     k:"1", t:"Title card",        d:"Event name, province, date"},
+    {id:"mechanics",   k:"2", t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
+    {id:"introduce",   k:"3", t:"Introduce contestants", d:"Portraits, names and schools"},
+    {id:"schools",     k:"4", t:"Students & coaches", d:"School by school, A–Z, each with its coach"},
+    {id:"round",       k:"5", t:"Round scores",      d:"By contestant number, for the read-out"},
+    {id:"advancing",   k:"6", t:"Advancing to R3",   d:"Who made the cut after Round 2"},
+    {id:"leaderboard", k:"7", t:"Leaderboard",       d:"Ranked, current standings"},
+    {id:"tiebreak",    k:"8", t:"Sudden death",      d:"Live tie-break marks"},
+    {id:"reveal",      k:"9", t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
+    {id:"champion",    k:"",  t:"Champion card",     d:"Full-screen winner, on its own"},
+    {id:"blank",       k:"0", t:"Blank the screen",  d:"Holding slate between segments"}
   ];
   function cueName(id){ var c=CUES.filter(function(x){return x.id===id;})[0]; return c?c.t:id; }
 
@@ -1113,7 +1420,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     var open = !!(winRef && !winRef.closed);
     var cues = CUES.map(function(c){
       return '<button class="cue'+(disp.cue===c.id?" on":"")+'" data-cue="'+c.id+'">'+
-        '<b>'+c.t+'</b><span>'+c.d+'</span></button>';
+        '<b>'+(c.k?'<i class="k">'+c.k+'</i>':'')+c.t+'</b><span>'+c.d+'</span></button>';
     }).join("");
     var rounds = ["r1","r2","r3"].map(function(k){
       return '<button class="lbtn'+(disp.round===k?" on":"")+'" data-cue="round" data-round="'+k+'">'+LABEL[k]+'</button>';
@@ -1122,10 +1429,20 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     var pages = pl ? Math.max(1, Math.ceil(pl.length/per())) : 1;
     var mech = disp.cue==="mechanics";
     var intro = disp.cue==="introduce";
+    var sch = disp.cue==="schools";
     var photos = named().filter(function(c){ return isPhoto(c.photo); }).length;
     var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2]].map(function(r){
       return '<button class="lbtn'+(disp.cue==="reveal" && disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
     }).join("");
+
+    var need = unassigned();
+    var coachRow = need.length
+      ? '<div class="deskrow"><span class="lab">Coaches</span>'+
+        '<button class="lbtn" data-goto="roster">Choose the missing coaches</button>'+
+        '<span class="note">'+need.length+' contestant'+(need.length===1?"":"s")+
+        ' come'+(need.length===1?"s":"")+' from a school with more than one coach and none picked \u2014 '+
+        'the students and coaches screen introduces them without one.</span></div>'
+      : "";
 
     // the Round 3 cut, offered here because the operator is on this tab while the
     // Round 2 scores are on screen and the Quizmaster reads out who advances
@@ -1162,6 +1479,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
           }).join("")+
           '<span class="note">The big figure on each tile. The other number stays under it in small type'+
           (sortBy==="score" ? ", and the on-screen order follows whichever you pick" : "")+'.</span></div>'+
+        coachRow+
         cutRow+
         '<div class="deskrow"><span class="lab">Round order on screen</span>'+
           [["By contestant number","no"],["By score \u2014 leader first","score"]].map(function(v){
@@ -1173,18 +1491,26 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
             return '<button class="lbtn'+(disp.cols===v[1]?" on":"")+'" data-cols="'+v[1]+'">'+v[0]+'</button>';
           }).join("")+
           '<span class="note">Tiles read downwards, then across.</span></div>'+
-        '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
-          (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
-            return '<button class="lbtn'+((intro?introPer:perPage)===v?" on":"")+'" data-per="'+v+'">'+v+'</button>';
-          }).join("")+
-          (intro?'<span class="note">One per page introduces them individually.</span>':'')+'</div>'+
+        (mech||sch
+          ? '<div class="deskrow"><span class="lab">Per page</span><span class="note">'+
+            (mech ? 'The mechanics run one screen at a time.'
+                  : 'One school at a time, alphabetically. A school that has sent two or more coaches '+
+                    'takes a screen per coach, so every contestant is introduced beside the right one.')+
+            '</span></div>'
+          : '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
+            (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
+              return '<button class="lbtn'+((intro?introPer:perPage)===v?" on":"")+'" data-per="'+v+'">'+v+'</button>';
+            }).join("")+
+            (intro?'<span class="note">One per page introduces them individually.</span>':'')+'</div>')+
         '<div class="deskrow"><span class="lab">Page</span>'+
           '<button class="lbtn" data-pg="-1"'+(!pl||disp.page===0?" disabled":"")+'>\u25c0 Previous</button>'+
           '<button class="lbtn" data-pg="1"'+(!pl||disp.page>=pages-1?" disabled":"")+'>Next \u25b6</button>'+
           '<span class="note">'+(pl
             ? (mech ? (pl.length+" mechanics screens \u00b7 showing screen "+(disp.page+1)+" of "+pages)
-                    : (pl.length+" contestants \u00b7 "+per()+" per page \u00b7 showing page "+
-                       (disp.page+1)+" of "+pages))
+              : (sch ? (pl.length+" screen"+(pl.length===1?"":"s")+" \u00b7 school by school \u00b7 showing "+
+                        (disp.page+1)+" of "+pages)
+                     : (pl.length+" contestants \u00b7 "+per()+" per page \u00b7 showing page "+
+                        (disp.page+1)+" of "+pages)))
             : "This cue is a single screen")+'</span></div>'+
         '<div class="deskrow"><span class="lab">Reveal</span>'+rev+
           '<button class="lbtn" data-reveal="0">Hide both</button>'+
@@ -1192,7 +1518,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
           '<span class="note">The champion has a card of their own — R walks the three in order.</span></div>'+
       '</div>'+
       '<div class="legend">Shortcuts: T returns to the title card and M shows the contest mechanics, from anywhere. '+
-      'On this tab, 1–9 and 0 pick a cue, left and right arrows turn the page, and R walks the declaration — '+
+      'On this tab, the number badge on each cue picks it, left and right arrows turn the page, and R walks the declaration — '+
       '3rd placer, 2nd placer, then the champion’s card.'+
       (photos<named().length ? ' <b>'+(named().length-photos)+' contestants have no photo yet</b> — add them on the Roster tab; the introduction screen shows their number instead.' : '')+
       '</div></div>';
@@ -1237,7 +1563,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
   // the mechanics cue pages one screen at a time; portraits and score tiles
   // page at their own counts, since a portrait needs far more room than a score
   function per(){
-    if(disp.cue==="mechanics") return 1;
+    if(disp.cue==="mechanics" || disp.cue==="schools") return 1;
     if(disp.cue==="introduce") return introPer;
     return perPage;
   }
@@ -1267,6 +1593,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     var s2 = standings();
     if(disp.cue==="mechanics") return mechPages();
     if(disp.cue==="introduce") return named();
+    if(disp.cue==="schools") return introGroups();
     if(disp.cue==="round") return roundList(disp.round);
     if(disp.cue==="advancing") return hasMarks("r2") ? qualifiers() : [];
     if(disp.cue==="leaderboard") return s2.rows;
@@ -1421,6 +1748,36 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
           var n2 = Object.keys(sch).length;
           return n2 ? (n2+" school"+(n2===1?"":"s")) : "the province";
         })()+'</small></div>'+body+'</div></div>';
+    }
+
+    /* Introduction of students and coaches — one school at a time, in
+       alphabetical order, each contestant beside the coach who brought them. */
+    if(disp.cue==="schools"){
+      var gps = introGroups();
+      if(!gps.length) return '<div class="dsp">'+dspHead("Students and coaches")+
+        '<div class="body"><div class="none">No contestants yet</div></div></div>';
+      var pgg = pageOf(gps), g = pgg.slice[0];
+      var ns = g.students.length;
+      // one row up to four, then two rows — a portrait needs height above all
+      var scol = ns>4 ? Math.ceil(ns/2) : ns;
+      var coachBar = g.coach
+        ? '<div class="coach">'+portrait(g.coach)+
+          '<div class="ctxt"><div class="lbl">Coach</div>'+
+          '<div class="who">'+esc(g.coach.name)+'</div></div></div>'
+        : '';
+      return '<div class="dsp">'+dspHead("Students and coaches")+
+        '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
+        '<div class="sect">'+esc(g.school || "No school given")+
+        '<small>'+ns+' contestant'+(ns===1?"":"s")+'</small></div>'+
+        '<div class="schl">'+coachBar+
+          '<div class="stus" style="grid-template-columns:repeat('+scol+',minmax(0,1fr))">'+
+          g.students.map(function(c){
+            return '<div class="icard">'+portrait(c)+
+              '<div class="itxt"><div class="num">No. '+c.no+'</div>'+
+              '<div class="who">'+esc(c.name)+'</div></div></div>';
+          }).join("")+'</div>'+
+        '</div>'+
+        pagerHTML(pgg, 'Screen '+(disp.page+1)+' of '+pgg.pages)+'</div></div>';
     }
 
     if(disp.cue==="round"){
@@ -1596,7 +1953,11 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
 
   // the audience window is a separate document, so its buttons are wired by hand
   function wireScene(root){
-    var bs = root.querySelectorAll(".pager .pg");
+    // in the preview the scene lives in this document, where the delegated
+    // [data-pg] handler already catches the pager — wiring it again here would
+    // turn two pages on one click
+    var own = root.ownerDocument === document;
+    var bs = own ? [] : root.querySelectorAll(".pager .pg");
     Array.prototype.forEach.call(bs, function(b){
       b.onclick = function(){ turnPage(+b.dataset.pg); };
     });
@@ -1657,7 +2018,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
      PHOTO_MAX on its long side before it is stored. A 4 MB phone photo comes
      out around 80 KB, so a full roster adds a couple of megabytes, not sixty. */
   var PHOTO_MAX = 720;
-  var photoFor = null;            // which contestant the file picker is filling
+  var photoFor = null;            // {kind:"c"|"k", i:index} — who the file picker is filling
 
   function isPhoto(v){ return typeof v==="string" && /^data:image\//.test(v); }
 
@@ -1685,27 +2046,30 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     fr.readAsDataURL(file);
   }
 
-  function pickPhoto(i){ photoFor = i; $("photoIn").click(); }
+  function pickPhoto(kind, i){ photoFor = {kind:kind, i:i}; $("photoIn").click(); }
 
   $("photoIn").addEventListener("change", function(e){
-    var f = e.target.files[0], i = photoFor;
+    var f = e.target.files[0], tgt = photoFor;
     e.target.value = ""; photoFor = null;
-    if(!f || i==null) return;
+    if(!f || !tgt) return;
     if(!/^image\//.test(f.type)){ toast("That file isn't a picture"); return; }
     shrink(f, function(uri){
       if(!uri){ toast("Could not read that picture"); return; }
-      state.contestants[i].photo = uri;
+      var who = tgt.kind==="k" ? coaches()[tgt.i] : state.contestants[tgt.i];
+      if(!who) return;
+      who.photo = uri;
       render();
-      toast("Photo added for "+(state.contestants[i].name || ("slot "+state.contestants[i].no)));
+      toast("Photo added for "+(who.name || (tgt.kind==="k" ? "the coach" : "slot "+who.no)));
     });
   });
 
-  // portrait for the audience screen, with a numbered placeholder when there is none
+  /* Portrait for the audience screen. With no photo it falls back to the
+     contestant's number, or — for a coach, who has no number — their initials. */
   function portrait(c, extra){
     return '<div class="por'+(extra?" "+extra:"")+'">'+
       (isPhoto(c.photo)
         ? '<img src="'+c.photo+'" alt="'+esc(c.name)+'">'
-        : '<div class="noimg">'+c.no+'</div>')+'</div>';
+        : '<div class="noimg">'+esc(c.no==null ? initials(c.name) : String(c.no))+'</div>')+'</div>';
   }
 
   /* ===================== the Round 3 cut ===================== */
@@ -1819,13 +2183,23 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
       return;
     }
     var phEl = t.closest ? t.closest("[data-photo]") : null;
-    if(phEl){ pickPhoto(+phEl.dataset.photo); return; }
+    if(phEl){ pickPhoto("c", +phEl.dataset.photo); return; }
     var unphEl = t.closest ? t.closest("[data-unphoto]") : null;
     if(unphEl){
       var ci = +unphEl.dataset.unphoto;
       state.contestants[ci].photo = null; render(); toast("Photo removed");
       return;
     }
+    var kphEl = t.closest ? t.closest("[data-kphoto]") : null;
+    if(kphEl){ pickPhoto("k", +kphEl.dataset.kphoto); return; }
+    var kunEl = t.closest ? t.closest("[data-kunphoto]") : null;
+    if(kunEl){
+      var ki = +kunEl.dataset.kunphoto;
+      if(coaches()[ki]){ coaches()[ki].photo = null; render(); toast("Photo removed"); }
+      return;
+    }
+    var kdEl = t.closest ? t.closest("[data-kdel]") : null;
+    if(kdEl){ removeCoach(+kdEl.dataset.kdel); return; }
     var sortEl = t.closest ? t.closest("[data-sort]") : null;
     if(sortEl){ sortBy = sortEl.dataset.sort; disp.page = 0; render(); return; }
     var valEl = t.closest ? t.closest("[data-val]") : null;
@@ -1886,6 +2260,10 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
       case "btnPaste": $("pasteBox").classList.add("show"); $("pasteText").focus(); break;
       case "btnPasteCancel": $("pasteBox").classList.remove("show"); break;
       case "btnPasteGo": loadPaste(); break;
+      case "btnAddCoach": case "btnAddCoach2": addCoach(); break;
+      case "btnKPaste": $("kPasteBox").classList.add("show"); $("kPasteText").focus(); break;
+      case "btnKPasteCancel": $("kPasteBox").classList.remove("show"); break;
+      case "btnKPasteGo": loadCoachPaste(); break;
       case "btnPrint": window.print(); break;
       case "btnDisplay": case "btnDisplay2": openDisplay(); break;
       case "btnCloseDisplay": if(winRef && !winRef.closed) winRef.close(); winRef=null; render(); break;
@@ -1916,12 +2294,29 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     var t = e.target;
     if(t.classList && t.classList.contains("rin")){
       state.contestants[+t.dataset.i][t.dataset.f] = t.value;
-      renderTop(); renderTabs(); paintDisplay();
+      renderTop(); renderTabs(); refreshCoachUI(); paintDisplay();
       var note = document.querySelector(".panel-head .note");
       if(note) note.textContent = named().length+" of "+state.contestants.length+" slots filled";
       return;
     }
+    if(t.classList && t.classList.contains("kin")){
+      var kk = coaches()[+t.dataset.ki];
+      if(kk){ kk[t.dataset.kf] = t.value; refreshCoachUI(); paintDisplay(); }
+      return;
+    }
     if(t.dataset && t.dataset.m){ state.meta[t.dataset.m] = t.value; renderTop(); paintDisplay(); }
+  });
+
+  // the roster's coach chooser — a full redraw, since it moves a contestant
+  // from one coach to another everywhere they are listed
+  document.addEventListener("change", function(e){
+    var t = e.target;
+    if(t.dataset && t.dataset.coach!==undefined){
+      var c = state.contestants[+t.dataset.coach];
+      c.coachId = t.value || null;
+      render();
+      toast(c.coachId ? (c.name||("No. "+c.no))+" is under "+coachName(c) : "Coach cleared");
+    }
   });
 
   document.addEventListener("keydown", function(e){
@@ -1937,8 +2332,8 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
       if(e.key==="ArrowLeft"){ e.preventDefault(); turnPage(-1); return; }
       if(e.key==="ArrowRight"){ e.preventDefault(); turnPage(1); return; }
       if(/^[0-9]$/.test(e.key)){
-        var ci = e.key==="0" ? 9 : (+e.key-1);    // 1–9 then 0 for the tenth cue
-        if(CUES[ci]){ setCue(CUES[ci].id); return; }
+        var hit = CUES.filter(function(x){ return x.k===e.key; })[0];
+        if(hit){ setCue(hit.id); return; }
       }
       // R walks the declaration: 3rd placer, 2nd placer, then the champion's own card
       if(e.key==="r" || e.key==="R"){
@@ -2002,10 +2397,21 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
         if(!d.meta.sdCount) d.meta.sdCount = 5;
         if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
         if(!Array.isArray(d.sdAck)) d.sdAck = [];
+        if(!Array.isArray(d.coaches)) d.coaches = [];              // sessions saved before coaches existed
         sdPop = null;
+        var kids = [];
+        d.coaches.forEach(function(k,ix){
+          if(!k.id || kids.indexOf(k.id)>=0) k.id = "k"+(ix+1)+"-"+ix;
+          if(typeof k.name!=="string") k.name = "";
+          if(typeof k.school!=="string") k.school = "";
+          if(!isPhoto(k.photo)) k.photo = null;
+          kids.push(k.id);
+        });
         d.contestants.forEach(function(c){
           if(!c.sd || typeof c.sd[0]==="boolean") c.sd = new Array(d.meta.sdCount).fill(null);
           if(!isPhoto(c.photo)) c.photo = null;   // only ever put a data: image in an <img src>
+          // a chosen coach who is no longer in the file goes back to following the school
+          if(typeof c.coachId!=="string" || kids.indexOf(c.coachId)<0) c.coachId = null;
         });
         state = d; render(); toast("Session restored");
       }catch(err){ toast("That file isn't a saved PSQ session"); }
@@ -2325,7 +2731,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
 
   function exportCsv(){
     var s = standings(), q = qualifiers();
-    var head = ["No.","Name","School"];
+    var head = ["No.","Name","School","Coach"];
     ["r1","r2","r3"].forEach(function(k){
       for(var i=1;i<=QN;i++) head.push(LABEL[k]+" Q"+i);
       head.push(LABEL[k]+" total");
@@ -2334,7 +2740,7 @@ td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
     head.push("Rounds 1 & 2","Qualified for Round 3","Grand total","Place");
     var lines = [head];
     named().forEach(function(c){
-      var row = [c.no,c.name,c.school];
+      var row = [c.no,c.name,c.school,coachName(c)];
       ["r1","r2","r3"].forEach(function(k){
         for(var i=0;i<QN;i++) row.push(c[k][i]?PTS[k]:0);
         row.push(rt(c,k));

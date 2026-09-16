@@ -25,6 +25,13 @@ rows 7–8, contestants from row 9. The Board of Judges blocks and the point not
 follow the data and shift down automatically if there are more than 22
 contestants.
 
+## What the form does not carry
+
+Coaches are not on PSQ Form 1 — the office template has no column for them, and
+the export is cell-for-cell with that template. They are in the saved session
+`.json` and in the plain CSV (a **Coach** column, after School), which is where
+to look if the Secretariat asks who coached whom.
+
 ## Formulas, not baked numbers
 
 The export writes the template's own formulas so the sheet stays live — a judge

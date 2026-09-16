@@ -72,7 +72,8 @@ docs/
 | --- | --- |
 | scoring | `rt`, `cum12`, `grand`, `qualifiers`, `sdStreak`, `standings`, `unresolved` |
 | console header | `renderTop`, `renderTabs` — the Top 3 strip and tab bar |
-| console views | `renderRoster`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
+| coaches | `coachesAt`, `coachOf`, `unassigned`, `introGroups` — who coaches whom |
+| console views | `renderRoster`, `renderCoachPanel`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
 | portraits | `shrink`, `pickPhoto`, `portrait` — photos in, and how they are drawn |
 | audience screen | `sceneHTML`, `fit`, `paintDisplay`, `openDisplay` |
 | events | one delegated `click` handler, one `keydown`, one `input` |
@@ -80,8 +81,8 @@ docs/
 | session | `saveSession`, restore, `exportCsv` |
 
 State is one plain object, `state`, holding `meta`, `cut` (the announced Round 3
-cut, once there is one) and `contestants` — each of which carries its `photo` as
-a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
+cut, once there is one), `coaches` and `contestants` — each of which carries its
+`photo` as a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
 deliberately kept out of it so the saved session file stays about the contest,
 not about the projector.
 
@@ -113,10 +114,30 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   They ride inside the session `.json`, so one file still carries the whole
   contest to the venue. A contestant with no photo shows their number instead —
   nothing breaks if some pictures never arrive.
+- **Coaches.** The Roster tab has a Coaches table under the roster — a name and
+  a school each, with an optional photo, or *Paste from Excel* for the lot. Which
+  coach a contestant is under is then derived, not typed twice: **one coach at a
+  school and every contestant of that school is theirs**, and the roster's Coach
+  column just says so. Only when a school has sent **two or more** does that
+  column turn into a chooser, because that is the one case nobody can infer. A
+  banner names any contestant still waiting to be assigned, and the Display tab
+  repeats it, so nobody reaches the projector unpaired by accident. Match the
+  spelling of the school in both tables — the box offers the ones already typed,
+  and matching ignores case and extra spaces. Editing either school re-derives
+  the pairing, so a coach who moves never drags a contestant with them.
+
 - **Introduce contestants** is a cue of its own: portraits with name and school,
   paged. Set *Portraits per page* to 1 on the Display tab to introduce them one
   at a time — a single large portrait with the name and school beside it — or 4,
   6, 8 to show a row at a time.
+
+- **Introduction of students and coaches** is the second introduction cue, and it
+  runs by school rather than by number: the schools in alphabetical order, one to
+  a screen, the coach across the top and their contestants below. A school that
+  has sent two or more coaches takes a screen per coach, so each contestant is
+  introduced beside the one who brought them, and the schools still come out in
+  order. Contestants with no school given come last. Paging is `←` `→` as
+  everywhere else; there is no per-page setting, since a screen is a school.
 - **Declaring the winners.** The reveal screen carries the **2nd and 3rd placers
   only**, each with their portrait; the champion has a full-screen card of their
   own. `R` walks the whole declaration in order: 3rd placer, 2nd placer, then the
@@ -143,8 +164,10 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   cut* and re-apply. Applying it clears any Round 3 marks already ticked for an
   eliminated contestant.
 - **Shortcuts:** `T` returns to the title card and `M` shows the contest
-  mechanics, from anywhere. On the Display tab, `1`–`9` then `0` pick a cue,
-  `←` `→` turn the page, `R` walks the declaration of winners.
+  mechanics, from anywhere. On the Display tab each cue carries its own number in
+  the corner — press it to pick that cue — `←` `→` turn the page, and `R` walks
+  the declaration of winners. The champion card is the one cue without a number:
+  `R` reaches it, and so does the button beside the reveals.
 
 ---
 
