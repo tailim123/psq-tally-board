@@ -159,9 +159,9 @@ td.st{font-size:12px}
 .pill.qual{background:var(--yellow)}
 .sep{border-left:3px solid var(--ink)}
 
-.rin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
-.rin:hover{border-color:#C9D3E2}
-.rin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
+.rin,.kin,.jin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
+.rin:hover,.kin:hover,.jin:hover{border-color:#C9D3E2}
+.rin:focus,.kin:focus,.jin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
 
 /* roster coach cell — a name when the school settles it, a chooser when not */
 td.coachcell{min-width:200px;font-size:12.5px}
@@ -170,6 +170,7 @@ td.coachcell{min-width:200px;font-size:12.5px}
   font-weight:650;max-width:100%;
 }
 .csel.need{background:#FCE2DC;border-color:#8E2413;color:#8E2413}
+.jsel{border:2.5px solid var(--ink);border-radius:6px;padding:5px 8px;background:#fff;font-weight:650}
 .cmute{color:var(--muted);font-weight:600;font-style:italic}
 .cwarn{color:#8E2413;font-weight:650;font-size:11.5px}
 .conly{font-weight:700;display:block;line-height:1.3}

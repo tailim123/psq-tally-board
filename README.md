@@ -74,6 +74,7 @@ docs/
 | console header | `renderTop`, `renderTabs` — the Top 3 strip and tab bar |
 | coaches | `coachesAt`, `coachOf`, `unassigned`, `introGroups` — who coaches whom |
 | schools | `schoolList`, `schoolLogo` — the schools typed so far, and their logos |
+| judges | `judges`, `namedJudges` — the Board of Judges, in the order introduced |
 | console views | `renderRoster`, `renderCoachPanel`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
 | portraits | `shrink`, `pickPhoto`, `portrait` — photos in, and how they are drawn |
 | audience screen | `sceneHTML`, `fit`, `paintDisplay`, `openDisplay` |
@@ -82,8 +83,8 @@ docs/
 | session | `saveSession`, restore, `exportCsv` |
 
 State is one plain object, `state`, holding `meta`, `cut` (the announced Round 3
-cut, once there is one), `coaches`, `schools` (only those a logo was added for)
-and `contestants` — each of which carries its `photo` as a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
+cut, once there is one), `coaches`, `schools` (only those a logo was added for),
+`judges` and `contestants` — each of which carries its `photo` as a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
 deliberately kept out of it so the saved session file stays about the contest,
 not about the projector.
 
@@ -176,6 +177,19 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   single large portrait with the name beside it, the same card the coach gets —
   or 4, 6, 8 to show a row at a time. A school with more contestants than that
   takes more than one screen before its coach. Turn the screens with `←` `→`.
+- **The Board of Judges.** A panel of their own on the Roster tab: a name, a role
+  (*Chairman* or *Member*, the two the mechanics and PSQ Form 1 use), an optional
+  office or position, and a photo. **Board of Judges** is then a cue on the
+  Display tab that introduces them **one to a screen** — portrait, role, name and
+  office — on the same card the coaches get, so the two introductions read as one
+  piece of the ceremony.
+
+  The order of the rows is the order they are introduced in; the `▲` `▼` arrows
+  on each row set it, which is how you put the chairman last if that is how the
+  programme runs. A judge with no photo shows their initials. None of this touches
+  the scoring, and Form 1 still leaves the Board's signature blocks blank to be
+  signed by hand.
+
 - **Declaring the winners.** The reveal screen carries the **2nd and 3rd placers
   only**, each with their portrait; the champion has a full-screen card of their
   own. `R` walks the whole declaration in order: 3rd placer, 2nd placer, then the
@@ -204,7 +218,8 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
 - **Shortcuts:** `T` returns to the title card and `M` shows the contest
   mechanics, from anywhere. On the Display tab each cue carries its own number in
   the corner — press it to pick that cue — `←` `→` turn the page, and `R` walks
-  the declaration of winners.
+  the declaration of winners. The champion card is the one cue without a number:
+  `R` reaches it, and so does the button beside the reveals.
 
 ---
 

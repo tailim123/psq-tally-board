@@ -166,9 +166,9 @@ td.st{font-size:12px}
 .pill.qual{background:var(--yellow)}
 .sep{border-left:3px solid var(--ink)}
 
-.rin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
-.rin:hover{border-color:#C9D3E2}
-.rin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
+.rin,.kin,.jin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
+.rin:hover,.kin:hover,.jin:hover{border-color:#C9D3E2}
+.rin:focus,.kin:focus,.jin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
 
 /* roster coach cell — a name when the school settles it, a chooser when not */
 td.coachcell{min-width:200px;font-size:12.5px}
@@ -177,6 +177,7 @@ td.coachcell{min-width:200px;font-size:12.5px}
   font-weight:650;max-width:100%;
 }
 .csel.need{background:#FCE2DC;border-color:#8E2413;color:#8E2413}
+.jsel{border:2.5px solid var(--ink);border-radius:6px;padding:5px 8px;background:#fff;font-weight:650}
 .cmute{color:var(--muted);font-weight:600;font-style:italic}
 .cwarn{color:#8E2413;font-weight:650;font-size:11.5px}
 .conly{font-weight:700;display:block;line-height:1.3}
@@ -689,6 +690,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     sdAck:[],          // tie-breaks the operator has seen resolved and cleared away
     coaches:[],        // {id, name, school, photo} — one entry per registered coach
     schools:[],        // {name, logo} — only the schools a logo has been added for
+    judges:[],         // {name, role, office, photo} — the Board of Judges, in the order introduced
     contestants:[]
   };
   for(var i=1;i<=22;i++) state.contestants.push(blankC(i));
@@ -949,6 +951,14 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     return out;
   }
 
+  /* The Board of Judges — Section A of the mechanics. They are introduced one to
+     a screen, in the order they are listed here, so the list is the running
+     order and the arrows in the panel are how it is set. */
+  var JUDGE_ROLES = ["Chairman", "Member"];
+  function judges(){ return state.judges || (state.judges = []); }
+  function namedJudges(){ return judges().filter(function(j){ return j.name.trim()!==""; }); }
+  function chairs(){ return namedJudges().filter(function(j){ return j.role==="Chairman"; }); }
+
   function initials(s){
     var p = String(s==null?"":s).trim().split(/\s+/).filter(Boolean);
     if(!p.length) return "?";
@@ -1117,9 +1127,84 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       'They appear on the Introduce contestants screen and on the winners’ cards. '+
       'The Coach column fills itself from the school — it only asks when a school has sent more than one coach. '+
       'Delete row takes a contestant off altogether; the rows below move up a number, since the number is the slot.</div></div>'+
-      renderCoachPanel()+
+      renderCoachPanel()+renderJudgePanel()+
       '<div id="schoolPanel">'+renderSchoolPanel()+'</div>'+
       '<datalist id="schoolList">'+schoolOptions()+'</datalist>';
+  }
+
+  /* ---- the Board of Judges ---- */
+  function renderJudgePanel(){
+    var js = judges();
+    var rows = js.map(function(j,i){
+      var has = isPhoto(j.photo);
+      return '<tr><td class="no pad">'+(i+1)+'</td>'+
+        '<td class="pad"><input class="jin" data-jf="name" data-ji="'+i+'" value="'+esc(j.name)+'" placeholder="Judge’s name"></td>'+
+        '<td class="pad"><select class="jsel" data-jrole="'+i+'" aria-label="Role of '+esc(j.name||("judge "+(i+1)))+'">'+
+          JUDGE_ROLES.map(function(r){
+            return '<option'+(j.role===r?" selected":"")+'>'+r+'</option>';
+          }).join("")+'</select></td>'+
+        '<td class="pad"><input class="jin" data-jf="office" data-ji="'+i+'" value="'+esc(j.office||"")+'" placeholder="Office or position (optional)"></td>'+
+        '<td class="pad photocell">'+
+          (has ? '<img class="thumb" src="'+j.photo+'" alt="'+esc(j.name)+'">'
+               : '<span class="thumb none">'+esc(initials(j.name))+'</span>')+
+          '<button class="lbtn tiny" data-jphoto="'+i+'">'+(has?"Replace":"Add photo")+'</button>'+
+          (has ? '<button class="lbtn tiny danger" data-junphoto="'+i+'">Remove</button>' : '')+
+        '</td>'+
+        '<td class="pad actions">'+
+          '<button class="lbtn tiny" data-jmove="'+i+'" data-dir="-1"'+(i===0?" disabled":"")+
+            ' aria-label="Introduce '+esc(j.name||("judge "+(i+1)))+' earlier">\u25b2</button>'+
+          '<button class="lbtn tiny" data-jmove="'+i+'" data-dir="1"'+(i===js.length-1?" disabled":"")+
+            ' aria-label="Introduce '+esc(j.name||("judge "+(i+1)))+' later">\u25bc</button>'+
+          '<button class="lbtn tiny danger" data-jdel="'+i+'">Delete row</button>'+
+        '</td></tr>';
+    }).join("");
+
+    var body = js.length
+      ? '<div class="scroll"><table><thead><tr><th class="c">Order</th><th>Name</th><th>Role</th>'+
+        '<th>Office or position</th><th class="c">Photo</th><th></th></tr></thead>'+
+        '<tbody>'+rows+'</tbody></table></div>'
+      : '<div class="empty-state"><p>No judges encoded yet. The Board of Judges oversees the contest '+
+        'and its decision is final — encode them here to introduce them on screen.</p>'+
+        '<button class="lbtn go" id="btnAddJudge">Add a judge</button></div>';
+
+    var ch = chairs(), note;
+    if(!namedJudges().length) note = "none encoded";
+    else if(!ch.length) note = namedJudges().length+" encoded · no chairman marked yet";
+    else if(ch.length>1) note = namedJudges().length+" encoded · "+ch.length+" are marked chairman";
+    else note = namedJudges().length+" encoded · chaired by "+ch[0].name;
+
+    return '<div class="panel">'+
+      '<div class="panel-head"><h3>Board of Judges</h3><span class="note">'+esc(note)+
+      ' · introduced one to a screen, in this order</span>'+
+      '<div class="right"><button class="lbtn" id="btnAddJudge2">Add a judge</button></div></div>'+
+      body+
+      '<div class="legend">The order here is the order they are introduced in — use the arrows to change it. '+
+      'The role and the office both show on their screen, under a portrait; a judge with no photo shows their initials. '+
+      'None of this touches the scoring, and PSQ Form 1 still leaves the Board’s signature blocks blank to be signed by hand.</div></div>';
+  }
+
+  function addJudge(){
+    judges().push({name:"", role:"Member", office:"", photo:null});
+    render();
+    var el = document.querySelector('.jin[data-jf="name"][data-ji="'+(judges().length-1)+'"]');
+    if(el) el.focus();
+  }
+  function removeJudge(i){
+    var j = judges()[i];
+    if(!j) return;
+    if(j.name.trim() && !confirm("Delete "+j.name+" from the Board of Judges?")) return;
+    judges().splice(i,1);
+    photoFor = null;                    // a file picker mid-flight no longer knows its row
+    render(); toast((j.name.trim()||"The judge")+" deleted");
+  }
+  function moveJudge(i, d){
+    var js = judges(), to = i+d;
+    if(to<0 || to>=js.length) return;
+    var tmp = js[i]; js[i] = js[to]; js[to] = tmp;
+    photoFor = null;
+    render();
+    var el = document.querySelector('[data-jmove="'+to+'"][data-dir="'+d+'"]');
+    if(el && !el.disabled) el.focus();
   }
 
   /* ---- school logos ----
@@ -1598,12 +1683,13 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     {id:"standby",     k:"1", t:"Title card",        d:"Event name, province, date"},
     {id:"mechanics",   k:"2", t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
     {id:"introduce",   k:"3", t:"Introduce contestants", d:"School by school, each followed by their coach"},
-    {id:"round",       k:"4", t:"Round scores",      d:"By contestant number, for the read-out"},
-    {id:"advancing",   k:"5", t:"Advancing to R3",   d:"Who made the cut after Round 2"},
-    {id:"leaderboard", k:"6", t:"Leaderboard",       d:"Ranked, current standings"},
-    {id:"tiebreak",    k:"7", t:"Sudden death",      d:"Live tie-break marks"},
-    {id:"reveal",      k:"8", t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
-    {id:"champion",    k:"9", t:"Champion card",     d:"Full-screen winner, on its own"},
+    {id:"judges",      k:"4", t:"Board of Judges",   d:"One judge to a screen, in the order you set"},
+    {id:"round",       k:"5", t:"Round scores",      d:"By contestant number, for the read-out"},
+    {id:"advancing",   k:"6", t:"Advancing to R3",   d:"Who made the cut after Round 2"},
+    {id:"leaderboard", k:"7", t:"Leaderboard",       d:"Ranked, current standings"},
+    {id:"tiebreak",    k:"8", t:"Sudden death",      d:"Live tie-break marks"},
+    {id:"reveal",      k:"9", t:"2nd & 3rd placers", d:"Third, then second — champion is separate"},
+    {id:"champion",    k:"",  t:"Champion card",     d:"Full-screen winner, reached by R"},
     {id:"blank",       k:"0", t:"Blank the screen",  d:"Holding slate between segments"}
   ];
   function cueName(id){ var c=CUES.filter(function(x){return x.id===id;})[0]; return c?c.t:id; }
@@ -1621,6 +1707,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     var pages = pl ? Math.max(1, Math.ceil(pl.length/per())) : 1;
     var mech = disp.cue==="mechanics";
     var intro = disp.cue==="introduce";
+    var jud = disp.cue==="judges";
     var photos = named().filter(function(c){ return isPhoto(c.photo); }).length;
     var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2]].map(function(r){
       return '<button class="lbtn'+(disp.cue==="reveal" && disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
@@ -1682,9 +1769,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
             return '<button class="lbtn'+(disp.cols===v[1]?" on":"")+'" data-cols="'+v[1]+'">'+v[0]+'</button>';
           }).join("")+
           '<span class="note">Tiles read downwards, then across.</span></div>'+
-        (mech
+        (mech||jud
           ? '<div class="deskrow"><span class="lab">Per page</span>'+
-            '<span class="note">The mechanics run one screen at a time.</span></div>'
+            '<span class="note">'+(mech ? 'The mechanics run one screen at a time.'
+                                        : 'The judges are introduced one to a screen \u2014 set the order on the Roster tab.')+
+            '</span></div>'
           : '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
             (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
               return '<button class="lbtn'+((intro?introPer:perPage)===v?" on":"")+'" data-per="'+v+'">'+v+'</button>';
@@ -1696,10 +1785,12 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
           '<button class="lbtn" data-pg="1"'+(!pl||disp.page>=pages-1?" disabled":"")+'>Next \u25b6</button>'+
           '<span class="note">'+(pl
             ? (mech ? (pl.length+" mechanics screens \u00b7 showing screen "+(disp.page+1)+" of "+pages)
+              : (jud ? (pl.length+" judge"+(pl.length===1?"":"s")+" \u00b7 one to a screen \u00b7 showing "+
+                        (disp.page+1)+" of "+pages)
               : (intro ? (pl.length+" screen"+(pl.length===1?"":"s")+" \u00b7 school by school, each followed "+
                           "by their coach \u00b7 showing "+(disp.page+1)+" of "+pages)
                        : (pl.length+" contestants \u00b7 "+per()+" per page \u00b7 showing page "+
-                          (disp.page+1)+" of "+pages)))
+                          (disp.page+1)+" of "+pages))))
             : "This cue is a single screen")+'</span></div>'+
         '<div class="deskrow"><span class="lab">Reveal</span>'+rev+
           '<button class="lbtn" data-reveal="0">Hide both</button>'+
@@ -1757,7 +1848,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   // entry, so they page one at a time; Portraits per page shapes the
   // introduction when its screens are built, not when they are turned
   function per(){
-    if(disp.cue==="mechanics" || disp.cue==="introduce") return 1;
+    if(disp.cue==="mechanics" || disp.cue==="introduce" || disp.cue==="judges") return 1;
     return perPage;
   }
 
@@ -1786,6 +1877,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     var s2 = standings();
     if(disp.cue==="mechanics") return mechPages();
     if(disp.cue==="introduce") return introScreens();
+    if(disp.cue==="judges") return namedJudges();
     if(disp.cue==="round") return roundList(disp.round);
     if(disp.cue==="advancing") return hasMarks("r2") ? qualifiers() : [];
     if(disp.cue==="leaderboard") return s2.rows;
@@ -1968,6 +2060,26 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
         schoolHead(sc.school, sub)+
         body+pagerHTML(pgi, 'Screen '+(disp.page+1)+' of '+pgi.pages)+'</div></div>';
+    }
+
+    /* The Board of Judges, one to a screen — the same card the coach gets, so
+       the two introductions read as one piece of the ceremony. */
+    if(disp.cue==="judges"){
+      var jl = namedJudges();
+      if(!jl.length) return '<div class="dsp">'+dspHead("Board of Judges")+
+        '<div class="body"><div class="none">No judges encoded yet</div></div></div>';
+      var pgj = pageOf(jl), jg = pgj.slice[0];
+      return '<div class="dsp">'+dspHead("Board of Judges")+
+        '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
+        '<div class="sect">Board of Judges'+
+        (pgj.pages>1 ? '<small>'+(disp.page+1)+' of '+pgj.pages+'</small>' : '')+'</div>'+
+        '<div class="intro solo" style="grid-template-columns:repeat(1,minmax(0,1fr))">'+
+        '<div class="icard">'+portrait(jg)+
+        '<div class="itxt"><div class="num">'+esc(jg.role || "Member")+'</div>'+
+        '<div class="who">'+esc(jg.name)+'</div>'+
+        (jg.office ? '<div class="sch">'+esc(jg.office)+'</div>' : '')+
+        '</div></div></div>'+
+        pagerHTML(pgj, 'Judge '+(disp.page+1)+' of '+pgj.pages)+'</div></div>';
     }
 
     if(disp.cue==="round"){
@@ -2269,11 +2381,13 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     }
     shrink(f, function(uri){
       if(!uri){ toast("Could not read that picture"); return; }
-      var who = tgt.kind==="k" ? coaches()[tgt.i] : state.contestants[tgt.i];
+      var who = tgt.kind==="k" ? coaches()[tgt.i]
+              : (tgt.kind==="j" ? judges()[tgt.i] : state.contestants[tgt.i]);
       if(!who) return;
       who.photo = uri;
       render();
-      toast("Photo added for "+(who.name || (tgt.kind==="k" ? "the coach" : "slot "+who.no)));
+      toast("Photo added for "+(who.name ||
+        (tgt.kind==="k" ? "the coach" : (tgt.kind==="j" ? "the judge" : "slot "+who.no))));
     });
   });
 
@@ -2409,6 +2523,18 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       state.contestants[ci].photo = null; render(); toast("Photo removed");
       return;
     }
+    var jphEl = t.closest ? t.closest("[data-jphoto]") : null;
+    if(jphEl){ pickPhoto("j", +jphEl.dataset.jphoto); return; }
+    var junEl = t.closest ? t.closest("[data-junphoto]") : null;
+    if(junEl){
+      var ji = +junEl.dataset.junphoto;
+      if(judges()[ji]){ judges()[ji].photo = null; render(); toast("Photo removed"); }
+      return;
+    }
+    var jmvEl = t.closest ? t.closest("[data-jmove]") : null;
+    if(jmvEl && !jmvEl.disabled){ moveJudge(+jmvEl.dataset.jmove, +jmvEl.dataset.dir); return; }
+    var jdEl = t.closest ? t.closest("[data-jdel]") : null;
+    if(jdEl){ removeJudge(+jdEl.dataset.jdel); return; }
     var slEl = t.closest ? t.closest("[data-slogo]") : null;
     if(slEl){ pickPhoto("s", 0, slEl.dataset.slogo); return; }
     var slDel = t.closest ? t.closest("[data-slogodel]") : null;
@@ -2487,6 +2613,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       case "btnPasteGo": loadPaste(); break;
       case "btnTrim": trimEmpty(); break;
       case "btnAddCoach": case "btnAddCoach2": addCoach(); break;
+      case "btnAddJudge": case "btnAddJudge2": addJudge(); break;
       case "btnKPaste": $("kPasteBox").classList.add("show"); $("kPasteText").focus(); break;
       case "btnKPasteCancel": $("kPasteBox").classList.remove("show"); break;
       case "btnKPasteGo": loadCoachPaste(); break;
@@ -2525,6 +2652,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       if(note) note.textContent = named().length+" of "+state.contestants.length+" slots filled";
       return;
     }
+    if(t.classList && t.classList.contains("jin")){
+      var jj = judges()[+t.dataset.ji];
+      if(jj){ jj[t.dataset.jf] = t.value; paintDisplay(); }
+      return;
+    }
     if(t.classList && t.classList.contains("kin")){
       var kk = coaches()[+t.dataset.ki];
       if(kk){ kk[t.dataset.kf] = t.value; refreshCoachUI(); paintDisplay(); }
@@ -2537,6 +2669,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   // from one coach to another everywhere they are listed
   document.addEventListener("change", function(e){
     var t = e.target;
+    if(t.dataset && t.dataset.jrole!==undefined){
+      var jr = judges()[+t.dataset.jrole];
+      if(jr){ jr.role = t.value; render(); }
+      return;
+    }
     if(t.dataset && t.dataset.coach!==undefined){
       var c = state.contestants[+t.dataset.coach];
       c.coachId = t.value || null;
@@ -2624,6 +2761,14 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         if(!Array.isArray(d.cut) || !d.cut.length) d.cut = null;   // sessions saved before the cut existed
         if(!Array.isArray(d.sdAck)) d.sdAck = [];
         if(!Array.isArray(d.coaches)) d.coaches = [];              // sessions saved before coaches existed
+        if(!Array.isArray(d.judges)) d.judges = [];                // sessions saved before the board existed
+        d.judges = d.judges.filter(function(j){ return j && typeof j==="object"; });
+        d.judges.forEach(function(j){
+          if(typeof j.name!=="string") j.name = "";
+          if(JUDGE_ROLES.indexOf(j.role)<0) j.role = "Member";
+          if(typeof j.office!=="string") j.office = "";
+          if(!isPhoto(j.photo)) j.photo = null;
+        });
         if(!Array.isArray(d.schools)) d.schools = [];              // sessions saved before logos existed
         d.schools = d.schools.filter(function(x){
           return x && typeof x.name==="string" && isPhoto(x.logo);
