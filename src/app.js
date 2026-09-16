@@ -1198,8 +1198,13 @@
           ? (n===1 ? ('contestant '+(sc.from+1)+' of '+sc.of)
                    : ('contestants '+(sc.from+1)+'\u2013'+(sc.from+n)+' of '+sc.of))
           : (n+' contestant'+(n===1?"":"s"));
-        body = '<div class="intro'+(n===1?" solo":"")+'" style="grid-template-columns:repeat('+
-          Math.max(1,n)+',minmax(0,1fr))">'+
+        // Tracks are the card's own width rather than a share of the screen, so a
+        // screen of two tiles carries the same tiles as a screen of four, and
+        // justify-content centres the row instead of pushing them to the edges.
+        // A lone contestant keeps the full-width track the solo card centres in.
+        var cols = n===1 ? 'minmax(0,1fr)'
+                         : 'repeat('+n+',minmax(0,var(--cardw)))';
+        body = '<div class="intro'+(n===1?" solo":"")+'" style="grid-template-columns:'+cols+'">'+
           sc.students.map(function(c){
             return '<div class="icard">'+portrait(c)+
               '<div class="itxt"><div class="num">No. '+c.no+'</div>'+
