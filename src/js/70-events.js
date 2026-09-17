@@ -43,6 +43,32 @@
       if(judges()[ji]){ judges()[ji].photo = null; render(); toast("Photo removed"); }
       return;
     }
+    var ptkEl = t.closest ? t.closest("[data-ptake]") : null;
+    if(ptkEl){ takeSegment(ptkEl.dataset.ptake); return; }
+    var pdnEl = t.closest ? t.closest("[data-pdone]") : null;
+    if(pdnEl){ toggleSegDone(+pdnEl.dataset.pdone); return; }
+    var pmvEl = t.closest ? t.closest("[data-pmove]") : null;
+    if(pmvEl && !pmvEl.disabled){ moveSegment(+pmvEl.dataset.pmove, +pmvEl.dataset.dir); return; }
+    var pdelEl = t.closest ? t.closest("[data-pdel]") : null;
+    if(pdelEl){ removeSegment(+pdelEl.dataset.pdel); return; }
+    var pphEl = t.closest ? t.closest("[data-pphoto]") : null;
+    if(pphEl){ pickPhoto("p", +pphEl.dataset.pphoto); return; }
+    var punEl = t.closest ? t.closest("[data-punphoto]") : null;
+    if(punEl){
+      var pi = +punEl.dataset.punphoto;
+      if(prog()[pi]){ prog()[pi].photo = null; render(); toast("Photo removed"); }
+      return;
+    }
+    var hphEl = t.closest ? t.closest("[data-hphoto]") : null;
+    if(hphEl){ pickPhoto("h", +hphEl.dataset.hphoto); return; }
+    var hunEl = t.closest ? t.closest("[data-hunphoto]") : null;
+    if(hunEl){
+      var hi = +hunEl.dataset.hunphoto;
+      if(hosts()[hi]){ hosts()[hi].photo = null; render(); toast("Photo removed"); }
+      return;
+    }
+    var hdEl = t.closest ? t.closest("[data-hdel]") : null;
+    if(hdEl){ removeHost(+hdEl.dataset.hdel); return; }
     var jmvEl = t.closest ? t.closest("[data-jmove]") : null;
     if(jmvEl && !jmvEl.disabled){ moveJudge(+jmvEl.dataset.jmove, +jmvEl.dataset.dir); return; }
     var jdEl = t.closest ? t.closest("[data-jdel]") : null;
@@ -165,6 +191,11 @@
       case "btnDeckAll": selectAll(true); break;
       case "btnDeckNone": selectAll(false); break;
       case "btnDeckAlt": alternateSelection(); break;
+      case "btnProgPrev": stepSegment(-1); break;
+      case "btnProgNext": stepSegment(1); break;
+      case "btnAddSeg": addSegment(); break;
+      case "btnProgReset": resetProgramme(); break;
+      case "btnAddHost": case "btnAddHost2": addHost(); break;
       case "btnAddCoach": case "btnAddCoach2": addCoach(); break;
       case "btnAddJudge": case "btnAddJudge2": addJudge(); break;
       case "btnKPaste": $("kPasteBox").classList.add("show"); $("kPasteText").focus(); break;
@@ -213,6 +244,26 @@
       if(mv > 0) brk.minutes = Math.min(180, mv);
       return;
     }
+    /* The programme's own boxes. The sub-items are one box holding a list, so
+       they are split on the commas as they are typed — the box keeps what was
+       typed, the programme keeps the lines. */
+    if(t.classList && t.classList.contains("pin")){
+      var pp = prog()[+t.dataset.pi];
+      if(pp){
+        if(t.dataset.pf === "items"){
+          pp.items = t.value.split(",").map(function(x){ return x.trim(); }).filter(Boolean);
+        } else {
+          pp[t.dataset.pf] = t.value;
+        }
+        refreshDerived(); paintDisplay();
+      }
+      return;
+    }
+    if(t.classList && t.classList.contains("hin")){
+      var hh = hosts()[+t.dataset.hi];
+      if(hh){ hh[t.dataset.hf] = t.value; refreshDerived(); paintDisplay(); }
+      return;
+    }
     if(t.classList && t.classList.contains("jin")){
       var jj = judges()[+t.dataset.ji];
       if(jj){ jj[t.dataset.jf] = t.value; refreshDerived(); paintDisplay(); }
@@ -230,6 +281,26 @@
   // from one coach to another everywhere they are listed
   document.addEventListener("change", function(e){
     var t = e.target;
+    if(t.dataset && t.dataset.pcue!==undefined){
+      var pc = prog()[+t.dataset.pcue];
+      if(pc){
+        pc.cue = t.value;
+        if(pc.cue==="round" && !pc.round) pc.round = "r1";
+        // the segment that is already on follows its own change straight away
+        if(nowSeg()===pc) takeSegment(pc.id); else render();
+      }
+      return;
+    }
+    if(t.dataset && t.dataset.pround!==undefined){
+      var pr = prog()[+t.dataset.pround];
+      if(pr){ pr.round = t.value; if(nowSeg()===pr) takeSegment(pr.id); else render(); }
+      return;
+    }
+    if(t.dataset && t.dataset.ppart!==undefined){
+      var pt2 = prog()[+t.dataset.ppart];
+      if(pt2){ pt2.part = +t.value; render(); }
+      return;
+    }
     if(t.dataset && t.dataset.jrole!==undefined){
       var jr = judges()[+t.dataset.jrole];
       if(jr){ jr.role = t.value; render(); }
@@ -278,11 +349,22 @@
     if(!typing && !e.ctrlKey && !e.metaKey && (e.key==="m" || e.key==="M")){
       setCue("mechanics"); toast("On screen: Contest mechanics"); return;
     }
+    if(!typing && !e.ctrlKey && !e.metaKey && (e.key==="p" || e.key==="P")){
+      setCue("programme"); toast("On screen: The programme"); return;
+    }
+    // the run of show is walked from the tab that shows it
+    if(tab==="programme" && !typingNow && !e.ctrlKey && !e.metaKey){
+      if(e.key==="ArrowLeft"){ e.preventDefault(); stepSegment(-1); return; }
+      if(e.key==="ArrowRight"){ e.preventDefault(); stepSegment(1); return; }
+    }
     if(tab==="display" && !typing && !e.ctrlKey && !e.metaKey){
       if(e.key==="ArrowLeft"){ e.preventDefault(); turnPage(-1); return; }
       if(e.key==="ArrowRight"){ e.preventDefault(); turnPage(1); return; }
-      if(/^[0-9]$/.test(e.key)){
-        var hit = CUES.filter(function(x){ return x.k===e.key; })[0];
+      // a cue's key is whatever is written against it — a digit for most, a
+      // letter for the two the keypad had no room left for
+      if(e.key.length===1){
+        var hit = CUES.filter(function(x){
+          return x.k && x.k.toLowerCase()===e.key.toLowerCase(); })[0];
         if(hit){ setCue(hit.id); return; }
       }
       // R walks the declaration: 3rd placer, 2nd placer, then the champion's own card

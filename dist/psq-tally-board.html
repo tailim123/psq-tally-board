@@ -175,9 +175,25 @@ td.st{font-size:12px}
 .pill.qual{background:var(--yellow)}
 .sep{border-left:3px solid var(--ink)}
 
-.rin,.kin,.jin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
-.rin:hover,.kin:hover,.jin:hover{border-color:#C9D3E2}
-.rin:focus,.kin:focus,.jin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
+.rin,.kin,.jin,.pin,.hin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
+.rin:hover,.kin:hover,.jin:hover,.pin:hover,.hin:hover{border-color:#C9D3E2}
+.rin:focus,.kin:focus,.jin:focus,.pin:focus,.hin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
+
+/* ---------------- the programme ----------------
+   Two boxes to a cell: the thing, and the smaller line under it — the segment
+   and its sub-items, the speaker and their position. */
+td.segcell{min-width:280px}
+td.orgcell{min-width:165px}
+.pin.sub{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.psel{border:2.5px solid var(--ink);border-radius:6px;padding:5px 8px;background:#fff;
+  font-weight:650;max-width:100%}
+.psel.sub{margin-top:5px;font-size:11.5px;padding:4px 7px}
+/* the segment that is on now, and the ones already behind us */
+tr.segnow td{background:#FFF6C9}
+tr.segnow td.no{color:var(--ink)}
+tr.segdone td{opacity:.62}
+.pill.now{background:var(--yellow)}
+.pill.done{background:#DCE9FF}
 
 /* roster coach cell — a name when the school settles it, a chooser when not */
 td.coachcell{min-width:200px;font-size:12.5px}
@@ -193,10 +209,14 @@ td.coachcell{min-width:200px;font-size:12.5px}
 .conly em{display:block;font-style:normal;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
 td.knote{min-width:200px}
 
-/* roster photo cell */
-td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
+/* roster photo cell — laid out inline rather than as a flex box, so the cell
+   still stretches to a row that runs to two lines, as the programme's do */
+td.photocell{white-space:nowrap}
+td.photocell>*{vertical-align:middle}
+td.photocell .thumb{margin-right:8px}
+td.photocell .lbtn.tiny+.lbtn.tiny{margin-left:6px}
 .thumb{width:34px;height:45px;object-fit:cover;border:2.5px solid var(--ink);border-radius:5px;background:#E7EDF7;flex:0 0 auto}
-.thumb.none{display:flex;align-items:center;justify-content:center;font-family:var(--pix);font-size:10px;color:#9AA9BE}
+.thumb.none{display:inline-flex;align-items:center;justify-content:center;font-family:var(--pix);font-size:10px;color:#9AA9BE}
 /* a school logo is not a portrait — square, and shown whole rather than cropped */
 .thumb.logo{width:45px;height:45px;object-fit:contain;background:#fff;padding:2px}
 .lbtn.tiny{padding:5px 9px;font-size:11px}
@@ -245,6 +265,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;padding:14px 15px;background:#F6F9FF;border-bottom:3px solid var(--ink)}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;letter-spacing:.05em;color:var(--olive);font-weight:800;text-transform:uppercase}
+.field.wide{grid-column:1/-1}
 .field input{border:2.5px solid var(--ink);border-radius:7px;padding:7px 9px;background:#fff;font-weight:600}
 .field input:focus{background:var(--cream-2);outline:none}
 
@@ -448,21 +469,129 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
 /* ---- title card ---- */
 .dsp .hero{text-align:center}
-.dsp .hero .logo{height:calc(var(--u)*7);background:var(--logo) no-repeat center/contain;margin-bottom:calc(var(--u)*2.4)}
+.dsp .hero .logo{height:calc(var(--u)*6.2);background:var(--logo) no-repeat center/contain;margin-bottom:calc(var(--u)*2)}
 .dsp .hero .kick{
   font-size:calc(var(--u)*2.1);color:#fff;font-weight:700;text-shadow:2px 2px 0 var(--sky-3);
 }
 .dsp .hero h1{
-  margin:calc(var(--u)*2.6) 0 calc(var(--u)*1.6);font-family:var(--pix);
+  margin:calc(var(--u)*2.2) 0 calc(var(--u)*1.4);font-family:var(--pix);
   font-size:calc(var(--u)*4.6);line-height:1.5;color:var(--d-yellow);
   text-shadow:5px 5px 0 var(--d-navy), 9px 9px 0 rgba(32,51,87,.35);
 }
 .dsp .hero .sub{font-size:calc(var(--u)*2.2);color:#fff;font-weight:750;text-shadow:2px 2px 0 var(--sky-3)}
 .dsp .hero .std{
-  display:inline-block;margin-top:calc(var(--u)*3.4);font-family:var(--pix);
+  display:inline-block;margin-top:calc(var(--u)*2.6);font-family:var(--pix);
   font-size:calc(var(--u)*1.6);background:var(--d-yellow);border:4px solid var(--ink);
   border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.4) calc(var(--u)*3);
   box-shadow:0 6px 0 var(--ink);
+}
+
+.dsp .hero .venue{
+  margin-top:calc(var(--u)*1.2);font-size:calc(var(--u)*1.6);color:#fff;font-weight:700;
+  text-shadow:1px 1px 0 var(--sky-3);
+}
+
+/* the emcee and the Quizmaster on the title card, where the chips do not fit */
+.dsp .hero .hostline{
+  margin-top:calc(var(--u)*1.8);font-size:calc(var(--u)*1.5);color:#fff;font-weight:650;
+  text-shadow:1px 1px 0 var(--sky-3);
+}
+.dsp .hero .hostline b{font-weight:850}
+
+/* ---- the programme ----
+   The printed programme read back: the two parts side by side, in order, with
+   the segment that is on marked and the ones behind it ticked off. */
+.dsp .pgm{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(calc(var(--u)*44),1fr));
+  gap:calc(var(--u)*1.6) calc(var(--u)*2.2);width:100%;align-items:start;
+}
+.dsp .pgm .part{display:flex;flex-direction:column;gap:calc(var(--u)*.7);min-width:0}
+.dsp .pgm .phead{
+  align-self:flex-start;font-family:var(--pix);font-size:calc(var(--u)*1.3);line-height:1;
+  color:var(--ink);background:var(--d-yellow);border:3px solid var(--ink);
+  border-radius:calc(var(--u)*.7);padding:calc(var(--u)*.8) calc(var(--u)*1.4);
+  box-shadow:0 3px 0 var(--ink);margin-bottom:calc(var(--u)*.4);
+}
+.dsp .pline{
+  display:flex;align-items:center;gap:calc(var(--u)*1.4);min-width:0;
+  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.8);
+  padding:calc(var(--u)*.7) calc(var(--u)*1.3);box-shadow:0 3px 0 var(--ink);
+}
+.dsp .pline .pt{min-width:0;flex:1 1 auto}
+.dsp .pline .pt b{
+  display:block;font-size:calc(var(--u)*1.5);font-weight:800;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.dsp .pline .pit{
+  display:block;font-size:calc(var(--u)*1.2);color:var(--d-grass2);font-weight:700;
+  line-height:1.25;margin-top:calc(var(--u)*.2);
+}
+.dsp .pline .pw{flex:0 0 auto;text-align:right;max-width:45%;min-width:0}
+.dsp .pline .pw b{
+  display:block;font-size:calc(var(--u)*1.35);font-weight:800;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dsp .pline .pw span{
+  display:block;font-size:calc(var(--u)*1.1);color:var(--d-olive);font-weight:700;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* the one that is on — the audience is told where we are, not left to count */
+.dsp .pline.now{
+  background:var(--d-yellow);border-width:4px;
+  box-shadow:0 3px 0 var(--ink), inset calc(var(--u)*1) 0 0 var(--d-grass);
+}
+.dsp .pline.done{opacity:.6}
+.dsp .pline.done .pt b::before{
+  content:"\2713\00a0";color:var(--d-grass2);font-weight:800;
+}
+
+/* the emcee and the Quizmaster, at the foot of the programme and of the title card */
+.dsp .hosts{
+  flex:0 0 auto;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*2);
+}
+.dsp .hosts .host{
+  background:var(--d-cream2);border:3px solid var(--ink);border-radius:calc(var(--u)*.8);
+  padding:calc(var(--u)*.7) calc(var(--u)*1.6);box-shadow:0 3px 0 var(--ink);text-align:center;
+}
+/* under the programme they sit at the foot of the screen, as they do in print */
+.dsp .body > .hosts{margin-top:auto;padding-top:calc(var(--u)*1.4)}
+.dsp .hosts .host b{display:block;font-size:calc(var(--u)*1.4);font-weight:800;line-height:1.2}
+.dsp .hosts .host span{
+  display:block;font-family:var(--pix);font-size:calc(var(--u)*.95);color:var(--d-olive);
+  margin-top:calc(var(--u)*.5);
+}
+
+/* ---- one segment, full screen ----
+   A segment nobody is named for is a heading: the title, and whatever runs
+   under it. Named a speaker, it becomes the card the coaches and judges get. */
+.dsp .seg{text-align:center}
+.dsp .seg .segt{
+  font-family:var(--pix);font-size:calc(var(--u)*3.6);line-height:1.5;color:var(--d-yellow);
+  text-shadow:4px 4px 0 var(--d-navy), 8px 8px 0 rgba(32,51,87,.3);
+}
+.dsp .seg .segby{
+  margin-top:calc(var(--u)*2);font-size:calc(var(--u)*2.2);color:#fff;font-weight:750;
+  text-shadow:2px 2px 0 var(--sky-3);
+}
+.dsp .seg .segitems{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*1.6);
+  margin-top:calc(var(--u)*3.4);
+}
+.dsp .seg .segitem{
+  background:#FFFFFF;border:4px solid var(--ink);border-radius:calc(var(--u)*1);
+  box-shadow:0 5px 0 var(--ink);padding:calc(var(--u)*1.4) calc(var(--u)*2.6);
+  font-size:calc(var(--u)*2);font-weight:800;line-height:1.2;
+}
+.dsp .seg .orgline{
+  display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);
+  margin-top:calc(var(--u)*2.4);
+}
+.dsp .seg .orgline span{font-size:calc(var(--u)*1.7);color:#fff;font-weight:750;text-shadow:1px 1px 0 var(--sky-3)}
+.dsp .seg .orgmark{
+  height:calc(var(--u)*4.4);max-width:calc(var(--u)*7);object-fit:contain;
+  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.5);
+  padding:calc(var(--u)*.35);
 }
 
 /* ---- the health break ---- */
@@ -494,9 +623,13 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 }
 .dsp .sbtn:hover{background:var(--d-cream2)}
 .dsp .sbtn:active{transform:translateY(5px);box-shadow:0 0 0}
-.dsp .opt{margin-top:calc(var(--u)*3)}
+/* the title card's options sit on one line, with their note under both */
+.dsp .opt{
+  margin-top:calc(var(--u)*2.2);display:flex;flex-wrap:wrap;
+  justify-content:center;gap:calc(var(--u)*1.4);
+}
 .dsp .opt .opthint{
-  display:block;margin-top:calc(var(--u)*1.2);font-size:calc(var(--u)*1.4);
+  flex:0 0 100%;margin-top:calc(var(--u)*.4);font-size:calc(var(--u)*1.4);
   color:#fff;font-weight:700;text-shadow:1px 1px 0 var(--sky-3);
 }
 /* the mechanics footer holds the back button and the screen pager on one line */
@@ -864,6 +997,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     meta:{edition:"30th Philippine Statistics Quiz",
           level:"Provincial Elimination",
           place:"Marinduque",
+          venue:"Governor’s Hall, Capitol Compound, Bangbangalon, Boac, Marinduque",
           date:"24 September 2026",
           sdCount:5},
     cut:null,          // once the Round 3 cut is announced, the frozen list of contestant numbers
@@ -871,6 +1005,12 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     coaches:[],        // {id, name, school, photo} — one entry per registered coach
     schools:[],        // {name, logo} — only the schools a logo has been added for
     judges:[],         // {name, role, office, org, photo} — the Board of Judges, in introduction order
+    /* the printed programme, in the order it runs. Seeded by prog() rather than
+       here: in development the parts are separate scripts, so the default is not
+       defined yet when this object is built. */
+    programme:null,    // [{id, part, title, items, name, office, org, photo, cue, round, done}]
+    progNow:null,      // the id of the segment that is on, once one has been taken
+    hosts:null,        // [{role, name, org, photo}] — the emcee and the Quizmaster
     deck:{name:"", slides:[]},   // the RTC's slides as pictures, and what each one is
     contestants:[]
   };
@@ -1129,7 +1269,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       if(!n) return;
       var e = seen["s"+n];
       if(!e){
-        e = seen["s"+n] = {key:n, name:String(name).trim(), contestants:0, coaches:0, judges:0};
+        e = seen["s"+n] = {key:n, name:String(name).trim(), contestants:0, coaches:0,
+                           judges:0, speakers:0};
         out.push(e);
       }
       e[field]++;
@@ -1138,6 +1279,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     state.contestants.forEach(function(c){ if(!c.name.trim()) add(c.school, "contestants"); });
     namedCoaches().forEach(function(k){ add(k.school, "coaches"); });
     namedJudges().forEach(function(j){ add(j.org, "judges"); });
+    // and the organisations named on the programme — a speaker's seal sits beside
+    // them on their card exactly as a judge's does
+    prog().forEach(function(p){ if(p.name.trim()) add(p.org, "speakers"); });
+    namedHosts().forEach(function(h){ add(h.org, "speakers"); });
     out.sort(function(a,b){ return a.key<b.key ? -1 : 1; });
     return out;
   }
@@ -1211,6 +1356,407 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     return out;
   }
 
+  /* ===================== the programme =====================
+     Until now the board knew only the parts of the day that carry a score. The
+     rest of the programme — the prayer, the welcome, the inspirational message,
+     the two awardings, the closing remarks — happened around it while the screen
+     sat on a title card.
+
+     So the whole programme is encoded here, in the order it runs, and the board
+     drives it. Every segment says what the audience should see while it is on,
+     and taking the next one puts that on screen. The printed programme and the
+     projector cannot drift apart, because they are the same list read twice. */
+
+  var PART_LABEL = {1:"Part I", 2:"Part II — Contest proper"};
+
+  /* What a segment puts on screen when it is taken. Most are the board's own
+     cues; "segment" is the card built from the segment itself — its title, and
+     whoever is taking it. */
+  var PROG_CUES = [
+    {v:"segment",     t:"This segment’s own card"},
+    {v:"standby",     t:"Title card"},
+    {v:"programme",   t:"The programme"},
+    {v:"mechanics",   t:"Contest mechanics"},
+    {v:"introduce",   t:"Introduce contestants"},
+    {v:"judges",      t:"Board of Judges"},
+    {v:"round",       t:"Round scores"},
+    {v:"advancing",   t:"Advancing to Round 3"},
+    {v:"leaderboard", t:"Leaderboard"},
+    {v:"reveal",      t:"2nd & 3rd placers"},
+    {v:"champion",    t:"Champion card"},
+    {v:"blank",       t:"Blank the screen"}
+  ];
+
+  /* The 30th PSQ Provincial Elimination programme as printed. It is seeded
+     rather than left blank for the same reason the event name and the date are:
+     this board is built for one contest, and every line of it is editable. */
+  function defaultProgramme(){
+    function s(id, part, title, extra){
+      var o = {id:id, part:part, title:title, items:[], name:"", office:"",
+               org:"", photo:null, cue:"segment", round:null, done:false};
+      if(extra) for(var k in extra) o[k] = extra[k];
+      return o;
+    }
+    return [
+      s("reg",     1, "Registration", {office:"Secretariat"}),
+      s("prelim",  1, "Preliminaries", {items:["Prayer","National Anthem","MIMAROPA Hymn"]}),
+      s("welcome", 1, "Welcome Message",
+        {name:"Gemma N. Opis", office:"Chief Statistical Specialist"}),
+      s("guest",   1, "Introduction of Guest Speaker",
+        {name:"Abejen Shayne P. Mayores", office:"Statistical Analyst"}),
+      s("inspire", 1, "Inspirational Message",
+        {name:"Hon. Aurelio Leva III", office:"Provincial Board Member"}),
+      s("present", 1, "Presentation of the Contestants and Coaches", {cue:"introduce"}),
+      s("board",   1, "Introduction of the Members of the Board of Judges", {cue:"judges"}),
+      s("rd1",     2, "Round 1", {cue:"round", round:"r1"}),
+      s("rd2",     2, "Round 2", {cue:"round", round:"r2"}),
+      s("appre",   2, "Awarding of Certificate of Appreciation",
+        {items:["Judges & Sponsors"]}),
+      s("rd3",     2, "Round 3", {cue:"round", round:"r3"}),
+      s("partic",  2, "Awarding of Certificate of Participation",
+        {items:["Contestants and Coaches"]}),
+      s("winners", 2, "Announcement of Winners and Awarding of Prizes", {cue:"reveal"}),
+      s("closing", 2, "Closing Remarks",
+        {name:"Harvy M. Fabaleña", office:"Senior Statistical Specialist"})
+    ];
+  }
+  /* The emcee and the Quizmaster are not segments — they are on all day. They
+     sit at the foot of the printed programme, and at the foot of the screen. */
+  function defaultHosts(){
+    return [{role:"Emcee",      name:"Sonny Jr. R. Dela Cruz",   org:"", photo:null},
+            {role:"Quiz Master", name:"Frenz Darren J. Medallon", org:"", photo:null}];
+  }
+
+  function prog(){ return state.programme || (state.programme = defaultProgramme()); }
+  function hosts(){ return state.hosts || (state.hosts = defaultHosts()); }
+  function namedHosts(){ return hosts().filter(function(h){ return h.name.trim()!==""; }); }
+  function segById(id){
+    if(!id) return null;
+    return prog().filter(function(p){ return p.id===id; })[0] || null;
+  }
+  function nowSeg(){ return segById(state.progNow); }
+  function segIndex(seg){ return seg ? prog().indexOf(seg) : -1; }
+  function newSegId(){ var n = 1; while(segById("s"+n)) n++; return "s"+n; }
+  function segDone(){ return prog().filter(function(p){ return p.done; }).length; }
+  function segWhere(seg){ return seg ? PART_LABEL[seg.part]+" · "+seg.title : ""; }
+
+  /* Taking a segment is the one move the run of show has: it becomes the one
+     that is on, the one it replaces is marked off, and the screen follows to
+     whatever that segment says it should carry. Nothing here is automatic —
+     the programme advances when the emcee does, not when a score arrives. */
+  function takeSegment(id){
+    var seg = segById(id);
+    if(!seg) return;
+    var prev = nowSeg();
+    if(prev && prev!==seg) prev.done = true;
+    seg.done = false;
+    state.progNow = seg.id;
+    if(seg.cue==="round" && seg.round) setCue("round", seg.round);
+    else setCue(seg.cue || "segment");
+    toast("On now: "+seg.title);
+  }
+  function stepSegment(d){
+    var list = prog();
+    if(!list.length){ toast("No programme encoded"); return; }
+    var i = segIndex(nowSeg());
+    var to = i<0 ? (d>0 ? 0 : list.length-1) : i+d;
+    if(to<0){ toast("That is the first segment"); return; }
+    if(to>=list.length){ toast("That was the last segment"); return; }
+    takeSegment(list[to].id);
+  }
+  function toggleSegDone(i){
+    var p = prog()[i];
+    if(!p) return;
+    p.done = !p.done;
+    if(p.done && state.progNow===p.id) state.progNow = null;
+    render();
+  }
+  function addSegment(){
+    var now = nowSeg();
+    prog().push({id:newSegId(), part:(now?now.part:1), title:"", items:[], name:"",
+                 office:"", org:"", photo:null, cue:"segment", round:null, done:false});
+    render();
+    var el = document.querySelector('.pin[data-pf="title"][data-pi="'+(prog().length-1)+'"]');
+    if(el) el.focus();
+  }
+  function removeSegment(i){
+    var p = prog()[i];
+    if(!p) return;
+    if(p.title.trim() && !confirm("Delete “"+p.title+"” from the programme?")) return;
+    if(state.progNow===p.id) state.progNow = null;
+    prog().splice(i,1);
+    photoFor = null;                    // a file picker mid-flight no longer knows its row
+    render(); toast((p.title.trim()||"The segment")+" deleted");
+  }
+  function moveSegment(i, d){
+    var list = prog(), to = i+d;
+    if(to<0 || to>=list.length) return;
+    var tmp = list[i]; list[i] = list[to]; list[to] = tmp;
+    photoFor = null;
+    render();
+    var el = document.querySelector('[data-pmove="'+to+'"][data-dir="'+d+'"]');
+    if(el && !el.disabled) el.focus();
+  }
+  function resetProgramme(){
+    if(!confirm("Restore the standard programme?\n\nEvery segment you have added, renamed or "+
+                "reordered is replaced, and the photographs on them go too. The roster, the "+
+                "judges and the tally are untouched.")) return;
+    state.programme = defaultProgramme();
+    state.progNow = null;
+    photoFor = null;
+    render(); toast("The standard programme is back");
+  }
+  function addHost(){
+    hosts().push({role:"", name:"", org:"", photo:null});
+    render();
+    var el = document.querySelector('.hin[data-hf="role"][data-hi="'+(hosts().length-1)+'"]');
+    if(el) el.focus();
+  }
+  function removeHost(i){
+    var h = hosts()[i];
+    if(!h) return;
+    if(h.name.trim() && !confirm("Delete "+h.name+"?")) return;
+    hosts().splice(i,1);
+    photoFor = null;
+    render(); toast((h.name.trim()||"The row")+" deleted");
+  }
+
+  /* ---- the run of show, on the operator's side ----
+     The same row goes on the Display desk, on the Run tab and at the top of the
+     Programme tab, because the operator may be on any of the three when the
+     emcee moves on. */
+  function progRow(){
+    var list = prog(), now = nowSeg(), i = segIndex(now);
+    var note = now
+      ? esc(segWhere(now))+" · "+(i+1)+" of "+list.length+" · "+segDone()+" done"
+      : (list.length ? "Nothing taken yet — Next starts at “"+esc(list[0].title)+"”"
+                     : "No programme encoded — the Programme tab builds one");
+    return '<div class="deskrow"><span class="lab">Programme</span>'+
+      '<button class="lbtn" id="btnProgPrev"'+(i<=0?" disabled":"")+'>◀ Previous</button>'+
+      '<button class="lbtn go" id="btnProgNext"'+
+        (!list.length || i>=list.length-1 ? " disabled":"")+'>'+
+        (now ? "Next segment ▶" : "Start the programme ▶")+'</button>'+
+      '<button class="lbtn'+(disp.cue==="programme"?" on":"")+'" data-cue="programme">The programme</button>'+
+      '<button class="lbtn'+(disp.cue==="segment"?" on":"")+'" data-cue="segment"'+
+        (list.length?"":" disabled")+'>This segment</button>'+
+      '<span class="note">'+note+'</span></div>';
+  }
+
+  /* ---- the Programme tab ---- */
+  function renderProgramme(){
+    var list = prog(), now = nowSeg();
+    var rows = list.map(function(p,i){
+      var has = isPhoto(p.photo);
+      var isNow = now===p;
+      return '<tr class="'+(isNow?"segnow":(p.done?"segdone":""))+'">'+
+        '<td class="no pad">'+(i+1)+'</td>'+
+        '<td class="pad"><select class="psel" data-ppart="'+i+'" aria-label="Part for '+
+          esc(p.title||("segment "+(i+1)))+'">'+
+          [1,2].map(function(n){
+            return '<option value="'+n+'"'+(p.part===n?" selected":"")+'>'+
+              (n===1?"I":"II")+'</option>';
+          }).join("")+'</select></td>'+
+        '<td class="pad segcell">'+
+          '<input class="pin" data-pf="title" data-pi="'+i+'" value="'+esc(p.title)+
+            '" placeholder="Segment">'+
+          '<input class="pin sub" data-pf="items" data-pi="'+i+'" value="'+
+            esc((p.items||[]).join(", "))+'" placeholder="Sub-items, separated by commas">'+
+        '</td>'+
+        '<td class="pad segcell">'+
+          '<input class="pin" data-pf="name" data-pi="'+i+'" value="'+esc(p.name)+
+            '" placeholder="Who takes it (optional)">'+
+          '<input class="pin sub" data-pf="office" data-pi="'+i+'" value="'+esc(p.office)+
+            '" placeholder="Position">'+
+        '</td>'+
+        '<td class="pad orgcell"><input class="pin" data-pf="org" data-pi="'+i+'" value="'+esc(p.org)+
+          '" placeholder="Organisation" list="schoolList"></td>'+
+        '<td class="pad photocell">'+
+          (has ? '<img class="thumb" src="'+p.photo+'" alt="'+esc(p.name)+'">'
+               : '<span class="thumb none">'+esc(p.name.trim()?initials(p.name):"—")+'</span>')+
+          '<button class="lbtn tiny" data-pphoto="'+i+'">'+(has?"Replace":"Add photo")+'</button>'+
+          (has ? '<button class="lbtn tiny danger" data-punphoto="'+i+'">Remove</button>' : '')+
+        '</td>'+
+        '<td class="pad">'+
+          '<select class="psel" data-pcue="'+i+'" aria-label="What the screen shows during '+
+            esc(p.title||("segment "+(i+1)))+'">'+
+            PROG_CUES.map(function(c){
+              return '<option value="'+c.v+'"'+(p.cue===c.v?" selected":"")+'>'+esc(c.t)+'</option>';
+            }).join("")+'</select>'+
+          (p.cue==="round"
+            ? '<select class="psel sub" data-pround="'+i+'" aria-label="Which round">'+
+              ["r1","r2","r3"].map(function(k){
+                return '<option value="'+k+'"'+(p.round===k?" selected":"")+'>'+LABEL[k]+'</option>';
+              }).join("")+'</select>'
+            : '')+
+        '</td>'+
+        '<td class="st">'+(isNow
+          ? '<span class="pill now">on now</span>'
+          : (p.done ? '<span class="pill done">done</span>' : '—'))+'</td>'+
+        '<td class="pad actions">'+
+          '<button class="lbtn tiny'+(isNow?" on":" go")+'" data-ptake="'+p.id+'">'+
+            (isNow?"On screen":"Take it")+'</button>'+
+          '<button class="lbtn tiny" data-pdone="'+i+'">'+(p.done?"Not done":"Done")+'</button>'+
+          '<button class="lbtn tiny" data-pmove="'+i+'" data-dir="-1"'+(i===0?" disabled":"")+
+            ' aria-label="Move earlier">▲</button>'+
+          '<button class="lbtn tiny" data-pmove="'+i+'" data-dir="1"'+(i===list.length-1?" disabled":"")+
+            ' aria-label="Move later">▼</button>'+
+          '<button class="lbtn tiny danger" data-pdel="'+i+'">Delete</button>'+
+        '</td></tr>';
+    }).join("");
+
+    var body = list.length
+      ? '<div class="scroll"><table><thead><tr><th class="c">No.</th><th class="c">Part</th>'+
+        '<th>Segment</th><th>Who takes it</th><th>Organisation</th><th class="c">Photo</th>'+
+        '<th>On screen</th><th class="c">Status</th><th></th></tr></thead><tbody>'+rows+
+        '</tbody></table></div>'
+      : '<div class="empty-state"><p>No programme encoded. The board can run the whole day from '+
+        'this list — every segment, in order, with what the audience sees during it.</p>'+
+        '<button class="lbtn go" id="btnProgReset">Load the standard programme</button></div>';
+
+    var p1 = list.filter(function(p){ return p.part===1; }).length;
+
+    return '<div class="panel">'+
+      '<div class="panel-head"><h3>Programme</h3>'+
+      '<span class="note">'+list.length+' segment'+(list.length===1?"":"s")+
+        ' · '+p1+' in Part I, '+(list.length-p1)+' in Part II · '+segDone()+' done</span>'+
+      '<div class="right"><button class="lbtn" id="btnAddSeg">Add a segment</button>'+
+      '<button class="lbtn" id="btnProgReset">Restore the standard programme</button></div></div>'+
+      '<div class="desk" style="padding:0 15px 14px">'+progRow()+'</div>'+
+      body+
+      '<div class="legend">Take it puts the segment on and marks the one before it done — or use '+
+      'Previous and Next, here, on the Display tab or on the Run tab. The left and right arrow keys '+
+      'do the same while this tab is open. <b>On screen</b> is what the audience sees when a segment '+
+      'is taken: its own card by default, or one of the board’s cues, so Round 1 puts the Round 1 '+
+      'scores up and the presentation of the contestants starts the introductions. '+
+      'Sub-items are the lines under a heading — the prayer, the anthem and the hymn under '+
+      'Preliminaries. A segment with nobody named is a heading; name someone and it becomes a card '+
+      'with their portrait, position and organisation, the same card the coaches and judges get.</div>'+
+      '</div>'+
+      renderHostPanel()+
+      '<datalist id="schoolList">'+schoolOptions()+'</datalist>';
+  }
+
+  function renderHostPanel(){
+    var hs = hosts();
+    var rows = hs.map(function(h,i){
+      var has = isPhoto(h.photo);
+      return '<tr><td class="no pad">'+(i+1)+'</td>'+
+        '<td class="pad"><input class="hin" data-hf="role" data-hi="'+i+'" value="'+esc(h.role||"")+
+          '" placeholder="Emcee, Quiz Master…"></td>'+
+        '<td class="pad"><input class="hin" data-hf="name" data-hi="'+i+'" value="'+esc(h.name)+
+          '" placeholder="Name"></td>'+
+        '<td class="pad orgcell"><input class="hin" data-hf="org" data-hi="'+i+'" value="'+esc(h.org||"")+
+          '" placeholder="Organisation (optional)" list="schoolList"></td>'+
+        '<td class="pad photocell">'+
+          (has ? '<img class="thumb" src="'+h.photo+'" alt="'+esc(h.name)+'">'
+               : '<span class="thumb none">'+esc(initials(h.name))+'</span>')+
+          '<button class="lbtn tiny" data-hphoto="'+i+'">'+(has?"Replace":"Add photo")+'</button>'+
+          (has ? '<button class="lbtn tiny danger" data-hunphoto="'+i+'">Remove</button>' : '')+
+        '</td>'+
+        '<td class="pad actions"><button class="lbtn tiny danger" data-hdel="'+i+'">Delete row</button></td>'+
+        '</tr>';
+    }).join("");
+
+    var body = hs.length
+      ? '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>Role</th><th>Name</th>'+
+        '<th>Organisation</th><th class="c">Photo</th><th></th></tr></thead><tbody>'+rows+
+        '</tbody></table></div>'
+      : '<div class="empty-state"><p>Nobody encoded. The emcee and the Quizmaster sit at the foot '+
+        'of the printed programme — they sit at the foot of the screen too.</p>'+
+        '<button class="lbtn go" id="btnAddHost">Add a name</button></div>';
+
+    return '<div class="panel"><div class="panel-head"><h3>Emcee &amp; Quizmaster</h3>'+
+      '<span class="note">'+namedHosts().length+' encoded · shown on the title card and under the programme</span>'+
+      '<div class="right"><button class="lbtn" id="btnAddHost2">Add a name</button></div></div>'+
+      body+
+      '<div class="legend">These two are on all day rather than at one point of the programme, so they '+
+      'are not segments. They appear under the programme on screen and under the date on the title card. '+
+      'A photograph is optional — nothing on screen shows one yet, but it rides in the saved session '+
+      'with the rest.</div></div>';
+  }
+
+  /* ---- the audience screens ---- */
+
+  // the emcee and the Quizmaster, as the printed programme carries them
+  function hostsFootHTML(){
+    var hs = namedHosts();
+    if(!hs.length) return "";
+    return '<div class="hosts">'+hs.map(function(h){
+      return '<div class="host"><b>'+esc(h.name)+'</b><span>'+esc(h.role||"")+'</span></div>';
+    }).join("")+'</div>';
+  }
+
+  /* On the title card there is no room for the chips, and no need for them: one
+     line under the options names the two who are on all day. */
+  function hostsLineHTML(){
+    var hs = namedHosts();
+    if(!hs.length) return "";
+    return '<div class="hostline">'+hs.map(function(h){
+      return (h.role ? esc(h.role)+" " : "")+"<b>"+esc(h.name)+"</b>";
+    }).join(" · ")+'</div>';
+  }
+
+  /* The programme as printed: the two parts side by side, every segment in
+     order, the one that is on marked and the ones behind it ticked off. */
+  function programmeSceneHTML(){
+    var list = prog(), now = nowSeg();
+    if(!list.length) return '<div class="dsp">'+dspHead("Programme")+
+      '<div class="body"><div class="none">No programme encoded</div></div></div>';
+
+    var parts = [1,2].map(function(n){
+      var rows = list.filter(function(p){ return p.part===n; });
+      if(!rows.length) return "";
+      return '<div class="part"><div class="phead">'+esc(PART_LABEL[n])+'</div>'+
+        rows.map(function(p){
+          var who = p.name.trim();
+          return '<div class="pline'+(p===now?" now":(p.done?" done":""))+'">'+
+            '<div class="pt"><b>'+esc(p.title)+'</b>'+
+            ((p.items||[]).length
+              ? '<span class="pit">'+esc(p.items.join(" · "))+'</span>' : '')+'</div>'+
+            (who || p.office
+              ? '<div class="pw">'+(who?'<b>'+esc(who)+'</b>':'')+
+                (p.office?'<span>'+esc(p.office)+'</span>':'')+'</div>'
+              : '')+
+          '</div>';
+        }).join("")+'</div>';
+    }).join("");
+
+    return '<div class="dsp">'+dspHead("Programme")+
+      '<div class="body" style="justify-content:flex-start;padding-top:calc(var(--u)*2)">'+
+      '<div class="pgm">'+parts+'</div>'+hostsFootHTML()+'</div></div>';
+  }
+
+  /* One segment, full screen. With somebody named it is the card the coaches
+     and the judges get, so the whole ceremony reads as one piece; with nobody
+     named it is the heading and whatever sits under it. */
+  function segmentSceneHTML(){
+    var seg = nowSeg() || prog().filter(function(p){ return !p.done; })[0] || null;
+    if(!seg) return '<div class="dsp">'+dspHead("Programme")+
+      '<div class="body"><div class="none">No segment is on</div></div></div>';
+
+    var body;
+    if(seg.name.trim()){
+      body = '<div class="intro solo" style="grid-template-columns:repeat(1,minmax(0,1fr))">'+
+        '<div class="icard">'+portrait(seg)+
+        '<div class="itxt"><div class="num">'+esc(seg.title)+'</div>'+
+        '<div class="who">'+esc(seg.name)+'</div>'+
+        (seg.office ? '<div class="sch">'+esc(seg.office)+'</div>' : '')+
+        orgLine(seg.org)+
+        '</div></div></div>';
+    } else {
+      body = '<div class="seg">'+
+        '<div class="segt">'+esc(seg.title)+'</div>'+
+        (seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
+        ((seg.items||[]).length
+          ? '<div class="segitems">'+seg.items.map(function(t){
+              return '<div class="segitem">'+esc(t)+'</div>'; }).join("")+'</div>'
+          : '')+
+        (seg.org ? orgLine(seg.org) : '')+
+      '</div>';
+    }
+    return '<div class="dsp">'+dspHead(PART_LABEL[seg.part])+
+      '<div class="body">'+body+'</div></div>';
+  }
 
   /* ===================== the deck =====================
      The Regional Technical Committee sends the questions as a PowerPoint deck.
@@ -1583,7 +2129,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   function renderTabs(){
     var u = pendingTies();
-    var defs = [["roster","Roster"],["deck","Deck"]];
+    var defs = [["roster","Roster"],["programme","Programme"],["deck","Deck"]];
     if(hasDeck()) defs.push(["run","Run"]);
     defs = defs.concat([["r1","Round 1"],["r2","Round 2"],["r3","Round 3"],
                 ["sd","Tie-break"],["standings","Standings"],["display","Display"]]);
@@ -1631,6 +2177,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '<div class="field"><label for="mLv">Stage</label><input id="mLv" data-m="level" value="'+esc(state.meta.level)+'"></div>'+
         '<div class="field"><label for="mPl">Province</label><input id="mPl" data-m="place" value="'+esc(state.meta.place)+'"></div>'+
         '<div class="field"><label for="mDt">Date</label><input id="mDt" data-m="date" value="'+esc(state.meta.date)+'"></div>'+
+        '<div class="field wide"><label for="mVn">Venue</label><input id="mVn" data-m="venue" value="'+
+          esc(state.meta.venue||"")+'" placeholder="Hall, compound, town"></div>'+
       '</div>'+
       '<div class="panel-head"><h3>Roster</h3><span class="note">'+named().length+' of '+state.contestants.length+
         ' slots filled · '+withPhotos+' with a photo</span>'+
@@ -1758,16 +2306,17 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '</td>'+
         '<td class="cum">'+(x.contestants||"—")+'</td>'+
         '<td class="cum">'+(x.coaches||"—")+'</td>'+
-        '<td class="cum">'+(x.judges||"—")+'</td></tr>';
+        '<td class="cum">'+(x.judges||"—")+'</td>'+
+        '<td class="cum">'+(x.speakers||"—")+'</td></tr>';
     }).join("");
     var withLogo = list.filter(function(x){ return logoFor(x.name); }).length;
     return '<div class="panel">'+
       '<div class="panel-head"><h3>School &amp; organisation logos</h3><span class="note">'+
       withLogo+' of '+list.length+' with a logo · schools badge the contestants who are introduced under them, '+
-      'organisations badge their judge</span></div>'+
+      'organisations badge their judge or speaker</span></div>'+
       '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>School or organisation</th>'+
       '<th class="c">Logo</th><th class="c">Contestants</th><th class="c">Coaches</th><th class="c">Judges</th>'+
-      '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<th class="c">Speakers</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="legend">The list follows the names typed above — there is nothing to add here by hand. '+
       'Logos keep their transparency, are shrunk before they are stored and travel inside the saved session. '+
       'Correcting a name’s spelling parks its logo rather than losing it; type the spelling back and it returns. '+
@@ -2637,7 +3186,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     }
 
     return '<div class="panel">' + head + stage +
-      '<div class="desk" style="padding:0 15px 4px">' + breakRow() + '</div>' + strip + tally +
+      '<div class="desk" style="padding:0 15px 4px">' + progRow() + breakRow() + '</div>' + strip + tally +
       '<div class="legend">These are the same boxes the round tabs hold — this is one column of them, ' +
       'for the question on screen. An answer slide tallies its own question, which is when the Quizmaster ' +
       'reads the answers out. While a tally button has focus the arrows and space belong to the tally, ' +
@@ -2776,12 +3325,15 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         : "The screen goes back to whatever it was showing when you end it.") + '</span></div>';
   }
   /* ===================== display control desk ===================== */
-  /* The number key is written down rather than taken from the position, so a
-     cue can be added or dropped without the whole keypad shifting under the
-     operator. */
+  /* The key is written down rather than taken from the position, so a cue can
+     be added or dropped without the whole keypad shifting under the operator —
+     which is also why the two newest carry a letter: the digits were spoken for
+     and renumbering would have moved every cue the operator already knows. */
   var CUES = [
     {id:"standby",     k:"1", t:"Title card",        d:"Event name, province, date"},
     {id:"mechanics",   k:"2", t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
+    {id:"programme",   k:"P", t:"The programme",     d:"The whole run of show, the segment on now marked"},
+    {id:"segment",     k:"S", t:"This segment",      d:"The segment on now, and whoever is taking it"},
     {id:"introduce",   k:"3", t:"Introduce contestants", d:"School by school, each followed by their coach"},
     {id:"judges",      k:"4", t:"Board of Judges",   d:"One judge to a screen, in the order you set"},
     {id:"round",       k:"5", t:"Round scores",      d:"By contestant number, for the read-out"},
@@ -2808,6 +3360,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     var mech = disp.cue==="mechanics";
     var intro = disp.cue==="introduce";
     var jud = disp.cue==="judges";
+    var prg = disp.cue==="programme" || disp.cue==="segment";
     var photos = named().filter(function(c){ return isPhoto(c.photo); }).length;
     var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2]].map(function(r){
       return '<button class="lbtn'+(disp.cue==="reveal" && disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
@@ -2848,8 +3401,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       '<div class="desk">'+
         '<h4>What the audience sees</h4>'+
         '<p class="hint">The screen only changes when you choose a cue, so you can tally quietly while a title card is up. '+
-        'The title card carries a <b>View the contest mechanics</b> button — click it on the audience screen itself, or press M here.</p>'+
+        'The title card carries <b>View the contest mechanics</b> and <b>View the programme</b> buttons — click either on the '+
+        'audience screen itself, or press M or P here. The Programme row below walks the day segment by segment and moves '+
+        'the screen with it.</p>'+
         '<div class="cues">'+cues+'</div>'+
+        progRow()+
         '<div class="deskrow"><span class="lab">Round on screen</span>'+rounds+'</div>'+
         '<div class="deskrow"><span class="lab">Score shown</span>'+
           [["Running total","total"],["This round only","round"]].map(function(v){
@@ -2871,10 +3427,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
             return '<button class="lbtn'+(disp.cols===v[1]?" on":"")+'" data-cols="'+v[1]+'">'+v[0]+'</button>';
           }).join("")+
           '<span class="note">Tiles read downwards, then across.</span></div>'+
-        (mech||jud
+        (mech||jud||prg
           ? '<div class="deskrow"><span class="lab">Per page</span>'+
             '<span class="note">'+(mech ? 'The mechanics run one screen at a time.'
-                                        : 'The judges are introduced one to a screen \u2014 set the order on the Roster tab.')+
+                                  : (jud ? 'The judges are introduced one to a screen \u2014 set the order on the Roster tab.'
+                                         : 'One screen \u2014 the Programme tab sets what is on it.'))+
             '</span></div>'
           : '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
             (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
@@ -2899,8 +3456,9 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
           '<button class="lbtn'+(disp.cue==="champion"?" on":"")+'" data-cue="champion">Then the champion</button>'+
           '<span class="note">The champion has a card of their own — R walks the three in order.</span></div>'+
       '</div>'+
-      '<div class="legend">Shortcuts: T returns to the title card and M shows the contest mechanics, from anywhere. '+
-      'On this tab, the number badge on each cue picks it, left and right arrows turn the page, and R walks the declaration — '+
+      '<div class="legend">Shortcuts: T returns to the title card, M shows the contest mechanics and P shows the programme, from anywhere. '+
+      'On this tab, the badge on each cue picks it — a number for most, P for the programme and S for the segment on now — '+
+      'left and right arrows turn the page, and R walks the declaration — '+
       '3rd placer, 2nd placer, then the champion’s card.'+
       (photos<named().length ? ' <b>'+(named().length-photos)+' contestants have no photo yet</b> — add them on the Roster tab; the introduction screen shows their number instead.' : '')+
       (namedCoaches().filter(function(k){ return !isPhoto(k.photo); }).length
@@ -3114,6 +3672,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
     if(disp.cue==="blank") return '<div class="dsp"></div>';
 
+    // the programme, and the segment of it that is on — both built in 22-programme
+    if(disp.cue==="programme") return programmeSceneHTML();
+    if(disp.cue==="segment") return segmentSceneHTML();
+
     if(disp.cue==="standby"){
       return '<div class="dsp"><div class="body"><div class="hero">'+
         '<div class="logo"></div>'+
@@ -3121,8 +3683,12 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '<h1>'+esc(state.meta.edition)+'</h1>'+
         '<div class="sub">'+esc([state.meta.level, state.meta.place].filter(Boolean).join(" · "))+'</div>'+
         '<div class="std">'+esc(state.meta.date)+'</div>'+
+        (state.meta.venue ? '<div class="venue">'+esc(state.meta.venue)+'</div>' : '')+
         '<div class="opt"><button class="sbtn" data-scene="mechanics">View the contest mechanics</button>'+
-        '<span class="opthint">The rounds, the scoring, who advances, and how the winners are declared</span></div>'+
+        '<button class="sbtn" data-scene="programme">View the programme</button>'+
+        '<span class="opthint">The rounds, the scoring, who advances and how the winners are declared — '+
+        'and the order of the whole programme</span></div>'+
+        hostsLineHTML()+
         '</div></div></div>';
     }
 
@@ -3509,12 +4075,14 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     shrink(f, function(uri){
       if(!uri){ toast("Could not read that picture"); return; }
       var who = tgt.kind==="k" ? coaches()[tgt.i]
-              : (tgt.kind==="j" ? judges()[tgt.i] : state.contestants[tgt.i]);
+              : (tgt.kind==="j" ? judges()[tgt.i]
+              : (tgt.kind==="p" ? prog()[tgt.i]
+              : (tgt.kind==="h" ? hosts()[tgt.i] : state.contestants[tgt.i])));
       if(!who) return;
       who.photo = uri;
       render();
-      toast("Photo added for "+(who.name ||
-        (tgt.kind==="k" ? "the coach" : (tgt.kind==="j" ? "the judge" : "slot "+who.no))));
+      var what = {k:"the coach", j:"the judge", p:"this segment", h:"this row"}[tgt.kind];
+      toast("Photo added for "+(who.name || what || ("slot "+who.no)));
     });
   });
 
@@ -3629,6 +4197,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     renderTop(); renderTabs();
     var v = $("view");
     if(tab==="roster") v.innerHTML = renderRoster();
+    else if(tab==="programme") v.innerHTML = renderProgramme();
     else if(tab==="deck") v.innerHTML = renderDeck();
     else if(tab==="run") v.innerHTML = renderRun();
     else if(tab==="standings") v.innerHTML = renderStandings();
@@ -3683,6 +4252,32 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       if(judges()[ji]){ judges()[ji].photo = null; render(); toast("Photo removed"); }
       return;
     }
+    var ptkEl = t.closest ? t.closest("[data-ptake]") : null;
+    if(ptkEl){ takeSegment(ptkEl.dataset.ptake); return; }
+    var pdnEl = t.closest ? t.closest("[data-pdone]") : null;
+    if(pdnEl){ toggleSegDone(+pdnEl.dataset.pdone); return; }
+    var pmvEl = t.closest ? t.closest("[data-pmove]") : null;
+    if(pmvEl && !pmvEl.disabled){ moveSegment(+pmvEl.dataset.pmove, +pmvEl.dataset.dir); return; }
+    var pdelEl = t.closest ? t.closest("[data-pdel]") : null;
+    if(pdelEl){ removeSegment(+pdelEl.dataset.pdel); return; }
+    var pphEl = t.closest ? t.closest("[data-pphoto]") : null;
+    if(pphEl){ pickPhoto("p", +pphEl.dataset.pphoto); return; }
+    var punEl = t.closest ? t.closest("[data-punphoto]") : null;
+    if(punEl){
+      var pi = +punEl.dataset.punphoto;
+      if(prog()[pi]){ prog()[pi].photo = null; render(); toast("Photo removed"); }
+      return;
+    }
+    var hphEl = t.closest ? t.closest("[data-hphoto]") : null;
+    if(hphEl){ pickPhoto("h", +hphEl.dataset.hphoto); return; }
+    var hunEl = t.closest ? t.closest("[data-hunphoto]") : null;
+    if(hunEl){
+      var hi = +hunEl.dataset.hunphoto;
+      if(hosts()[hi]){ hosts()[hi].photo = null; render(); toast("Photo removed"); }
+      return;
+    }
+    var hdEl = t.closest ? t.closest("[data-hdel]") : null;
+    if(hdEl){ removeHost(+hdEl.dataset.hdel); return; }
     var jmvEl = t.closest ? t.closest("[data-jmove]") : null;
     if(jmvEl && !jmvEl.disabled){ moveJudge(+jmvEl.dataset.jmove, +jmvEl.dataset.dir); return; }
     var jdEl = t.closest ? t.closest("[data-jdel]") : null;
@@ -3805,6 +4400,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       case "btnDeckAll": selectAll(true); break;
       case "btnDeckNone": selectAll(false); break;
       case "btnDeckAlt": alternateSelection(); break;
+      case "btnProgPrev": stepSegment(-1); break;
+      case "btnProgNext": stepSegment(1); break;
+      case "btnAddSeg": addSegment(); break;
+      case "btnProgReset": resetProgramme(); break;
+      case "btnAddHost": case "btnAddHost2": addHost(); break;
       case "btnAddCoach": case "btnAddCoach2": addCoach(); break;
       case "btnAddJudge": case "btnAddJudge2": addJudge(); break;
       case "btnKPaste": $("kPasteBox").classList.add("show"); $("kPasteText").focus(); break;
@@ -3853,6 +4453,26 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       if(mv > 0) brk.minutes = Math.min(180, mv);
       return;
     }
+    /* The programme's own boxes. The sub-items are one box holding a list, so
+       they are split on the commas as they are typed — the box keeps what was
+       typed, the programme keeps the lines. */
+    if(t.classList && t.classList.contains("pin")){
+      var pp = prog()[+t.dataset.pi];
+      if(pp){
+        if(t.dataset.pf === "items"){
+          pp.items = t.value.split(",").map(function(x){ return x.trim(); }).filter(Boolean);
+        } else {
+          pp[t.dataset.pf] = t.value;
+        }
+        refreshDerived(); paintDisplay();
+      }
+      return;
+    }
+    if(t.classList && t.classList.contains("hin")){
+      var hh = hosts()[+t.dataset.hi];
+      if(hh){ hh[t.dataset.hf] = t.value; refreshDerived(); paintDisplay(); }
+      return;
+    }
     if(t.classList && t.classList.contains("jin")){
       var jj = judges()[+t.dataset.ji];
       if(jj){ jj[t.dataset.jf] = t.value; refreshDerived(); paintDisplay(); }
@@ -3870,6 +4490,26 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   // from one coach to another everywhere they are listed
   document.addEventListener("change", function(e){
     var t = e.target;
+    if(t.dataset && t.dataset.pcue!==undefined){
+      var pc = prog()[+t.dataset.pcue];
+      if(pc){
+        pc.cue = t.value;
+        if(pc.cue==="round" && !pc.round) pc.round = "r1";
+        // the segment that is already on follows its own change straight away
+        if(nowSeg()===pc) takeSegment(pc.id); else render();
+      }
+      return;
+    }
+    if(t.dataset && t.dataset.pround!==undefined){
+      var pr = prog()[+t.dataset.pround];
+      if(pr){ pr.round = t.value; if(nowSeg()===pr) takeSegment(pr.id); else render(); }
+      return;
+    }
+    if(t.dataset && t.dataset.ppart!==undefined){
+      var pt2 = prog()[+t.dataset.ppart];
+      if(pt2){ pt2.part = +t.value; render(); }
+      return;
+    }
     if(t.dataset && t.dataset.jrole!==undefined){
       var jr = judges()[+t.dataset.jrole];
       if(jr){ jr.role = t.value; render(); }
@@ -3918,11 +4558,22 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(!typing && !e.ctrlKey && !e.metaKey && (e.key==="m" || e.key==="M")){
       setCue("mechanics"); toast("On screen: Contest mechanics"); return;
     }
+    if(!typing && !e.ctrlKey && !e.metaKey && (e.key==="p" || e.key==="P")){
+      setCue("programme"); toast("On screen: The programme"); return;
+    }
+    // the run of show is walked from the tab that shows it
+    if(tab==="programme" && !typingNow && !e.ctrlKey && !e.metaKey){
+      if(e.key==="ArrowLeft"){ e.preventDefault(); stepSegment(-1); return; }
+      if(e.key==="ArrowRight"){ e.preventDefault(); stepSegment(1); return; }
+    }
     if(tab==="display" && !typing && !e.ctrlKey && !e.metaKey){
       if(e.key==="ArrowLeft"){ e.preventDefault(); turnPage(-1); return; }
       if(e.key==="ArrowRight"){ e.preventDefault(); turnPage(1); return; }
-      if(/^[0-9]$/.test(e.key)){
-        var hit = CUES.filter(function(x){ return x.k===e.key; })[0];
+      // a cue's key is whatever is written against it — a digit for most, a
+      // letter for the two the keypad had no room left for
+      if(e.key.length===1){
+        var hit = CUES.filter(function(x){
+          return x.k && x.k.toLowerCase()===e.key.toLowerCase(); })[0];
         if(hit){ setCue(hit.id); return; }
       }
       // R walks the declaration: 3rd placer, 2nd placer, then the champion's own card
@@ -4010,6 +4661,36 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       if(typeof j.org!=="string") j.org = "";
       if(!isPhoto(j.photo)) j.photo = null;
     });
+
+    /* The programme. A session saved before it existed gets the standard one
+       rather than an empty list: a board with no programme would be a board that
+       had lost the day's running order, which is not what that file meant. */
+    if(!Array.isArray(d.programme) || !d.programme.length) d.programme = defaultProgramme();
+    var pids = [];
+    d.programme = d.programme.filter(function(p){ return p && typeof p==="object"; });
+    d.programme.forEach(function(p, ix){
+      if(typeof p.id!=="string" || !p.id || pids.indexOf(p.id)>=0) p.id = "s"+(ix+1)+"-"+ix;
+      pids.push(p.id);
+      p.part = p.part===2 ? 2 : 1;
+      ["title","name","office","org"].forEach(function(f){
+        if(typeof p[f]!=="string") p[f] = "";
+      });
+      if(!Array.isArray(p.items)) p.items = [];
+      p.items = p.items.filter(function(x){ return typeof x==="string" && x.trim()!==""; });
+      if(!PROG_CUES.some(function(c){ return c.v===p.cue; })) p.cue = "segment";
+      if(["r1","r2","r3"].indexOf(p.round)<0) p.round = p.cue==="round" ? "r1" : null;
+      p.done = !!p.done;
+      if(!isPhoto(p.photo)) p.photo = null;
+    });
+    if(typeof d.progNow!=="string" || pids.indexOf(d.progNow)<0) d.progNow = null;
+
+    if(!Array.isArray(d.hosts)) d.hosts = defaultHosts();
+    d.hosts = d.hosts.filter(function(h){ return h && typeof h==="object"; });
+    d.hosts.forEach(function(h){
+      ["role","name","org"].forEach(function(f){ if(typeof h[f]!=="string") h[f] = ""; });
+      if(!isPhoto(h.photo)) h.photo = null;
+    });
+    if(typeof d.meta.venue!=="string") d.meta.venue = "";
 
     if(!Array.isArray(d.schools)) d.schools = [];              // sessions saved before logos existed
     d.schools = d.schools.filter(function(x){
@@ -4161,6 +4842,14 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
                   return {id:k.id, name:k.name, school:k.school, photo:null}; }),
       judges:   judges().map(function(j){
                   return {name:j.name, role:j.role, office:j.office, org:j.org, photo:null}; }),
+      // the programme is where the day has got to, which nothing else records
+      programme: prog().map(function(p){
+                  return {id:p.id, part:p.part, title:p.title, items:p.items, name:p.name,
+                          office:p.office, org:p.org, photo:null, cue:p.cue,
+                          round:p.round, done:p.done}; }),
+      progNow:  state.progNow,
+      hosts:    hosts().map(function(h){
+                  return {role:h.role, name:h.name, org:h.org, photo:null}; }),
       deck:     {name:"", slides:[]},
       contestants: state.contestants.map(function(c){
                   return {no:c.no, name:c.name, school:c.school, coachId:c.coachId,

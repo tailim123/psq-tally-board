@@ -74,6 +74,7 @@
     renderTop(); renderTabs();
     var v = $("view");
     if(tab==="roster") v.innerHTML = renderRoster();
+    else if(tab==="programme") v.innerHTML = renderProgramme();
     else if(tab==="deck") v.innerHTML = renderDeck();
     else if(tab==="run") v.innerHTML = renderRun();
     else if(tab==="standings") v.innerHTML = renderStandings();

@@ -426,7 +426,7 @@
     }
 
     return '<div class="panel">' + head + stage +
-      '<div class="desk" style="padding:0 15px 4px">' + breakRow() + '</div>' + strip + tally +
+      '<div class="desk" style="padding:0 15px 4px">' + progRow() + breakRow() + '</div>' + strip + tally +
       '<div class="legend">These are the same boxes the round tabs hold — this is one column of them, ' +
       'for the question on screen. An answer slide tallies its own question, which is when the Quizmaster ' +
       'reads the answers out. While a tally button has focus the arrows and space belong to the tally, ' +

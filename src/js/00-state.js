@@ -17,6 +17,7 @@
     meta:{edition:"30th Philippine Statistics Quiz",
           level:"Provincial Elimination",
           place:"Marinduque",
+          venue:"Governor’s Hall, Capitol Compound, Bangbangalon, Boac, Marinduque",
           date:"24 September 2026",
           sdCount:5},
     cut:null,          // once the Round 3 cut is announced, the frozen list of contestant numbers
@@ -24,6 +25,12 @@
     coaches:[],        // {id, name, school, photo} — one entry per registered coach
     schools:[],        // {name, logo} — only the schools a logo has been added for
     judges:[],         // {name, role, office, org, photo} — the Board of Judges, in introduction order
+    /* the printed programme, in the order it runs. Seeded by prog() rather than
+       here: in development the parts are separate scripts, so the default is not
+       defined yet when this object is built. */
+    programme:null,    // [{id, part, title, items, name, office, org, photo, cue, round, done}]
+    progNow:null,      // the id of the segment that is on, once one has been taken
+    hosts:null,        // [{role, name, org, photo}] — the emcee and the Quizmaster
     deck:{name:"", slides:[]},   // the RTC's slides as pictures, and what each one is
     contestants:[]
   };

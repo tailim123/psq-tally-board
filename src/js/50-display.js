@@ -205,6 +205,10 @@
 
     if(disp.cue==="blank") return '<div class="dsp"></div>';
 
+    // the programme, and the segment of it that is on — both built in 22-programme
+    if(disp.cue==="programme") return programmeSceneHTML();
+    if(disp.cue==="segment") return segmentSceneHTML();
+
     if(disp.cue==="standby"){
       return '<div class="dsp"><div class="body"><div class="hero">'+
         '<div class="logo"></div>'+
@@ -212,8 +216,12 @@
         '<h1>'+esc(state.meta.edition)+'</h1>'+
         '<div class="sub">'+esc([state.meta.level, state.meta.place].filter(Boolean).join(" · "))+'</div>'+
         '<div class="std">'+esc(state.meta.date)+'</div>'+
+        (state.meta.venue ? '<div class="venue">'+esc(state.meta.venue)+'</div>' : '')+
         '<div class="opt"><button class="sbtn" data-scene="mechanics">View the contest mechanics</button>'+
-        '<span class="opthint">The rounds, the scoring, who advances, and how the winners are declared</span></div>'+
+        '<button class="sbtn" data-scene="programme">View the programme</button>'+
+        '<span class="opthint">The rounds, the scoring, who advances and how the winners are declared — '+
+        'and the order of the whole programme</span></div>'+
+        hostsLineHTML()+
         '</div></div></div>';
     }
 

@@ -83,21 +83,129 @@
 
 /* ---- title card ---- */
 .dsp .hero{text-align:center}
-.dsp .hero .logo{height:calc(var(--u)*7);background:var(--logo) no-repeat center/contain;margin-bottom:calc(var(--u)*2.4)}
+.dsp .hero .logo{height:calc(var(--u)*6.2);background:var(--logo) no-repeat center/contain;margin-bottom:calc(var(--u)*2)}
 .dsp .hero .kick{
   font-size:calc(var(--u)*2.1);color:#fff;font-weight:700;text-shadow:2px 2px 0 var(--sky-3);
 }
 .dsp .hero h1{
-  margin:calc(var(--u)*2.6) 0 calc(var(--u)*1.6);font-family:var(--pix);
+  margin:calc(var(--u)*2.2) 0 calc(var(--u)*1.4);font-family:var(--pix);
   font-size:calc(var(--u)*4.6);line-height:1.5;color:var(--d-yellow);
   text-shadow:5px 5px 0 var(--d-navy), 9px 9px 0 rgba(32,51,87,.35);
 }
 .dsp .hero .sub{font-size:calc(var(--u)*2.2);color:#fff;font-weight:750;text-shadow:2px 2px 0 var(--sky-3)}
 .dsp .hero .std{
-  display:inline-block;margin-top:calc(var(--u)*3.4);font-family:var(--pix);
+  display:inline-block;margin-top:calc(var(--u)*2.6);font-family:var(--pix);
   font-size:calc(var(--u)*1.6);background:var(--d-yellow);border:4px solid var(--ink);
   border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.4) calc(var(--u)*3);
   box-shadow:0 6px 0 var(--ink);
+}
+
+.dsp .hero .venue{
+  margin-top:calc(var(--u)*1.2);font-size:calc(var(--u)*1.6);color:#fff;font-weight:700;
+  text-shadow:1px 1px 0 var(--sky-3);
+}
+
+/* the emcee and the Quizmaster on the title card, where the chips do not fit */
+.dsp .hero .hostline{
+  margin-top:calc(var(--u)*1.8);font-size:calc(var(--u)*1.5);color:#fff;font-weight:650;
+  text-shadow:1px 1px 0 var(--sky-3);
+}
+.dsp .hero .hostline b{font-weight:850}
+
+/* ---- the programme ----
+   The printed programme read back: the two parts side by side, in order, with
+   the segment that is on marked and the ones behind it ticked off. */
+.dsp .pgm{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(calc(var(--u)*44),1fr));
+  gap:calc(var(--u)*1.6) calc(var(--u)*2.2);width:100%;align-items:start;
+}
+.dsp .pgm .part{display:flex;flex-direction:column;gap:calc(var(--u)*.7);min-width:0}
+.dsp .pgm .phead{
+  align-self:flex-start;font-family:var(--pix);font-size:calc(var(--u)*1.3);line-height:1;
+  color:var(--ink);background:var(--d-yellow);border:3px solid var(--ink);
+  border-radius:calc(var(--u)*.7);padding:calc(var(--u)*.8) calc(var(--u)*1.4);
+  box-shadow:0 3px 0 var(--ink);margin-bottom:calc(var(--u)*.4);
+}
+.dsp .pline{
+  display:flex;align-items:center;gap:calc(var(--u)*1.4);min-width:0;
+  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.8);
+  padding:calc(var(--u)*.7) calc(var(--u)*1.3);box-shadow:0 3px 0 var(--ink);
+}
+.dsp .pline .pt{min-width:0;flex:1 1 auto}
+.dsp .pline .pt b{
+  display:block;font-size:calc(var(--u)*1.5);font-weight:800;line-height:1.2;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.dsp .pline .pit{
+  display:block;font-size:calc(var(--u)*1.2);color:var(--d-grass2);font-weight:700;
+  line-height:1.25;margin-top:calc(var(--u)*.2);
+}
+.dsp .pline .pw{flex:0 0 auto;text-align:right;max-width:45%;min-width:0}
+.dsp .pline .pw b{
+  display:block;font-size:calc(var(--u)*1.35);font-weight:800;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dsp .pline .pw span{
+  display:block;font-size:calc(var(--u)*1.1);color:var(--d-olive);font-weight:700;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* the one that is on — the audience is told where we are, not left to count */
+.dsp .pline.now{
+  background:var(--d-yellow);border-width:4px;
+  box-shadow:0 3px 0 var(--ink), inset calc(var(--u)*1) 0 0 var(--d-grass);
+}
+.dsp .pline.done{opacity:.6}
+.dsp .pline.done .pt b::before{
+  content:"\2713\00a0";color:var(--d-grass2);font-weight:800;
+}
+
+/* the emcee and the Quizmaster, at the foot of the programme and of the title card */
+.dsp .hosts{
+  flex:0 0 auto;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*2);
+}
+.dsp .hosts .host{
+  background:var(--d-cream2);border:3px solid var(--ink);border-radius:calc(var(--u)*.8);
+  padding:calc(var(--u)*.7) calc(var(--u)*1.6);box-shadow:0 3px 0 var(--ink);text-align:center;
+}
+/* under the programme they sit at the foot of the screen, as they do in print */
+.dsp .body > .hosts{margin-top:auto;padding-top:calc(var(--u)*1.4)}
+.dsp .hosts .host b{display:block;font-size:calc(var(--u)*1.4);font-weight:800;line-height:1.2}
+.dsp .hosts .host span{
+  display:block;font-family:var(--pix);font-size:calc(var(--u)*.95);color:var(--d-olive);
+  margin-top:calc(var(--u)*.5);
+}
+
+/* ---- one segment, full screen ----
+   A segment nobody is named for is a heading: the title, and whatever runs
+   under it. Named a speaker, it becomes the card the coaches and judges get. */
+.dsp .seg{text-align:center}
+.dsp .seg .segt{
+  font-family:var(--pix);font-size:calc(var(--u)*3.6);line-height:1.5;color:var(--d-yellow);
+  text-shadow:4px 4px 0 var(--d-navy), 8px 8px 0 rgba(32,51,87,.3);
+}
+.dsp .seg .segby{
+  margin-top:calc(var(--u)*2);font-size:calc(var(--u)*2.2);color:#fff;font-weight:750;
+  text-shadow:2px 2px 0 var(--sky-3);
+}
+.dsp .seg .segitems{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:calc(var(--u)*1.6);
+  margin-top:calc(var(--u)*3.4);
+}
+.dsp .seg .segitem{
+  background:#FFFFFF;border:4px solid var(--ink);border-radius:calc(var(--u)*1);
+  box-shadow:0 5px 0 var(--ink);padding:calc(var(--u)*1.4) calc(var(--u)*2.6);
+  font-size:calc(var(--u)*2);font-weight:800;line-height:1.2;
+}
+.dsp .seg .orgline{
+  display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);
+  margin-top:calc(var(--u)*2.4);
+}
+.dsp .seg .orgline span{font-size:calc(var(--u)*1.7);color:#fff;font-weight:750;text-shadow:1px 1px 0 var(--sky-3)}
+.dsp .seg .orgmark{
+  height:calc(var(--u)*4.4);max-width:calc(var(--u)*7);object-fit:contain;
+  background:#FFFFFF;border:3px solid var(--ink);border-radius:calc(var(--u)*.5);
+  padding:calc(var(--u)*.35);
 }
 
 /* ---- the health break ---- */
@@ -129,9 +237,13 @@
 }
 .dsp .sbtn:hover{background:var(--d-cream2)}
 .dsp .sbtn:active{transform:translateY(5px);box-shadow:0 0 0}
-.dsp .opt{margin-top:calc(var(--u)*3)}
+/* the title card's options sit on one line, with their note under both */
+.dsp .opt{
+  margin-top:calc(var(--u)*2.2);display:flex;flex-wrap:wrap;
+  justify-content:center;gap:calc(var(--u)*1.4);
+}
 .dsp .opt .opthint{
-  display:block;margin-top:calc(var(--u)*1.2);font-size:calc(var(--u)*1.4);
+  flex:0 0 100%;margin-top:calc(var(--u)*.4);font-size:calc(var(--u)*1.4);
   color:#fff;font-weight:700;text-shadow:1px 1px 0 var(--sky-3);
 }
 /* the mechanics footer holds the back button and the screen pager on one line */

@@ -168,9 +168,25 @@ td.st{font-size:12px}
 .pill.qual{background:var(--yellow)}
 .sep{border-left:3px solid var(--ink)}
 
-.rin,.kin,.jin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
-.rin:hover,.kin:hover,.jin:hover{border-color:#C9D3E2}
-.rin:focus,.kin:focus,.jin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
+.rin,.kin,.jin,.pin,.hin{border:2px solid transparent;background:transparent;border-radius:6px;padding:6px 8px;width:100%;font-weight:600}
+.rin:hover,.kin:hover,.jin:hover,.pin:hover,.hin:hover{border-color:#C9D3E2}
+.rin:focus,.kin:focus,.jin:focus,.pin:focus,.hin:focus{border-color:var(--ink);background:var(--cream-2);outline:none}
+
+/* ---------------- the programme ----------------
+   Two boxes to a cell: the thing, and the smaller line under it — the segment
+   and its sub-items, the speaker and their position. */
+td.segcell{min-width:280px}
+td.orgcell{min-width:165px}
+.pin.sub{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:2px}
+.psel{border:2.5px solid var(--ink);border-radius:6px;padding:5px 8px;background:#fff;
+  font-weight:650;max-width:100%}
+.psel.sub{margin-top:5px;font-size:11.5px;padding:4px 7px}
+/* the segment that is on now, and the ones already behind us */
+tr.segnow td{background:#FFF6C9}
+tr.segnow td.no{color:var(--ink)}
+tr.segdone td{opacity:.62}
+.pill.now{background:var(--yellow)}
+.pill.done{background:#DCE9FF}
 
 /* roster coach cell — a name when the school settles it, a chooser when not */
 td.coachcell{min-width:200px;font-size:12.5px}
@@ -186,10 +202,14 @@ td.coachcell{min-width:200px;font-size:12.5px}
 .conly em{display:block;font-style:normal;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
 td.knote{min-width:200px}
 
-/* roster photo cell */
-td.photocell{white-space:nowrap;display:flex;align-items:center;gap:8px}
+/* roster photo cell — laid out inline rather than as a flex box, so the cell
+   still stretches to a row that runs to two lines, as the programme's do */
+td.photocell{white-space:nowrap}
+td.photocell>*{vertical-align:middle}
+td.photocell .thumb{margin-right:8px}
+td.photocell .lbtn.tiny+.lbtn.tiny{margin-left:6px}
 .thumb{width:34px;height:45px;object-fit:cover;border:2.5px solid var(--ink);border-radius:5px;background:#E7EDF7;flex:0 0 auto}
-.thumb.none{display:flex;align-items:center;justify-content:center;font-family:var(--pix);font-size:10px;color:#9AA9BE}
+.thumb.none{display:inline-flex;align-items:center;justify-content:center;font-family:var(--pix);font-size:10px;color:#9AA9BE}
 /* a school logo is not a portrait — square, and shown whole rather than cropped */
 .thumb.logo{width:45px;height:45px;object-fit:contain;background:#fff;padding:2px}
 .lbtn.tiny{padding:5px 9px;font-size:11px}
@@ -238,6 +258,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .setup{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;padding:14px 15px;background:#F6F9FF;border-bottom:3px solid var(--ink)}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:10px;letter-spacing:.05em;color:var(--olive);font-weight:800;text-transform:uppercase}
+.field.wide{grid-column:1/-1}
 .field input{border:2.5px solid var(--ink);border-radius:7px;padding:7px 9px;background:#fff;font-weight:600}
 .field input:focus{background:var(--cream-2);outline:none}
 

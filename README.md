@@ -5,8 +5,13 @@ Elimination**, built for PSA Marinduque.
 
 Two screens driven from one window:
 
-- a **tally console** for the operator — roster, per-round tick grids, tie-break, standings
+- a **tally console** for the operator — the programme, roster, per-round tick
+  grids, tie-break, standings
 - an **audience screen** in a second browser window for the projector, cued by the operator
+
+It runs the whole programme, not only the scored parts of it: the registration,
+the preliminaries, the messages, the awardings and the closing remarks are
+segments the board knows about and puts on screen.
 
 Everything runs offline from a single HTML file. No server, no internet, no install.
 
@@ -45,6 +50,7 @@ src/
     00-state.js                constants, the state object, the two tiny helpers
     10-scoring.js              rounds, the cut, placings, sudden death
     20-people.js               coaches, school and organisation logos, judges
+    22-programme.js            the printed programme, the run of show, and its two screens
     25-deck.js                 the RTC's slides as pictures, and what each one is
     78-autosave.js             keeping a copy, and being honest about whether it worked
     35-run.js                  the run state machine, the clocks, the live region, the Run tab
@@ -104,6 +110,7 @@ The parts read top to bottom in these sections:
 | coaches | `coachesAt`, `coachOf`, `unassigned`, `introGroups` — who coaches whom |
 | logos | `logoList`, `logoFor` — every school and organisation named, and its logo |
 | judges | `judges`, `namedJudges` — the Board of Judges, in the order introduced |
+| programme | `prog`, `nowSeg`, `takeSegment`, `stepSegment`, `hosts` — the run of show |
 | deck | `slides`, `qIndexOf`, `deckProblems` — the RTC's slides and their tags |
 | run | `ask`, `remaining`, `startTicking` — the state machine and the clock |
 | console views | `renderRoster`, `renderCoachPanel`, `renderRound`, `renderSd`, `renderStandings`, `renderDesk` |
@@ -115,7 +122,11 @@ The parts read top to bottom in these sections:
 
 State is one plain object, `state`, holding `meta`, `cut` (the announced Round 3
 cut, once there is one), `coaches`, `schools` (only those a logo was added for),
-`judges` and `contestants` — each of which carries its `photo` as a data URI. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
+`judges`, `programme` with `progNow` (the run of show, and where the day has got
+to), `hosts` and `contestants` — each of which carries its `photo` as a data URI.
+`programme` and `hosts` start as `null` and are seeded by `prog()` and `hosts()`
+on first use, because in development the parts load as separate scripts and the
+defaults are not defined yet when `state` is built. Display settings (`disp`, `perPage`, `introPer`, `sortBy`) are
 deliberately kept out of it so the saved session file stays about the contest,
 not about the projector.
 
@@ -125,6 +136,42 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
 ---
 
 ## Operating notes
+
+- **The programme is the spine of the day.** The Programme tab holds the printed
+  programme as a list of segments, in order, seeded with the one this contest
+  runs: registration, the preliminaries, the welcome, the introduction of the
+  guest speaker, the inspirational message, the presentation of the contestants
+  and coaches and the introduction of the Board of Judges in Part I; the three
+  rounds, the two awardings, the announcement of the winners and the closing
+  remarks in Part II. Every line of it is editable — rename a segment, move it
+  with `▲` `▼`, add one, delete one, or **Restore the standard programme**.
+
+  Each segment says **what the audience sees while it is on**. By default that is
+  the segment's own card; it can be any of the board's cues instead, which is how
+  *Presentation of the Contestants and Coaches* starts the introductions,
+  *Round 1* puts the Round 1 scores up and *Announcement of Winners* begins the
+  reveal. **Take it** makes a segment the one that is on, marks the one before it
+  done, and moves the screen — so does *Previous* and *Next*, which sit on the
+  Programme tab, the Display tab and the Run tab, because the operator may be on
+  any of the three when the emcee moves on. On the Programme tab `←` and `→` do
+  the same.
+
+  A segment with **nobody named is a heading** — the title, and any sub-items
+  under it, which is what carries the prayer, the national anthem and the
+  MIMAROPA hymn under *Preliminaries*. **Name someone** and it becomes a card
+  with their portrait, position and organisation, the same card the coaches and
+  the judges get, so the whole ceremony reads as one piece. Their organisation
+  takes a logo in the same panel the schools do.
+
+  The **emcee and the Quizmaster** are not segments — they are on all day, so
+  they have a panel of their own and sit at the foot of the programme screen and
+  under the date on the title card, exactly as they do in print. The **venue**
+  sits beside the event name on the Roster tab and on the title card.
+
+  Two cues carry it: **The programme** (`P`) is the whole run of show, both parts
+  side by side, the segment on now marked and the ones behind it ticked off;
+  **This segment** (`S`) is the one that is on, full screen. Nothing advances by
+  itself — the programme moves when the emcee does, never when a score arrives.
 
 - **The tally grid never reorders.** Rows are locked to contestant-number order so
   they cannot move while the operator is ticking boxes. Score ordering exists only
@@ -203,7 +250,8 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   badge and an organisation's seal are the same kind of thing. Its rows are not
   typed — they are every school named on the roster or against a coach, and every
   organisation named against a judge — so the only thing to do there is *Add
-  logo*. Columns show who each name is carrying: contestants, coaches, judges.
+  logo*, and a programme speaker's organisation is in the list beside them.
+  Columns show who each name is carrying: contestants, coaches, judges, speakers.
 
   A school's logo sits beside that school's name on every introduction screen, the
   coach's included. An organisation's logo sits beside its name on that judge's
@@ -258,14 +306,16 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   only**, each with their portrait; the champion has a full-screen card of their
   own. `R` walks the whole declaration in order: 3rd placer, 2nd placer, then the
   champion's card.
-- **The title card offers the mechanics.** Under the date there is a *View the
-  contest mechanics* button, which opens six screens covering the whole of the
+- **The title card offers the mechanics and the programme.** Under the date and
+  the venue there are *View the contest mechanics* and *View the programme*
+  buttons, live on the audience window itself so the emcee can click either
+  there. The first opens six screens covering the whole of the
   contest mechanics — how the contest runs, answering a question, scoring,
   advancing to Round 3, declaring the winners, and clarifications. Turn them with
-  `◀` `▶` on screen or the arrow keys. The button is live on the audience window
-  itself, so the emcee can click it there; the operator can also cue it from the
+  `◀` `▶` on screen or the arrow keys. The operator can also cue it from the
   Display tab or press `M`. The numbers on those screens come from the scoring
-  constants, so they cannot drift from what the app actually scores.
+  constants, so they cannot drift from what the app actually scores. The second
+  shows the programme, which the operator cues with `P`.
 - **Round scores show one figure, your choice of two.** On the Display tab,
   *Score shown* switches the big number on each tile between the **running
   total** (Round 1, then Rounds 1 & 2, then all three) and **this round only**.
@@ -340,11 +390,14 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   what is left and resuming sets a fresh deadline, so the time allowed is exact
   even if the board is busy.
 
-- **Shortcuts:** `T` returns to the title card and `M` shows the contest
-  mechanics, from anywhere. On the Display tab each cue carries its own number in
-  the corner — press it to pick that cue — `←` `→` turn the page, and `R` walks
-  the declaration of winners. The champion card is the one cue without a number:
-  `R` reaches it, and so does the button beside the reveals.
+- **Shortcuts:** `T` returns to the title card, `M` shows the contest mechanics
+  and `P` shows the programme, from anywhere. On the Display tab each cue carries
+  its own key in the corner — press it to pick that cue; the two the digits had
+  no room left for carry a letter instead, `P` for the programme and `S` for the
+  segment that is on. `←` `→` turn the page, and `R` walks the declaration of
+  winners. The champion card is the one cue without a key: `R` reaches it, and so
+  does the button beside the reveals. On the Programme tab `←` `→` step through
+  the segments rather than the pages.
 
 ---
 

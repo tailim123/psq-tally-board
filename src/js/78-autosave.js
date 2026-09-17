@@ -107,6 +107,14 @@
                   return {id:k.id, name:k.name, school:k.school, photo:null}; }),
       judges:   judges().map(function(j){
                   return {name:j.name, role:j.role, office:j.office, org:j.org, photo:null}; }),
+      // the programme is where the day has got to, which nothing else records
+      programme: prog().map(function(p){
+                  return {id:p.id, part:p.part, title:p.title, items:p.items, name:p.name,
+                          office:p.office, org:p.org, photo:null, cue:p.cue,
+                          round:p.round, done:p.done}; }),
+      progNow:  state.progNow,
+      hosts:    hosts().map(function(h){
+                  return {role:h.role, name:h.name, org:h.org, photo:null}; }),
       deck:     {name:"", slides:[]},
       contestants: state.contestants.map(function(c){
                   return {no:c.no, name:c.name, school:c.school, coachId:c.coachId,

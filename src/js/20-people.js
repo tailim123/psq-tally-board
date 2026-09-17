@@ -78,7 +78,8 @@
       if(!n) return;
       var e = seen["s"+n];
       if(!e){
-        e = seen["s"+n] = {key:n, name:String(name).trim(), contestants:0, coaches:0, judges:0};
+        e = seen["s"+n] = {key:n, name:String(name).trim(), contestants:0, coaches:0,
+                           judges:0, speakers:0};
         out.push(e);
       }
       e[field]++;
@@ -87,6 +88,10 @@
     state.contestants.forEach(function(c){ if(!c.name.trim()) add(c.school, "contestants"); });
     namedCoaches().forEach(function(k){ add(k.school, "coaches"); });
     namedJudges().forEach(function(j){ add(j.org, "judges"); });
+    // and the organisations named on the programme — a speaker's seal sits beside
+    // them on their card exactly as a judge's does
+    prog().forEach(function(p){ if(p.name.trim()) add(p.org, "speakers"); });
+    namedHosts().forEach(function(h){ add(h.org, "speakers"); });
     out.sort(function(a,b){ return a.key<b.key ? -1 : 1; });
     return out;
   }

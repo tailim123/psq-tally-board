@@ -75,12 +75,14 @@
     shrink(f, function(uri){
       if(!uri){ toast("Could not read that picture"); return; }
       var who = tgt.kind==="k" ? coaches()[tgt.i]
-              : (tgt.kind==="j" ? judges()[tgt.i] : state.contestants[tgt.i]);
+              : (tgt.kind==="j" ? judges()[tgt.i]
+              : (tgt.kind==="p" ? prog()[tgt.i]
+              : (tgt.kind==="h" ? hosts()[tgt.i] : state.contestants[tgt.i])));
       if(!who) return;
       who.photo = uri;
       render();
-      toast("Photo added for "+(who.name ||
-        (tgt.kind==="k" ? "the coach" : (tgt.kind==="j" ? "the judge" : "slot "+who.no))));
+      var what = {k:"the coach", j:"the judge", p:"this segment", h:"this row"}[tgt.kind];
+      toast("Photo added for "+(who.name || what || ("slot "+who.no)));
     });
   });
 

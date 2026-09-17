@@ -41,7 +41,7 @@
 
   function renderTabs(){
     var u = pendingTies();
-    var defs = [["roster","Roster"],["deck","Deck"]];
+    var defs = [["roster","Roster"],["programme","Programme"],["deck","Deck"]];
     if(hasDeck()) defs.push(["run","Run"]);
     defs = defs.concat([["r1","Round 1"],["r2","Round 2"],["r3","Round 3"],
                 ["sd","Tie-break"],["standings","Standings"],["display","Display"]]);
@@ -89,6 +89,8 @@
         '<div class="field"><label for="mLv">Stage</label><input id="mLv" data-m="level" value="'+esc(state.meta.level)+'"></div>'+
         '<div class="field"><label for="mPl">Province</label><input id="mPl" data-m="place" value="'+esc(state.meta.place)+'"></div>'+
         '<div class="field"><label for="mDt">Date</label><input id="mDt" data-m="date" value="'+esc(state.meta.date)+'"></div>'+
+        '<div class="field wide"><label for="mVn">Venue</label><input id="mVn" data-m="venue" value="'+
+          esc(state.meta.venue||"")+'" placeholder="Hall, compound, town"></div>'+
       '</div>'+
       '<div class="panel-head"><h3>Roster</h3><span class="note">'+named().length+' of '+state.contestants.length+
         ' slots filled · '+withPhotos+' with a photo</span>'+
@@ -216,16 +218,17 @@
         '</td>'+
         '<td class="cum">'+(x.contestants||"—")+'</td>'+
         '<td class="cum">'+(x.coaches||"—")+'</td>'+
-        '<td class="cum">'+(x.judges||"—")+'</td></tr>';
+        '<td class="cum">'+(x.judges||"—")+'</td>'+
+        '<td class="cum">'+(x.speakers||"—")+'</td></tr>';
     }).join("");
     var withLogo = list.filter(function(x){ return logoFor(x.name); }).length;
     return '<div class="panel">'+
       '<div class="panel-head"><h3>School &amp; organisation logos</h3><span class="note">'+
       withLogo+' of '+list.length+' with a logo · schools badge the contestants who are introduced under them, '+
-      'organisations badge their judge</span></div>'+
+      'organisations badge their judge or speaker</span></div>'+
       '<div class="scroll"><table><thead><tr><th class="c">No.</th><th>School or organisation</th>'+
       '<th class="c">Logo</th><th class="c">Contestants</th><th class="c">Coaches</th><th class="c">Judges</th>'+
-      '</tr></thead><tbody>'+rows+'</tbody></table></div>'+
+      '<th class="c">Speakers</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="legend">The list follows the names typed above — there is nothing to add here by hand. '+
       'Logos keep their transparency, are shrunk before they are stored and travel inside the saved session. '+
       'Correcting a name’s spelling parks its logo rather than losing it; type the spelling back and it returns. '+

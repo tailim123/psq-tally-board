@@ -1,11 +1,14 @@
 "use strict";
   /* ===================== display control desk ===================== */
-  /* The number key is written down rather than taken from the position, so a
-     cue can be added or dropped without the whole keypad shifting under the
-     operator. */
+  /* The key is written down rather than taken from the position, so a cue can
+     be added or dropped without the whole keypad shifting under the operator —
+     which is also why the two newest carry a letter: the digits were spoken for
+     and renumbering would have moved every cue the operator already knows. */
   var CUES = [
     {id:"standby",     k:"1", t:"Title card",        d:"Event name, province, date"},
     {id:"mechanics",   k:"2", t:"Contest mechanics", d:"The rounds, qualifying, and tie-breaks"},
+    {id:"programme",   k:"P", t:"The programme",     d:"The whole run of show, the segment on now marked"},
+    {id:"segment",     k:"S", t:"This segment",      d:"The segment on now, and whoever is taking it"},
     {id:"introduce",   k:"3", t:"Introduce contestants", d:"School by school, each followed by their coach"},
     {id:"judges",      k:"4", t:"Board of Judges",   d:"One judge to a screen, in the order you set"},
     {id:"round",       k:"5", t:"Round scores",      d:"By contestant number, for the read-out"},
@@ -32,6 +35,7 @@
     var mech = disp.cue==="mechanics";
     var intro = disp.cue==="introduce";
     var jud = disp.cue==="judges";
+    var prg = disp.cue==="programme" || disp.cue==="segment";
     var photos = named().filter(function(c){ return isPhoto(c.photo); }).length;
     var rev = [["Reveal 3rd placer",1],["Reveal 2nd placer",2]].map(function(r){
       return '<button class="lbtn'+(disp.cue==="reveal" && disp.reveal===r[1]?" on":"")+'" data-reveal="'+r[1]+'">'+r[0]+'</button>';
@@ -72,8 +76,11 @@
       '<div class="desk">'+
         '<h4>What the audience sees</h4>'+
         '<p class="hint">The screen only changes when you choose a cue, so you can tally quietly while a title card is up. '+
-        'The title card carries a <b>View the contest mechanics</b> button — click it on the audience screen itself, or press M here.</p>'+
+        'The title card carries <b>View the contest mechanics</b> and <b>View the programme</b> buttons — click either on the '+
+        'audience screen itself, or press M or P here. The Programme row below walks the day segment by segment and moves '+
+        'the screen with it.</p>'+
         '<div class="cues">'+cues+'</div>'+
+        progRow()+
         '<div class="deskrow"><span class="lab">Round on screen</span>'+rounds+'</div>'+
         '<div class="deskrow"><span class="lab">Score shown</span>'+
           [["Running total","total"],["This round only","round"]].map(function(v){
@@ -95,10 +102,11 @@
             return '<button class="lbtn'+(disp.cols===v[1]?" on":"")+'" data-cols="'+v[1]+'">'+v[0]+'</button>';
           }).join("")+
           '<span class="note">Tiles read downwards, then across.</span></div>'+
-        (mech||jud
+        (mech||jud||prg
           ? '<div class="deskrow"><span class="lab">Per page</span>'+
             '<span class="note">'+(mech ? 'The mechanics run one screen at a time.'
-                                        : 'The judges are introduced one to a screen \u2014 set the order on the Roster tab.')+
+                                  : (jud ? 'The judges are introduced one to a screen \u2014 set the order on the Roster tab.'
+                                         : 'One screen \u2014 the Programme tab sets what is on it.'))+
             '</span></div>'
           : '<div class="deskrow"><span class="lab">'+(intro?"Portraits per page":"Tiles per page")+'</span>'+
             (intro?[1,4,6,8]:[6,8,10,12]).map(function(v){
@@ -123,8 +131,9 @@
           '<button class="lbtn'+(disp.cue==="champion"?" on":"")+'" data-cue="champion">Then the champion</button>'+
           '<span class="note">The champion has a card of their own — R walks the three in order.</span></div>'+
       '</div>'+
-      '<div class="legend">Shortcuts: T returns to the title card and M shows the contest mechanics, from anywhere. '+
-      'On this tab, the number badge on each cue picks it, left and right arrows turn the page, and R walks the declaration — '+
+      '<div class="legend">Shortcuts: T returns to the title card, M shows the contest mechanics and P shows the programme, from anywhere. '+
+      'On this tab, the badge on each cue picks it — a number for most, P for the programme and S for the segment on now — '+
+      'left and right arrows turn the page, and R walks the declaration — '+
       '3rd placer, 2nd placer, then the champion’s card.'+
       (photos<named().length ? ' <b>'+(named().length-photos)+' contestants have no photo yet</b> — add them on the Roster tab; the introduction screen shows their number instead.' : '')+
       (namedCoaches().filter(function(k){ return !isPhoto(k.photo); }).length
