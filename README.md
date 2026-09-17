@@ -47,7 +47,7 @@ src/
     20-people.js               coaches, school and organisation logos, judges
     25-deck.js                 the RTC's slides as pictures, and what each one is
     78-autosave.js             keeping a copy, and being honest about whether it worked
-    35-run.js                  the run state machine, the clock, the live region, the Run tab
+    35-run.js                  the run state machine, the clocks, the live region, the Run tab
     30-console.js              the operator's header, tabs and tab views
     40-desk.js                 the display control desk
     50-display.js              the audience screen: scenes, fit, the pop-up window
@@ -305,6 +305,20 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   you are not switching tabs mid-round. Round 3 lists only the contestants who
   made the cut; sudden death lists only the tied group, clicked once for correct
   and twice for wrong, exactly as the Tie-break tab does.
+
+- **Health break.** On the Display tab and on the Run tab there is a **Health
+  break** row: pick 5, 10, 15, 20 or 30 minutes, or type any number up to 180, and
+  *Start the break*. The audience gets a full screen with the minutes counting
+  down and the clock time you will resume at; the last thirty seconds turn red,
+  and a chime sounds when the time is up. It does not end itself — the Quizmaster
+  decides that — so the screen sits at 0:00 until you press *End the break*, and
+  the display then goes back to whatever it was showing.
+
+  While it runs you can *Pause* it, or add **+1** or **+5 minutes** without
+  restarting. **Starting a break pauses a running question clock**, which is the
+  thing that would otherwise go wrong quietly: a fifteen-second question does not
+  survive a ten-minute break ticking away underneath it. The question comes back
+  paused, with its time intact, for you to resume.
 
 - **Running a question.** On the Display tab, *Put the deck on screen*. From then
   on the slide owns the display — no header, no skyline, nothing of the board's

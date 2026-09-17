@@ -47,6 +47,10 @@
     if(jmvEl && !jmvEl.disabled){ moveJudge(+jmvEl.dataset.jmove, +jmvEl.dataset.dir); return; }
     var jdEl = t.closest ? t.closest("[data-jdel]") : null;
     if(jdEl){ removeJudge(+jdEl.dataset.jdel); return; }
+    var bmEl = t.closest ? t.closest("[data-brkmin]") : null;
+    if(bmEl){ brk.minutes = +bmEl.dataset.brkmin; render(); return; }
+    var baEl = t.closest ? t.closest("[data-brkadd]") : null;
+    if(baEl){ addBreakTime(+baEl.dataset.brkadd); return; }
     var rtEl = t.closest ? t.closest("[data-rtick]") : null;
     if(rtEl){ runToggleTick(+rtEl.dataset.rtick); return; }
     var rjEl = t.closest ? t.closest("[data-rjump]") : null;
@@ -150,6 +154,9 @@
       case "btnRunTime": runTime(); break;
       case "btnRunReset": runReset(); break;
       case "btnRunClearQ": runClearQuestion(); break;
+      case "btnBreakStart": startBreak(0); break;
+      case "btnBreakToggle": toggleBreak(); break;
+      case "btnBreakEnd": endBreak(); break;
       case "btnChime": chimeOn = !chimeOn; render();
         toast(chimeOn ? "Chime on" : "Chime off"); break;
       case "btnDeckOpen": $("deckIn").click(); break;
@@ -199,6 +206,11 @@
       renderTop(); renderTabs(); refreshDerived(); paintDisplay();
       var note = document.querySelector(".panel-head .note");
       if(note) note.textContent = named().length+" of "+state.contestants.length+" slots filled";
+      return;
+    }
+    if(t.id === "brkMin"){
+      var mv = parseInt(t.value, 10);
+      if(mv > 0) brk.minutes = Math.min(180, mv);
       return;
     }
     if(t.classList && t.classList.contains("jin")){

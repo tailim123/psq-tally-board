@@ -82,6 +82,7 @@
           '<span class="note">The big figure on each tile. The other number stays under it in small type'+
           (sortBy==="score" ? ", and the on-screen order follows whichever you pick" : "")+'.</span></div>'+
         runDeskRow()+
+        breakRow()+
         coachRow+
         cutRow+
         '<div class="deskrow"><span class="lab">Round order on screen</span>'+

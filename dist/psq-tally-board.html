@@ -291,6 +291,13 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .cue.on span{color:#7A5E00}
 .deskrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:15px;border-top:2px dashed #C9D3E2}
 .deskrow .lab{font-size:11px;color:var(--olive);font-weight:800;text-transform:uppercase;margin-right:2px}
+/* the health break's minutes box, and the time left while one runs */
+.bmin{width:66px;border:2.5px solid var(--ink);border-radius:7px;padding:6px 8px;
+  background:#fff;font-weight:700;text-align:center}
+.deskrow .unit{font-size:11px;color:var(--muted);font-weight:700;margin-right:4px}
+.brkleft{font-family:var(--pix);font-size:17px;background:var(--yellow);
+  border:2.5px solid var(--ink);border-radius:7px;padding:6px 10px;box-shadow:0 3px 0 var(--ink)}
+.brkleft.soon{background:var(--red);color:#fff}
 
 .preview{position:fixed;inset:0;background:rgba(10,22,48,.94);z-index:60;display:none;flex-direction:column;padding:56px 24px 24px}
 .preview.show{display:flex}
@@ -456,6 +463,26 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   font-size:calc(var(--u)*1.6);background:var(--d-yellow);border:4px solid var(--ink);
   border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.4) calc(var(--u)*3);
   box-shadow:0 6px 0 var(--ink);
+}
+
+/* ---- the health break ---- */
+.dsp .brk{text-align:center}
+.dsp .brk .kick{
+  font-family:var(--pix);font-size:calc(var(--u)*2.6);color:var(--d-yellow);
+  text-shadow:4px 4px 0 var(--d-navy);letter-spacing:.04em;
+}
+.dsp .brk .bclock{
+  display:inline-block;margin-top:calc(var(--u)*3);font-family:var(--pix);
+  font-size:calc(var(--u)*11);line-height:1;color:var(--ink);background:var(--d-yellow);
+  border:6px solid var(--ink);border-radius:calc(var(--u)*1.6);
+  padding:calc(var(--u)*2.4) calc(var(--u)*4) calc(var(--u)*1.8);
+  box-shadow:0 8px 0 var(--ink);
+}
+.dsp .brk .bclock.soon{background:var(--d-red);color:#fff}
+.dsp .brk.over .bclock{background:#C9D9F5;color:var(--sky-deep)}
+.dsp .brk .bsub{
+  margin-top:calc(var(--u)*3);font-size:calc(var(--u)*2.2);color:#fff;font-weight:750;
+  text-shadow:2px 2px 0 var(--sky-3);
 }
 
 /* ---- on-screen option button (title card, mechanics) ---- */
@@ -2337,6 +2364,13 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
      arithmetic means a throttled tick loses accuracy in the display for a moment,
      never in the time actually allowed. */
   function tickOnce(){
+    // a break, when there is one, is the clock on screen
+    if(brk.on){
+      var bms = brkRemaining(), bsec = Math.ceil(bms / 1000);
+      if(bsec !== shownSec){ shownSec = bsec; writeBreakClock(bsec); }
+      if(brk.running && bms <= 0) breakDone();
+      return;
+    }
     var ms = remaining(), sec = Math.ceil(ms / 1000);
     if(sec !== shownSec){ shownSec = sec; writeClock(sec); }
     if(ask.phase === "running" && ms <= 0) timeUp();
@@ -2602,11 +2636,144 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       }
     }
 
-    return '<div class="panel">' + head + stage + strip + tally +
+    return '<div class="panel">' + head + stage +
+      '<div class="desk" style="padding:0 15px 4px">' + breakRow() + '</div>' + strip + tally +
       '<div class="legend">These are the same boxes the round tabs hold — this is one column of them, ' +
       'for the question on screen. An answer slide tallies its own question, which is when the Quizmaster ' +
       'reads the answers out. While a tally button has focus the arrows and space belong to the tally, ' +
       'not to the deck.</div></div>';
+  }
+
+  /* ---- the health break ----
+     Between rounds the contest stops and the audience needs telling for how long.
+     It is a clock like any other here: a deadline, not a countdown that ticks
+     down, sharing the same one-write-a-second live region as the question clock.
+
+     It sits above everything on screen — above the deck, above the cues — because
+     a break interrupts whatever was showing. And starting one pauses a running
+     question clock, which is the part that would otherwise go wrong quietly: a
+     fifteen-second question does not survive a ten-minute break running underneath
+     it. */
+
+  var brk = {on:false, running:false, endsAt:null, remain:0, minutes:10};
+  var BREAK_MINUTES = [5, 10, 15, 20, 30];
+
+  function brkRemaining(){
+    if(brk.running) return Math.max(0, brk.endsAt - Date.now());
+    return brk.remain;
+  }
+  function fmtMS(sec){
+    var m = Math.floor(Math.max(0, sec) / 60), r = Math.max(0, sec) % 60;
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+  function hhmm(d){
+    var p = function(n){ return (n < 10 ? "0" : "") + n; };
+    return p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function startBreak(mins){
+    if(mins) brk.minutes = mins;
+    var m = Math.max(1, Math.min(180, Math.round(brk.minutes || 10)));
+    brk.minutes = m;
+    // a question clock must not run on underneath the break
+    if(ask.phase === "running") runPause();
+    brk.on = true;
+    brk.remain = m * 60000;
+    brk.endsAt = Date.now() + brk.remain;
+    brk.running = true;
+    render();
+    startTicking();
+    toast("Health break — " + m + " minute" + (m === 1 ? "" : "s"));
+  }
+  function pauseBreak(){
+    if(!brk.on || !brk.running) return;
+    brk.remain = brkRemaining();
+    brk.endsAt = null;
+    brk.running = false;
+    stopTicking();
+    render();
+  }
+  function resumeBreak(){
+    if(!brk.on || brk.running) return;
+    brk.endsAt = Date.now() + Math.max(0, brk.remain);
+    brk.running = true;
+    render();
+    startTicking();
+  }
+  function toggleBreak(){ if(brk.running) pauseBreak(); else resumeBreak(); }
+  function addBreakTime(mins){
+    if(!brk.on) return;
+    var add = mins * 60000;
+    if(brk.running) brk.endsAt = Math.max(Date.now(), brk.endsAt || Date.now()) + add;
+    else brk.remain = Math.max(0, brk.remain) + add;
+    render();
+    toast((mins > 0 ? "Added " : "Took off ") + Math.abs(mins) + " minute" +
+          (Math.abs(mins) === 1 ? "" : "s"));
+  }
+  function endBreak(){
+    if(!brk.on) return;
+    brk.on = false; brk.running = false; brk.endsAt = null; brk.remain = 0;
+    stopTicking();
+    render();
+    toast("Break over — back to the screen you left");
+  }
+  // the time ran out; the operator still decides when to resume
+  function breakDone(){
+    brk.running = false; brk.remain = 0; brk.endsAt = null;
+    stopTicking();
+    render();
+    chime();
+  }
+
+  function writeBreakClock(sec){
+    var text = fmtMS(sec), soon = brk.running && sec <= 30;
+    clockNodes().forEach(function(el){
+      el.textContent = text;
+      var box = el.parentNode;
+      if(box && box.classList) box.classList.toggle("soon", soon);
+    });
+  }
+
+  function breakSceneHTML(){
+    var sec = Math.ceil(brkRemaining() / 1000);
+    var over = sec <= 0;
+    shownSec = null;                     // the markup carries the value; start fresh
+    var sub = over ? "We resume in a moment"
+      : (brk.running ? "We resume at " + hhmm(new Date(brk.endsAt)) : "Paused");
+    return '<div class="dsp">' + dspHead("Health break") +
+      '<div class="body"><div class="brk' + (over ? " over" : "") + '">' +
+      '<div class="kick">Health break</div>' +
+      '<div class="bclock"><span id="clockFace">' + fmtMS(sec) + '</span></div>' +
+      '<div class="bsub">' + esc(sub) + '</div>' +
+      '</div></div></div>';
+  }
+
+  /* The same controls on the Display desk and on the Run tab, because the
+     operator may be on either when the Quizmaster calls the break. */
+  function breakRow(){
+    if(!brk.on){
+      return '<div class="deskrow"><span class="lab">Health break</span>' +
+        BREAK_MINUTES.map(function(m){
+          return '<button class="lbtn' + (brk.minutes === m ? " on" : "") +
+            '" data-brkmin="' + m + '">' + m + '</button>';
+        }).join("") +
+        '<input class="bmin" id="brkMin" type="number" min="1" max="180" step="1" value="' +
+          esc(String(brk.minutes)) + '" aria-label="Minutes for the health break"><span class="unit">min</span>' +
+        '<button class="lbtn go" id="btnBreakStart">Start the break</button>' +
+        '<span class="note">Takes the screen while it runs, and pauses a question clock if one is going.</span>' +
+        '</div>';
+    }
+    var sec = Math.ceil(brkRemaining() / 1000);
+    return '<div class="deskrow"><span class="lab">Health break</span>' +
+      '<b class="brkleft' + (sec <= 30 && brk.running ? " soon" : "") + '">' + fmtMS(sec) + '</b>' +
+      '<button class="lbtn ' + (brk.running ? "" : "go") + '" id="btnBreakToggle">' +
+        (brk.running ? "Pause" : "Resume") + '</button>' +
+      '<button class="lbtn" data-brkadd="1">+1 min</button>' +
+      '<button class="lbtn" data-brkadd="5">+5 min</button>' +
+      '<button class="lbtn danger" id="btnBreakEnd">End the break</button>' +
+      '<span class="note">' + (sec <= 0
+        ? "The time is up — end the break when the Quizmaster is ready."
+        : "The screen goes back to whatever it was showing when you end it.") + '</span></div>';
   }
   /* ===================== display control desk ===================== */
   /* The number key is written down rather than taken from the position, so a
@@ -2691,6 +2858,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
           '<span class="note">The big figure on each tile. The other number stays under it in small type'+
           (sortBy==="score" ? ", and the on-screen order follows whichever you pick" : "")+'.</span></div>'+
         runDeskRow()+
+        breakRow()+
         coachRow+
         cutRow+
         '<div class="deskrow"><span class="lab">Round order on screen</span>'+
@@ -2939,6 +3107,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   function sceneHTML(){
     // one rule: while the deck is on screen it owns the display, and every cue
     // below carries on working untouched for when it is not
+    if(brk.on) return breakSceneHTML();
     if(runLive()) return runSceneHTML();
 
     var s = standings(), list = named();
@@ -3518,6 +3687,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(jmvEl && !jmvEl.disabled){ moveJudge(+jmvEl.dataset.jmove, +jmvEl.dataset.dir); return; }
     var jdEl = t.closest ? t.closest("[data-jdel]") : null;
     if(jdEl){ removeJudge(+jdEl.dataset.jdel); return; }
+    var bmEl = t.closest ? t.closest("[data-brkmin]") : null;
+    if(bmEl){ brk.minutes = +bmEl.dataset.brkmin; render(); return; }
+    var baEl = t.closest ? t.closest("[data-brkadd]") : null;
+    if(baEl){ addBreakTime(+baEl.dataset.brkadd); return; }
     var rtEl = t.closest ? t.closest("[data-rtick]") : null;
     if(rtEl){ runToggleTick(+rtEl.dataset.rtick); return; }
     var rjEl = t.closest ? t.closest("[data-rjump]") : null;
@@ -3621,6 +3794,9 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       case "btnRunTime": runTime(); break;
       case "btnRunReset": runReset(); break;
       case "btnRunClearQ": runClearQuestion(); break;
+      case "btnBreakStart": startBreak(0); break;
+      case "btnBreakToggle": toggleBreak(); break;
+      case "btnBreakEnd": endBreak(); break;
       case "btnChime": chimeOn = !chimeOn; render();
         toast(chimeOn ? "Chime on" : "Chime off"); break;
       case "btnDeckOpen": $("deckIn").click(); break;
@@ -3670,6 +3846,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       renderTop(); renderTabs(); refreshDerived(); paintDisplay();
       var note = document.querySelector(".panel-head .note");
       if(note) note.textContent = named().length+" of "+state.contestants.length+" slots filled";
+      return;
+    }
+    if(t.id === "brkMin"){
+      var mv = parseInt(t.value, 10);
+      if(mv > 0) brk.minutes = Math.min(180, mv);
       return;
     }
     if(t.classList && t.classList.contains("jin")){

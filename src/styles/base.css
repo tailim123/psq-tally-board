@@ -284,6 +284,13 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .cue.on span{color:#7A5E00}
 .deskrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px;padding-top:15px;border-top:2px dashed #C9D3E2}
 .deskrow .lab{font-size:11px;color:var(--olive);font-weight:800;text-transform:uppercase;margin-right:2px}
+/* the health break's minutes box, and the time left while one runs */
+.bmin{width:66px;border:2.5px solid var(--ink);border-radius:7px;padding:6px 8px;
+  background:#fff;font-weight:700;text-align:center}
+.deskrow .unit{font-size:11px;color:var(--muted);font-weight:700;margin-right:4px}
+.brkleft{font-family:var(--pix);font-size:17px;background:var(--yellow);
+  border:2.5px solid var(--ink);border-radius:7px;padding:6px 10px;box-shadow:0 3px 0 var(--ink)}
+.brkleft.soon{background:var(--red);color:#fff}
 
 .preview{position:fixed;inset:0;background:rgba(10,22,48,.94);z-index:60;display:none;flex-direction:column;padding:56px 24px 24px}
 .preview.show{display:flex}

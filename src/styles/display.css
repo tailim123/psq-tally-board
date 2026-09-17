@@ -100,6 +100,26 @@
   box-shadow:0 6px 0 var(--ink);
 }
 
+/* ---- the health break ---- */
+.dsp .brk{text-align:center}
+.dsp .brk .kick{
+  font-family:var(--pix);font-size:calc(var(--u)*2.6);color:var(--d-yellow);
+  text-shadow:4px 4px 0 var(--d-navy);letter-spacing:.04em;
+}
+.dsp .brk .bclock{
+  display:inline-block;margin-top:calc(var(--u)*3);font-family:var(--pix);
+  font-size:calc(var(--u)*11);line-height:1;color:var(--ink);background:var(--d-yellow);
+  border:6px solid var(--ink);border-radius:calc(var(--u)*1.6);
+  padding:calc(var(--u)*2.4) calc(var(--u)*4) calc(var(--u)*1.8);
+  box-shadow:0 8px 0 var(--ink);
+}
+.dsp .brk .bclock.soon{background:var(--d-red);color:#fff}
+.dsp .brk.over .bclock{background:#C9D9F5;color:var(--sky-deep)}
+.dsp .brk .bsub{
+  margin-top:calc(var(--u)*3);font-size:calc(var(--u)*2.2);color:#fff;font-weight:750;
+  text-shadow:2px 2px 0 var(--sky-3);
+}
+
 /* ---- on-screen option button (title card, mechanics) ---- */
 .dsp .sbtn{
   display:inline-block;font-family:var(--pix);font-size:calc(var(--u)*1.4);line-height:1.3;

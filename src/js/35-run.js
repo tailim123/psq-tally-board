@@ -153,6 +153,13 @@
      arithmetic means a throttled tick loses accuracy in the display for a moment,
      never in the time actually allowed. */
   function tickOnce(){
+    // a break, when there is one, is the clock on screen
+    if(brk.on){
+      var bms = brkRemaining(), bsec = Math.ceil(bms / 1000);
+      if(bsec !== shownSec){ shownSec = bsec; writeBreakClock(bsec); }
+      if(brk.running && bms <= 0) breakDone();
+      return;
+    }
     var ms = remaining(), sec = Math.ceil(ms / 1000);
     if(sec !== shownSec){ shownSec = sec; writeClock(sec); }
     if(ask.phase === "running" && ms <= 0) timeUp();
@@ -418,9 +425,142 @@
       }
     }
 
-    return '<div class="panel">' + head + stage + strip + tally +
+    return '<div class="panel">' + head + stage +
+      '<div class="desk" style="padding:0 15px 4px">' + breakRow() + '</div>' + strip + tally +
       '<div class="legend">These are the same boxes the round tabs hold — this is one column of them, ' +
       'for the question on screen. An answer slide tallies its own question, which is when the Quizmaster ' +
       'reads the answers out. While a tally button has focus the arrows and space belong to the tally, ' +
       'not to the deck.</div></div>';
+  }
+
+  /* ---- the health break ----
+     Between rounds the contest stops and the audience needs telling for how long.
+     It is a clock like any other here: a deadline, not a countdown that ticks
+     down, sharing the same one-write-a-second live region as the question clock.
+
+     It sits above everything on screen — above the deck, above the cues — because
+     a break interrupts whatever was showing. And starting one pauses a running
+     question clock, which is the part that would otherwise go wrong quietly: a
+     fifteen-second question does not survive a ten-minute break running underneath
+     it. */
+
+  var brk = {on:false, running:false, endsAt:null, remain:0, minutes:10};
+  var BREAK_MINUTES = [5, 10, 15, 20, 30];
+
+  function brkRemaining(){
+    if(brk.running) return Math.max(0, brk.endsAt - Date.now());
+    return brk.remain;
+  }
+  function fmtMS(sec){
+    var m = Math.floor(Math.max(0, sec) / 60), r = Math.max(0, sec) % 60;
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+  function hhmm(d){
+    var p = function(n){ return (n < 10 ? "0" : "") + n; };
+    return p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function startBreak(mins){
+    if(mins) brk.minutes = mins;
+    var m = Math.max(1, Math.min(180, Math.round(brk.minutes || 10)));
+    brk.minutes = m;
+    // a question clock must not run on underneath the break
+    if(ask.phase === "running") runPause();
+    brk.on = true;
+    brk.remain = m * 60000;
+    brk.endsAt = Date.now() + brk.remain;
+    brk.running = true;
+    render();
+    startTicking();
+    toast("Health break — " + m + " minute" + (m === 1 ? "" : "s"));
+  }
+  function pauseBreak(){
+    if(!brk.on || !brk.running) return;
+    brk.remain = brkRemaining();
+    brk.endsAt = null;
+    brk.running = false;
+    stopTicking();
+    render();
+  }
+  function resumeBreak(){
+    if(!brk.on || brk.running) return;
+    brk.endsAt = Date.now() + Math.max(0, brk.remain);
+    brk.running = true;
+    render();
+    startTicking();
+  }
+  function toggleBreak(){ if(brk.running) pauseBreak(); else resumeBreak(); }
+  function addBreakTime(mins){
+    if(!brk.on) return;
+    var add = mins * 60000;
+    if(brk.running) brk.endsAt = Math.max(Date.now(), brk.endsAt || Date.now()) + add;
+    else brk.remain = Math.max(0, brk.remain) + add;
+    render();
+    toast((mins > 0 ? "Added " : "Took off ") + Math.abs(mins) + " minute" +
+          (Math.abs(mins) === 1 ? "" : "s"));
+  }
+  function endBreak(){
+    if(!brk.on) return;
+    brk.on = false; brk.running = false; brk.endsAt = null; brk.remain = 0;
+    stopTicking();
+    render();
+    toast("Break over — back to the screen you left");
+  }
+  // the time ran out; the operator still decides when to resume
+  function breakDone(){
+    brk.running = false; brk.remain = 0; brk.endsAt = null;
+    stopTicking();
+    render();
+    chime();
+  }
+
+  function writeBreakClock(sec){
+    var text = fmtMS(sec), soon = brk.running && sec <= 30;
+    clockNodes().forEach(function(el){
+      el.textContent = text;
+      var box = el.parentNode;
+      if(box && box.classList) box.classList.toggle("soon", soon);
+    });
+  }
+
+  function breakSceneHTML(){
+    var sec = Math.ceil(brkRemaining() / 1000);
+    var over = sec <= 0;
+    shownSec = null;                     // the markup carries the value; start fresh
+    var sub = over ? "We resume in a moment"
+      : (brk.running ? "We resume at " + hhmm(new Date(brk.endsAt)) : "Paused");
+    return '<div class="dsp">' + dspHead("Health break") +
+      '<div class="body"><div class="brk' + (over ? " over" : "") + '">' +
+      '<div class="kick">Health break</div>' +
+      '<div class="bclock"><span id="clockFace">' + fmtMS(sec) + '</span></div>' +
+      '<div class="bsub">' + esc(sub) + '</div>' +
+      '</div></div></div>';
+  }
+
+  /* The same controls on the Display desk and on the Run tab, because the
+     operator may be on either when the Quizmaster calls the break. */
+  function breakRow(){
+    if(!brk.on){
+      return '<div class="deskrow"><span class="lab">Health break</span>' +
+        BREAK_MINUTES.map(function(m){
+          return '<button class="lbtn' + (brk.minutes === m ? " on" : "") +
+            '" data-brkmin="' + m + '">' + m + '</button>';
+        }).join("") +
+        '<input class="bmin" id="brkMin" type="number" min="1" max="180" step="1" value="' +
+          esc(String(brk.minutes)) + '" aria-label="Minutes for the health break"><span class="unit">min</span>' +
+        '<button class="lbtn go" id="btnBreakStart">Start the break</button>' +
+        '<span class="note">Takes the screen while it runs, and pauses a question clock if one is going.</span>' +
+        '</div>';
+    }
+    var sec = Math.ceil(brkRemaining() / 1000);
+    return '<div class="deskrow"><span class="lab">Health break</span>' +
+      '<b class="brkleft' + (sec <= 30 && brk.running ? " soon" : "") + '">' + fmtMS(sec) + '</b>' +
+      '<button class="lbtn ' + (brk.running ? "" : "go") + '" id="btnBreakToggle">' +
+        (brk.running ? "Pause" : "Resume") + '</button>' +
+      '<button class="lbtn" data-brkadd="1">+1 min</button>' +
+      '<button class="lbtn" data-brkadd="5">+5 min</button>' +
+      '<button class="lbtn danger" id="btnBreakEnd">End the break</button>' +
+      '<span class="note">' + (sec <= 0
+        ? "The time is up — end the break when the Quizmaster is ready."
+        : "The screen goes back to whatever it was showing when you end it.") + '</span></div>';
   }

@@ -198,6 +198,7 @@
   function sceneHTML(){
     // one rule: while the deck is on screen it owns the display, and every cue
     // below carries on working untouched for when it is not
+    if(brk.on) return breakSceneHTML();
     if(runLive()) return runSceneHTML();
 
     var s = standings(), list = named();
