@@ -227,10 +227,8 @@
     if(!hasDeck()) return "";
     var s = curSlide(), n = slides().length;
     var q = isQuestionSlide();
-    var where = "Slide " + (ask.slide + 1) + " of " + n +
-      (s && s.role === "question" ? " · " + roundName(s.round) + " Q" + qIndexOf(ask.slide) +
-        " · " + ((s.seconds || DEFAULT_SECONDS)) + "s"
-       : (s && s.role === "answer" ? " · answer" : " · not a question"));
+    var where = "Slide " + (ask.slide + 1) + " of " + n + " · " + qDesc(ask.slide) +
+      (q ? " · " + (s.seconds || DEFAULT_SECONDS) + "s" : "");
 
     var live = runLive();
     return '<div class="deskrow"><span class="lab">Deck</span>' +
@@ -265,20 +263,39 @@
   /* Which question the tally should show. An answer slide counts as its own
      question's, because that is when the Quizmaster reads each contestant's
      answer out and the ticking actually happens. */
-  function runTallyTarget(){
+  function runQuestionAt(){
     var i = ask.slide, s = slides()[i];
     if(!s) return null;
     if(s.role === "answer"){
       for(var j = i - 1; j >= 0; j--){
         var p = slides()[j];
-        if(p.role === "question"){ i = j; s = p; break; }
+        if(p.role === "question") return {s:p, i:j};
         if(p.role === "answer") return null;    // two answers running: ambiguous
       }
+      return null;
     }
-    if(!s || s.role !== "question" || !s.round) return null;
-    var q = qIndexOf(i);
-    if(!q || q > boxesFor(s.round)) return null;
-    return {round:s.round, q:q, idx:q - 1, slide:i};
+    return s.role === "question" ? {s:s, i:i} : null;
+  }
+  function runTallyTarget(){
+    var at = runQuestionAt();
+    if(!at || !at.s.round) return null;
+    var q = qIndexOf(at.i);
+    // the trial has no boxes, so this is where it stops short of the tally
+    if(!q || q > boxesFor(at.s.round)) return null;
+    return {round:at.s.round, q:q, idx:q - 1, slide:at.i};
+  }
+  function trialNow(){
+    var at = runQuestionAt();
+    return !!(at && at.s.round === "trial");
+  }
+  // how a slide reads in the console. The trial's one question needs no number.
+  function qDesc(i){
+    var s = slides()[i];
+    if(!s) return "—";
+    if(s.role === "answer") return "answer";
+    if(s.role !== "question") return "not a question";
+    return s.round === "trial" ? "Trial question"
+      : (roundName(s.round || "") + " question " + qIndexOf(i));
   }
 
   // who is answering: everyone, the announced cut in Round 3, the tied group in
@@ -335,9 +352,7 @@
         '</div></div>';
     }
     var s = curSlide(), t = runTallyTarget(), live = runLive(), n = slides().length;
-    var what = !s ? "—"
-      : (s.role === "question" ? roundName(s.round || "") + " question " + qIndexOf(ask.slide)
-      : (s.role === "answer" ? "answer" : "not a question"));
+    var what = qDesc(ask.slide);
 
     var head = '<div class="panel-head"><h3>Run</h3>' +
       '<span class="note">Slide ' + (ask.slide + 1) + ' of ' + n + ' · ' + esc(what) +
@@ -391,8 +406,11 @@
 
     var tally;
     if(!t){
-      tally = '<div class="empty-state"><p>This slide is not a question, so there is nothing to tally. ' +
-        'Step to a question slide, or tag this one on the Deck tab.</p></div>';
+      tally = '<div class="empty-state"><p>' + (trialNow()
+        ? 'The trial question is not scored. It is given before Round 1 so everyone can practise ' +
+          'answering — the clock runs as usual, and nothing here reaches the tally sheet.'
+        : 'This slide is not a question, so there is nothing to tally. ' +
+          'Step to a question slide, or tag this one on the Deck tab.') + '</p></div>';
     } else {
       var who = runAnswerers(t.round);
       if(!who.length){

@@ -195,6 +195,25 @@
       '<span>'+esc(org)+'</span></div>';
   }
 
+  /* The three rounds and the total, on a podium card. The placings are decided
+     on the total, so that stays the headline figure and the rounds underneath it
+     say where it came from — which is the whole point when two finishers land on
+     the same total and the tie was settled back in Round 1. The rows add up to
+     the total by construction: they are the same rt() the tally sheet totals. */
+  function breakdownHTML(c){
+    var rows = ["r1","r2","r3"].map(function(k){
+      return '<div class="brow"><span>'+LABEL[k]+'</span><b>'+rt(c,k)+'</b></div>';
+    }).join("");
+    return '<div class="brk">'+rows+
+      '<div class="brow tot"><span>Total</span><b>'+grand(c)+'</b></div></div>';
+  }
+  /* Only when somebody else finished on the same total — decidedBy() returns an
+     empty string otherwise, so the line simply is not there on a clear placing. */
+  function tieLineHTML(c){
+    var d = decidedBy(c);
+    return d ? '<div class="tie">'+esc(d)+'</div>' : '';
+  }
+
   function sceneHTML(){
     // one rule: while the deck is on screen it owns the display, and every cue
     // below carries on working untouched for when it is not
@@ -407,9 +426,9 @@
         }
         var isNew = justRevealed && order[disp.reveal-1]===i;
         return '<div class="card c'+(i+2)+(isNew?" pop":"")+'"><div class="pl">'+names[i]+'</div>'+
-          portrait(c)+
+          '<div class="mid">'+portrait(c)+breakdownHTML(c)+'</div>'+
           '<div class="who">'+esc(c.name)+'</div><div class="sch">'+esc(c.school||"")+'</div>'+
-          '<div class="pts">'+s.stage.fn(c)+'<em>points</em></div></div>';
+          tieLineHTML(c)+'</div>';
       }).join("");
       return '<div class="dsp">'+dspHead("Declaration of winners")+
         '<div class="body"><div class="rev two">'+cards+'</div></div>'+
@@ -425,10 +444,10 @@
       return '<div class="dsp">'+dspHead("Provincial Champion")+
         '<div class="body"><div class="champ'+(justRevealed?" pop":"")+'">'+
         '<div class="pl">'+esc(state.meta.place)+' Provincial Champion</div>'+
-        portrait(c1,"big")+
+        '<div class="mid">'+portrait(c1,"big")+breakdownHTML(c1)+'</div>'+
         '<div class="who">'+esc(c1.name)+'</div>'+
         '<div class="sch">'+esc(c1.school||"")+'</div>'+
-        '<div class="pts">'+s.stage.fn(c1)+' points</div></div></div></div>';
+        tieLineHTML(c1)+'</div></div></div>';
     }
     return '<div class="dsp"></div>';
   }

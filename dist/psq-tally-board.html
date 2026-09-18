@@ -838,47 +838,118 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .dsp .intro.solo .orgmark{height:calc(var(--u)*5.2);max-width:calc(var(--u)*8)}
 .dsp .intro.solo .orgline span{font-size:calc(var(--u)*1.8);white-space:normal;overflow:visible}
 
-/* ---- top 3 reveal ---- */
-.dsp .rev{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);align-items:stretch}
+/* ---- top 3 reveal ----
+   The cards share one set of row tracks rather than each stacking its own, so
+   the place label, the portrait, the name, the school and the points sit on the
+   same lines right across the screen. A name or a school that wraps to two
+   lines grows that row on every card instead of sliding one card's portrait
+   past its neighbour's. Row gap is zero because the cards span every row: the
+   space between the lines inside a card is set by their own margins. */
+.dsp .rev{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  /* label / portrait / name / school / tie-break note. The portrait's row is the
+     flexible one: the text rows take the height they need — a name and a school
+     that both wrap take a lot — and the portraits share out whatever is left,
+     equally on both cards. Fixed portrait heights looked right on a wide screen
+     and ran the cards off the bottom of a 1280x720 one. */
+  grid-template-rows:auto minmax(0,1fr) auto auto auto;
+  column-gap:calc(var(--u)*2.4);row-gap:0;align-items:stretch;
+  flex:1 1 auto;min-height:0;
+}
 /* the champion is not on this screen, so the two placers get the room */
-.dsp .rev.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:calc(var(--u)*78);margin:0 auto;width:100%}
+.dsp .rev.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:calc(var(--u)*92);margin:0 auto;width:100%}
+/* The frame takes the height of its row and keeps its 3:4 from that, so it is
+   never the thing that pushes a card off the screen. The cap stops it growing
+   into the breakdown beside it when the names are short and the room is wide. */
 .dsp .rev .por{
-  width:calc(var(--u)*17);max-height:calc(var(--u)*23);margin:calc(var(--u)*1.4) auto 0;
+  height:100%;width:auto;max-height:calc(var(--u)*26);flex:0 0 auto;margin:0;
+}
+/* the portrait and the round-by-round breakdown, side by side. Both placer
+   cards are laid out the same way round, so the portraits, the round rows, the
+   names and the schools each sit on one line right across the screen. */
+.dsp .card .mid,.dsp .champ .mid{
+  display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;
+  gap:calc(var(--u)*2);margin-top:calc(var(--u)*1.4);
+}
+
+/* ---- the round-by-round breakdown ----
+   The placing is decided on the total, so the total is the big figure and the
+   three rounds above it say where it came from. When two finishers land on the
+   same total this is the screen that shows the hall which round separated them,
+   without anybody having to explain it. */
+.dsp .brk{
+  flex:0 1 auto;min-width:0;text-align:left;
+  display:flex;flex-direction:column;gap:calc(var(--u)*.7);
+}
+.dsp .brk .brow{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:calc(var(--u)*1.6);white-space:nowrap;
+}
+.dsp .brk .brow span{font-size:calc(var(--u)*1.9);font-weight:700;color:var(--d-navy)}
+/* two digits is the most any figure runs to — Round 3 tops out at 20, the total at 40 */
+.dsp .brk .brow b{
+  font-family:var(--pix);font-size:calc(var(--u)*2.4);
+  min-width:2.2em;text-align:right;
+}
+.dsp .brk .tot{
+  border-top:3px solid var(--ink);
+  margin-top:calc(var(--u)*.3);padding-top:calc(var(--u)*.9);
+}
+.dsp .brk .tot span{
+  font-family:var(--pix);font-size:calc(var(--u)*1.5);color:var(--d-olive);
+  letter-spacing:.1em;
+}
+.dsp .brk .tot b{font-size:calc(var(--u)*3.2)}
+/* only rendered when somebody else finished on the same total */
+.dsp .tie{
+  font-size:calc(var(--u)*1.5);font-weight:700;font-style:italic;color:var(--d-olive);
+  margin-top:calc(var(--u)*.9);
 }
 .dsp .card{
   background:#FFFFFF;border:5px solid var(--ink);border-radius:calc(var(--u)*1.6);
   box-shadow:0 7px 0 var(--ink);
-  padding:calc(var(--u)*2.6) calc(var(--u)*2);text-align:center;
-  display:flex;flex-direction:column;justify-content:center;min-height:calc(var(--u)*32);
+  padding:calc(var(--u)*3) calc(var(--u)*2.6);text-align:center;
+  display:grid;grid-row:1/-1;grid-template-rows:subgrid;
 }
-.dsp .card .pl{font-family:var(--pix);font-size:calc(var(--u)*1.5);color:var(--d-olive)}
-.dsp .card .who{font-size:calc(var(--u)*3.2);font-weight:850;margin:calc(var(--u)*1.8) 0 calc(var(--u)*.8);line-height:1.15}
-.dsp .card .sch{font-size:calc(var(--u)*1.7);color:var(--d-grass2);font-weight:700;line-height:1.3}
-.dsp .card .pts{font-family:var(--pix);font-size:calc(var(--u)*3.4);margin-top:calc(var(--u)*2)}
-.dsp .card .pts em{font-family:var(--font);font-size:calc(var(--u)*1.2);font-style:normal;color:var(--d-olive);display:block;letter-spacing:.2em;font-weight:700;margin-top:calc(var(--u)*.8)}
+.dsp .card .pl{font-family:var(--pix);font-size:calc(var(--u)*1.9);color:var(--d-olive)}
+.dsp .card .who{font-size:calc(var(--u)*3.4);font-weight:850;margin:calc(var(--u)*1.8) 0 calc(var(--u)*.7);line-height:1.15}
+.dsp .card .sch{font-size:calc(var(--u)*2);color:var(--d-grass2);font-weight:700;line-height:1.3}
 .dsp .card.c1{box-shadow:0 7px 0 var(--ink), inset 0 calc(var(--u)*1.4) 0 var(--d-yellow)}
 .dsp .card.hidden{background:rgba(255,255,255,.16);border-style:dashed;border-color:#2C4A8F;box-shadow:none}
 .dsp .card.hidden .pl{color:#DCE7FA}
-.dsp .card.hidden .who{font-family:var(--pix);color:#9FBDF2;font-size:calc(var(--u)*6);margin:0}
+.dsp .card.hidden .who{font-family:var(--pix);color:#9FBDF2;font-size:calc(var(--u)*12);margin:0;
+  grid-row:2/-1;align-self:center}
 .dsp .pop{animation:dpop .45s steps(4,end) both}
 @keyframes dpop{from{opacity:0;transform:scale(.86) translateY(calc(var(--u)*2))}to{opacity:1;transform:none}}
 
 /* ---- champion ---- */
-.dsp .champ{text-align:center}
+/* The portrait is sized by the height left over, not by a width picked in
+   advance: it was coming out a quarter of the width of the name beside it. The
+   introduction card already works this way — the text takes what it needs and
+   the frame keeps its 3:4 from whatever remains. */
+.dsp .champ{text-align:center;display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 /* the portrait has to leave room for the name, school and points below it */
 .dsp .champ .por{
-  width:calc(var(--u)*19);max-height:calc(var(--u)*25);margin:calc(var(--u)*1.4) auto 0;
+  height:100%;width:auto;flex:0 0 auto;margin:0;
   border-width:5px;box-shadow:0 6px 0 var(--ink), 0 0 0 calc(var(--u)*.8) var(--d-yellow);
 }
-.dsp .champ .who{margin-top:calc(var(--u)*2)}
+.dsp .champ .mid{flex:1 1 auto;min-height:0;margin-top:calc(var(--u)*1.8);gap:calc(var(--u)*3.5)}
 .dsp .champ .pl{font-family:var(--pix);font-size:calc(var(--u)*1.7);color:var(--d-yellow);text-shadow:3px 3px 0 var(--d-navy)}
-.dsp .champ .who{font-size:calc(var(--u)*7);font-weight:850;line-height:1.05;margin:calc(var(--u)*2.4) 0 calc(var(--u)*1.4);color:#fff;text-shadow:4px 4px 0 var(--d-navy)}
+.dsp .champ .who{font-size:calc(var(--u)*5.4);font-weight:850;line-height:1.05;margin:calc(var(--u)*1.8) 0 calc(var(--u)*1);color:#fff;text-shadow:4px 4px 0 var(--d-navy)}
 .dsp .champ .sch{font-size:calc(var(--u)*2.6);color:#fff;font-weight:700;text-shadow:2px 2px 0 var(--sky-3)}
-.dsp .champ .pts{
-  display:inline-block;margin-top:calc(var(--u)*3);font-family:var(--pix);font-size:calc(var(--u)*2.4);
-  background:var(--d-yellow);border:5px solid var(--ink);border-radius:calc(var(--u)*1.2);
-  padding:calc(var(--u)*1.4) calc(var(--u)*3);box-shadow:0 6px 0 var(--ink);
+/* the champion's breakdown stands on a slab of its own — the card behind it is
+   the sky, not a white tile, so the rows need their own ground to read against */
+.dsp .champ .brk{
+  background:#FFFFFF;border:5px solid var(--ink);border-radius:calc(var(--u)*1.2);
+  box-shadow:0 6px 0 var(--ink);padding:calc(var(--u)*1.6) calc(var(--u)*2.4);
+  gap:calc(var(--u)*1);
 }
+.dsp .champ .brk .brow span{font-size:calc(var(--u)*1.9)}
+.dsp .champ .brk .brow b{font-size:calc(var(--u)*2.4)}
+.dsp .champ .brk .tot{border-top-width:4px}
+.dsp .champ .brk .tot span{font-size:calc(var(--u)*1.5)}
+.dsp .champ .brk .tot b{font-size:calc(var(--u)*3.6)}
+.dsp .champ .tie{color:var(--d-cream);text-shadow:2px 2px 0 var(--d-navy)}
 
 /* ---- sudden death ---- */
 .dsp .sdrow{
@@ -1770,7 +1841,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   var SLIDE_MAX = 1600;             // long side; a projector rarely exceeds 1920
   var DEFAULT_SECONDS = 15;
-  var ROUNDS = ["r1", "r2", "r3", "sd"];
+  /* The trial comes first because it is asked first — Section B of the mechanics
+     gives one trial question before Round 1 starts, so the contestants can
+     practise raising their answers before anything counts. */
+  var ROUNDS = ["trial", "r1", "r2", "r3", "sd"];
 
   var deckSel = [];                 // slide indices selected in the console
   var deckAnchor = null;            // where a shift-click range starts from
@@ -1779,8 +1853,18 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   function deck(){ return state.deck || (state.deck = {name:"", slides:[]}); }
   function slides(){ return deck().slides || (deck().slides = []); }
   function hasDeck(){ return slides().length > 0; }
-  function roundName(r){ return r === "sd" ? "Tie-break" : (LABEL[r] || "—"); }
-  function boxesFor(r){ return r === "sd" ? state.meta.sdCount : QN; }
+  function roundName(r){
+    return r === "sd" ? "Tie-break" : (r === "trial" ? "Trial" : (LABEL[r] || "—"));
+  }
+  /* Two different counts, and the trial is the reason they part company. Boxes
+     are what the tally has room for: the trial has none, because it is never
+     scored — no contestant's sheet has a trial mark on it and PSQ Form 1 has
+     nowhere to put one. Questions wanted is what the deck should hold, and the
+     trial wants exactly the one. */
+  function boxesFor(r){
+    return r === "sd" ? state.meta.sdCount : (r === "trial" ? 0 : QN);
+  }
+  function qWanted(r){ return r === "trial" ? 1 : boxesFor(r); }
 
   /* A question slide's number is its position among the question slides of its
      round. Deriving it rather than storing it means it cannot fall out of step
@@ -1813,8 +1897,15 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   function deckProblems(){
     var out = [];
     ROUNDS.forEach(function(r){
-      var n = qSlides(r).length, want = boxesFor(r);
+      var n = qSlides(r).length, want = qWanted(r);
       if(!n) return;
+      if(r === "trial"){
+        if(n > 1){
+          out.push({bad:true, msg:n + " slides are tagged as the trial question — the mechanics give " +
+                    "one trial question before Round 1, and none of them are scored"});
+        }
+        return;
+      }
       if(n > want){
         out.push({bad:true, msg:n + " slides are tagged " + roundName(r) + " questions, but that round " +
                   "only has " + want + " boxes to tally — the last " + (n - want) + " cannot be scored"});
@@ -1996,7 +2087,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(s.role === "question"){
       var q = qIndexOf(i);
       return '<span class="chip cq">' + (s.round ? roundName(s.round) : "no round") +
-        (q ? " Q" + q : "") + ' · ' + (s.seconds || DEFAULT_SECONDS) + 's</span>';
+        ((q && s.round !== "trial") ? " Q" + q : "") + ' · ' + (s.seconds || DEFAULT_SECONDS) + 's</span>';
     }
     if(s.role === "answer"){
       return '<span class="chip ca">' + (s.round ? roundName(s.round) + " " : "") + 'answer</span>';
@@ -2016,9 +2107,9 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     }
 
     var head = '<div class="panel-head"><h3>Deck</h3><span class="note">' +
-      (sl.length ? sl.length + ' slides · ' + qSlides("r1").length + '/' + qSlides("r2").length +
-                   '/' + qSlides("r3").length + '/' + qSlides("sd").length +
-                   ' questions tagged for Rounds 1, 2, 3 and the tie-break'
+      (sl.length ? sl.length + ' slides · ' + qSlides("trial").length + '/' + qSlides("r1").length +
+                   '/' + qSlides("r2").length + '/' + qSlides("r3").length + '/' + qSlides("sd").length +
+                   ' questions tagged for the trial, Rounds 1, 2, 3 and the tie-break'
                  : 'no slides yet') + '</span>' +
       '<div class="right">' +
         '<button class="lbtn" id="btnSlides">' + (sl.length ? "Replace slides" : "Import slides") + '</button>' +
@@ -2085,6 +2176,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     return '<div class="legend">The board shows the RTC’s slides as pictures, so the audience sees exactly ' +
       'what was designed — nothing is re-typed and nothing can be mis-read. Only the slides tagged as ' +
       '<b>questions</b> carry a clock and a tally; everything else simply shows. ' +
+      'The <b>trial</b> question is the exception: it runs with a clock like any other, but it is ' +
+      'never tallied — the mechanics give it before Round 1 purely as practice. ' +
       'With no deck loaded the board works exactly as it did before one was imported.</div>';
   }
   /* ===================== console header ===================== */
@@ -2987,10 +3080,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(!hasDeck()) return "";
     var s = curSlide(), n = slides().length;
     var q = isQuestionSlide();
-    var where = "Slide " + (ask.slide + 1) + " of " + n +
-      (s && s.role === "question" ? " · " + roundName(s.round) + " Q" + qIndexOf(ask.slide) +
-        " · " + ((s.seconds || DEFAULT_SECONDS)) + "s"
-       : (s && s.role === "answer" ? " · answer" : " · not a question"));
+    var where = "Slide " + (ask.slide + 1) + " of " + n + " · " + qDesc(ask.slide) +
+      (q ? " · " + (s.seconds || DEFAULT_SECONDS) + "s" : "");
 
     var live = runLive();
     return '<div class="deskrow"><span class="lab">Deck</span>' +
@@ -3025,20 +3116,39 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   /* Which question the tally should show. An answer slide counts as its own
      question's, because that is when the Quizmaster reads each contestant's
      answer out and the ticking actually happens. */
-  function runTallyTarget(){
+  function runQuestionAt(){
     var i = ask.slide, s = slides()[i];
     if(!s) return null;
     if(s.role === "answer"){
       for(var j = i - 1; j >= 0; j--){
         var p = slides()[j];
-        if(p.role === "question"){ i = j; s = p; break; }
+        if(p.role === "question") return {s:p, i:j};
         if(p.role === "answer") return null;    // two answers running: ambiguous
       }
+      return null;
     }
-    if(!s || s.role !== "question" || !s.round) return null;
-    var q = qIndexOf(i);
-    if(!q || q > boxesFor(s.round)) return null;
-    return {round:s.round, q:q, idx:q - 1, slide:i};
+    return s.role === "question" ? {s:s, i:i} : null;
+  }
+  function runTallyTarget(){
+    var at = runQuestionAt();
+    if(!at || !at.s.round) return null;
+    var q = qIndexOf(at.i);
+    // the trial has no boxes, so this is where it stops short of the tally
+    if(!q || q > boxesFor(at.s.round)) return null;
+    return {round:at.s.round, q:q, idx:q - 1, slide:at.i};
+  }
+  function trialNow(){
+    var at = runQuestionAt();
+    return !!(at && at.s.round === "trial");
+  }
+  // how a slide reads in the console. The trial's one question needs no number.
+  function qDesc(i){
+    var s = slides()[i];
+    if(!s) return "—";
+    if(s.role === "answer") return "answer";
+    if(s.role !== "question") return "not a question";
+    return s.round === "trial" ? "Trial question"
+      : (roundName(s.round || "") + " question " + qIndexOf(i));
   }
 
   // who is answering: everyone, the announced cut in Round 3, the tied group in
@@ -3095,9 +3205,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         '</div></div>';
     }
     var s = curSlide(), t = runTallyTarget(), live = runLive(), n = slides().length;
-    var what = !s ? "—"
-      : (s.role === "question" ? roundName(s.round || "") + " question " + qIndexOf(ask.slide)
-      : (s.role === "answer" ? "answer" : "not a question"));
+    var what = qDesc(ask.slide);
 
     var head = '<div class="panel-head"><h3>Run</h3>' +
       '<span class="note">Slide ' + (ask.slide + 1) + ' of ' + n + ' · ' + esc(what) +
@@ -3151,8 +3259,11 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
     var tally;
     if(!t){
-      tally = '<div class="empty-state"><p>This slide is not a question, so there is nothing to tally. ' +
-        'Step to a question slide, or tag this one on the Deck tab.</p></div>';
+      tally = '<div class="empty-state"><p>' + (trialNow()
+        ? 'The trial question is not scored. It is given before Round 1 so everyone can practise ' +
+          'answering — the clock runs as usual, and nothing here reaches the tally sheet.'
+        : 'This slide is not a question, so there is nothing to tally. ' +
+          'Step to a question slide, or tag this one on the Deck tab.') + '</p></div>';
     } else {
       var who = runAnswerers(t.round);
       if(!who.length){
@@ -3662,6 +3773,25 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       '<span>'+esc(org)+'</span></div>';
   }
 
+  /* The three rounds and the total, on a podium card. The placings are decided
+     on the total, so that stays the headline figure and the rounds underneath it
+     say where it came from — which is the whole point when two finishers land on
+     the same total and the tie was settled back in Round 1. The rows add up to
+     the total by construction: they are the same rt() the tally sheet totals. */
+  function breakdownHTML(c){
+    var rows = ["r1","r2","r3"].map(function(k){
+      return '<div class="brow"><span>'+LABEL[k]+'</span><b>'+rt(c,k)+'</b></div>';
+    }).join("");
+    return '<div class="brk">'+rows+
+      '<div class="brow tot"><span>Total</span><b>'+grand(c)+'</b></div></div>';
+  }
+  /* Only when somebody else finished on the same total — decidedBy() returns an
+     empty string otherwise, so the line simply is not there on a clear placing. */
+  function tieLineHTML(c){
+    var d = decidedBy(c);
+    return d ? '<div class="tie">'+esc(d)+'</div>' : '';
+  }
+
   function sceneHTML(){
     // one rule: while the deck is on screen it owns the display, and every cue
     // below carries on working untouched for when it is not
@@ -3874,9 +4004,9 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         }
         var isNew = justRevealed && order[disp.reveal-1]===i;
         return '<div class="card c'+(i+2)+(isNew?" pop":"")+'"><div class="pl">'+names[i]+'</div>'+
-          portrait(c)+
+          '<div class="mid">'+portrait(c)+breakdownHTML(c)+'</div>'+
           '<div class="who">'+esc(c.name)+'</div><div class="sch">'+esc(c.school||"")+'</div>'+
-          '<div class="pts">'+s.stage.fn(c)+'<em>points</em></div></div>';
+          tieLineHTML(c)+'</div>';
       }).join("");
       return '<div class="dsp">'+dspHead("Declaration of winners")+
         '<div class="body"><div class="rev two">'+cards+'</div></div>'+
@@ -3892,10 +4022,10 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       return '<div class="dsp">'+dspHead("Provincial Champion")+
         '<div class="body"><div class="champ'+(justRevealed?" pop":"")+'">'+
         '<div class="pl">'+esc(state.meta.place)+' Provincial Champion</div>'+
-        portrait(c1,"big")+
+        '<div class="mid">'+portrait(c1,"big")+breakdownHTML(c1)+'</div>'+
         '<div class="who">'+esc(c1.name)+'</div>'+
         '<div class="sch">'+esc(c1.school||"")+'</div>'+
-        '<div class="pts">'+s.stage.fn(c1)+' points</div></div></div></div>';
+        tieLineHTML(c1)+'</div></div></div>';
     }
     return '<div class="dsp"></div>';
   }

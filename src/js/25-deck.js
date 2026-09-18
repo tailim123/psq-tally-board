@@ -12,7 +12,10 @@
 
   var SLIDE_MAX = 1600;             // long side; a projector rarely exceeds 1920
   var DEFAULT_SECONDS = 15;
-  var ROUNDS = ["r1", "r2", "r3", "sd"];
+  /* The trial comes first because it is asked first — Section B of the mechanics
+     gives one trial question before Round 1 starts, so the contestants can
+     practise raising their answers before anything counts. */
+  var ROUNDS = ["trial", "r1", "r2", "r3", "sd"];
 
   var deckSel = [];                 // slide indices selected in the console
   var deckAnchor = null;            // where a shift-click range starts from
@@ -21,8 +24,18 @@
   function deck(){ return state.deck || (state.deck = {name:"", slides:[]}); }
   function slides(){ return deck().slides || (deck().slides = []); }
   function hasDeck(){ return slides().length > 0; }
-  function roundName(r){ return r === "sd" ? "Tie-break" : (LABEL[r] || "—"); }
-  function boxesFor(r){ return r === "sd" ? state.meta.sdCount : QN; }
+  function roundName(r){
+    return r === "sd" ? "Tie-break" : (r === "trial" ? "Trial" : (LABEL[r] || "—"));
+  }
+  /* Two different counts, and the trial is the reason they part company. Boxes
+     are what the tally has room for: the trial has none, because it is never
+     scored — no contestant's sheet has a trial mark on it and PSQ Form 1 has
+     nowhere to put one. Questions wanted is what the deck should hold, and the
+     trial wants exactly the one. */
+  function boxesFor(r){
+    return r === "sd" ? state.meta.sdCount : (r === "trial" ? 0 : QN);
+  }
+  function qWanted(r){ return r === "trial" ? 1 : boxesFor(r); }
 
   /* A question slide's number is its position among the question slides of its
      round. Deriving it rather than storing it means it cannot fall out of step
@@ -55,8 +68,15 @@
   function deckProblems(){
     var out = [];
     ROUNDS.forEach(function(r){
-      var n = qSlides(r).length, want = boxesFor(r);
+      var n = qSlides(r).length, want = qWanted(r);
       if(!n) return;
+      if(r === "trial"){
+        if(n > 1){
+          out.push({bad:true, msg:n + " slides are tagged as the trial question — the mechanics give " +
+                    "one trial question before Round 1, and none of them are scored"});
+        }
+        return;
+      }
       if(n > want){
         out.push({bad:true, msg:n + " slides are tagged " + roundName(r) + " questions, but that round " +
                   "only has " + want + " boxes to tally — the last " + (n - want) + " cannot be scored"});
@@ -238,7 +258,7 @@
     if(s.role === "question"){
       var q = qIndexOf(i);
       return '<span class="chip cq">' + (s.round ? roundName(s.round) : "no round") +
-        (q ? " Q" + q : "") + ' · ' + (s.seconds || DEFAULT_SECONDS) + 's</span>';
+        ((q && s.round !== "trial") ? " Q" + q : "") + ' · ' + (s.seconds || DEFAULT_SECONDS) + 's</span>';
     }
     if(s.role === "answer"){
       return '<span class="chip ca">' + (s.round ? roundName(s.round) + " " : "") + 'answer</span>';
@@ -258,9 +278,9 @@
     }
 
     var head = '<div class="panel-head"><h3>Deck</h3><span class="note">' +
-      (sl.length ? sl.length + ' slides · ' + qSlides("r1").length + '/' + qSlides("r2").length +
-                   '/' + qSlides("r3").length + '/' + qSlides("sd").length +
-                   ' questions tagged for Rounds 1, 2, 3 and the tie-break'
+      (sl.length ? sl.length + ' slides · ' + qSlides("trial").length + '/' + qSlides("r1").length +
+                   '/' + qSlides("r2").length + '/' + qSlides("r3").length + '/' + qSlides("sd").length +
+                   ' questions tagged for the trial, Rounds 1, 2, 3 and the tie-break'
                  : 'no slides yet') + '</span>' +
       '<div class="right">' +
         '<button class="lbtn" id="btnSlides">' + (sl.length ? "Replace slides" : "Import slides") + '</button>' +
@@ -327,5 +347,7 @@
     return '<div class="legend">The board shows the RTC’s slides as pictures, so the audience sees exactly ' +
       'what was designed — nothing is re-typed and nothing can be mis-read. Only the slides tagged as ' +
       '<b>questions</b> carry a clock and a tally; everything else simply shows. ' +
+      'The <b>trial</b> question is the exception: it runs with a clock like any other, but it is ' +
+      'never tallied — the mechanics give it before Round 1 purely as practice. ' +
       'With no deck loaded the board works exactly as it did before one was imported.</div>';
   }
