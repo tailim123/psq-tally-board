@@ -141,9 +141,9 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
   programme as a list of segments, in order, seeded with the one this contest
   runs: registration, the preliminaries, the welcome, the introduction of the
   guest speaker, the inspirational message, the presentation of the contestants
-  and coaches and the introduction of the Board of Judges in Part I; the three
-  rounds, the two awardings, the announcement of the winners and the closing
-  remarks in Part II. Every line of it is editable — rename a segment, move it
+  and coaches and the introduction of the Board of Judges in Part I; the
+  presentation of the contest mechanics, the three rounds, the two awardings,
+  the announcement of the winners and the closing remarks in Part II. Every line of it is editable — rename a segment, move it
   with `▲` `▼`, add one, delete one, or **Restore the standard programme**.
 
   Each segment says **what the audience sees while it is on**. By default that is
@@ -158,9 +158,10 @@ At 22 contestants this is instant and it removes a whole class of stale-DOM bugs
 
   A segment with **nobody named is a heading** — the title, and any sub-items
   under it, which is what carries the prayer, the national anthem and the
-  MIMAROPA hymn under *Preliminaries*. **Name someone** and it becomes a card
-  with their portrait, position and organisation, the same card the coaches and
-  the judges get, so the whole ceremony reads as one piece. Their organisation
+  MIMAROPA hymn under *Preliminaries*. **Name someone** and it becomes two
+  screens turned with `←` `→`: the segment announced on its own — the title, and
+  who is taking it — and then their portrait, position and organisation, the same
+  card the coaches and the judges get, so the whole ceremony reads as one piece. Their organisation
   takes a logo in the same panel the schools do.
 
   The **emcee and the Quizmaster** are not segments — they are on all day, so

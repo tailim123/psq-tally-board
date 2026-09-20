@@ -51,6 +51,7 @@
         {name:"Hon. Aurelio Leva III", office:"Provincial Board Member"}),
       s("present", 1, "Presentation of the Contestants and Coaches", {cue:"introduce"}),
       s("board",   1, "Introduction of the Members of the Board of Judges", {cue:"judges"}),
+      s("mech",    2, "Presentation of the Contest Mechanics", {cue:"mechanics"}),
       s("rd1",     2, "Round 1", {cue:"round", round:"r1"}),
       s("rd2",     2, "Round 2", {cue:"round", round:"r2"}),
       s("appre",   2, "Awarding of Certificate of Appreciation",
@@ -94,6 +95,7 @@
     if(prev && prev!==seg) prev.done = true;
     seg.done = false;
     state.progNow = seg.id;
+    disp.page = 0;
     if(seg.cue==="round" && seg.round) setCue("round", seg.round);
     else setCue(seg.cue || "segment");
     toast("On now: "+seg.title);
@@ -369,34 +371,41 @@
       '<div class="pgm">'+parts+'</div>'+hostsFootHTML()+'</div></div>';
   }
 
-  /* One segment, full screen. With somebody named it is the card the coaches
-     and the judges get, so the whole ceremony reads as one piece; with nobody
-     named it is the heading and whatever sits under it. */
+  /* One segment, in two screens: its title, then whoever is taking it. The
+     title used to sit in small type on the portrait card, where a long one
+     crowded the name; announced on its own it reads as the emcee says it. A
+     segment with nobody named is the title screen alone. */
+  function segScreens(seg){
+    if(!seg) return [];
+    return seg.name.trim() ? [{who:false},{who:true}] : [{who:false}];
+  }
   function segmentSceneHTML(){
     var seg = nowSeg() || prog().filter(function(p){ return !p.done; })[0] || null;
     if(!seg) return '<div class="dsp">'+dspHead("Programme")+
       '<div class="body"><div class="none">No segment is on</div></div></div>';
 
+    var pg = pageOf(segScreens(seg)), sc = pg.slice[0];
     var body;
-    if(seg.name.trim()){
+    if(sc && sc.who){
       body = '<div class="intro solo" style="grid-template-columns:repeat(1,minmax(0,1fr))">'+
         '<div class="icard">'+portrait(seg)+
-        '<div class="itxt"><div class="num">'+esc(seg.title)+'</div>'+
-        '<div class="who">'+esc(seg.name)+'</div>'+
+        '<div class="itxt"><div class="who">'+esc(seg.name)+'</div>'+
         (seg.office ? '<div class="sch">'+esc(seg.office)+'</div>' : '')+
         orgLine(seg.org)+
         '</div></div></div>';
     } else {
       body = '<div class="seg">'+
         '<div class="segt">'+esc(seg.title)+'</div>'+
-        (seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
+        // the title alone — the name belongs on the card that follows it
+        (!seg.name.trim() && seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
         ((seg.items||[]).length
           ? '<div class="segitems">'+seg.items.map(function(t){
               return '<div class="segitem">'+esc(t)+'</div>'; }).join("")+'</div>'
           : '')+
-        (seg.org ? orgLine(seg.org) : '')+
+        (seg.org && !seg.name.trim() ? orgLine(seg.org) : '')+
       '</div>';
     }
     return '<div class="dsp">'+dspHead(PART_LABEL[seg.part])+
-      '<div class="body">'+body+'</div></div>';
+      '<div class="body">'+body+
+      pagerHTML(pg, 'Screen '+(disp.page+1)+' of '+pg.pages)+'</div></div>';
   }

@@ -565,7 +565,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 /* ---- one segment, full screen ----
    A segment nobody is named for is a heading: the title, and whatever runs
    under it. Named a speaker, it becomes the card the coaches and judges get. */
-.dsp .seg{text-align:center}
+.dsp .seg{text-align:center;margin:auto 0}   /* centred against the pager's own auto margin */
 .dsp .seg .segt{
   font-family:var(--pix);font-size:calc(var(--u)*3.6);line-height:1.5;color:var(--d-yellow);
   text-shadow:4px 4px 0 var(--d-navy), 8px 8px 0 rgba(32,51,87,.3);
@@ -993,6 +993,57 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   color:#fff;font-weight:700;text-shadow:1px 1px 0 var(--sky-3);display:flex;gap:calc(var(--u)*2)}
 .dsp .none{text-align:center;color:#fff;font-size:calc(var(--u)*2);font-weight:750;text-shadow:2px 2px 0 var(--sky-3)}
 
+
+/* ============ movement ============
+   Super Mario is the reference, so the motion is pixel-stepped rather than
+   smooth — but the audience is here to read names and scores off a projector,
+   so nothing under a line of text moves more than a couple of pixels, and
+   nothing that moves repeats faster than about a second and a half. Entrances
+   play once and settle. base.css turns all of it off under
+   prefers-reduced-motion. */
+
+/* the sky drifts, as it does behind every overworld. The tile is 300px, so the
+   loop is seamless; 90s makes it barely perceptible and never distracting. */
+@keyframes drift{ to{ background-position:-300px 0; } }
+.dsp::before{ animation:drift 90s linear infinite; }
+
+/* a heading arrives the way Mario lands: up, overshoot, down. Four steps, so it
+   reads as sprite animation rather than a fade. Transform only, and no fill —
+   an element that never gets to animate is simply in its final place, never
+   stuck invisible on a projector. Only on the ceremony screens: a score heading
+   must not replay every time a box is ticked. */
+@keyframes land{
+  0%  { transform:translateY(-14%) }
+  55% { transform:translateY(6%) }
+  100%{ transform:none }
+}
+.dsp .hero h1,
+.dsp .schead,
+.dsp .seg .segt,
+.dsp .pgm .phead{ animation:land .42s steps(4,end); }
+
+/* cards rise into place like a block hit from below */
+@keyframes riseup{
+  0%  { transform:translateY(18%) }
+  70% { transform:translateY(-3%) }
+  100%{ transform:none }
+}
+.dsp .icard,
+.dsp .seg .segitem{ animation:riseup .38s steps(4,end); }
+
+/* the segment that is on bobs on the spot — the question block waiting to be
+   hit. Two pixels, once every 1.6s: the eye finds it, the reader is not chased
+   down the page by it. */
+@keyframes bob{ to{ transform:translateY(-2px) } }
+.dsp .pline.now{ animation:bob 1.6s steps(2,end) infinite alternate; }
+
+/* the champion's frame glints, the way a coin does. Colour only — the portrait
+   and the name hold still. */
+@keyframes glint{
+  0%,100%{ box-shadow:0 6px 0 var(--ink), 0 0 0 calc(var(--u)*.8) var(--d-yellow) }
+  50%    { box-shadow:0 6px 0 var(--ink), 0 0 0 calc(var(--u)*.8) #FFFFFF }
+}
+.dsp .champ .por{ animation:glint 1.8s steps(2,end) infinite; }
 
 </style>
 </head>
@@ -1479,6 +1530,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         {name:"Hon. Aurelio Leva III", office:"Provincial Board Member"}),
       s("present", 1, "Presentation of the Contestants and Coaches", {cue:"introduce"}),
       s("board",   1, "Introduction of the Members of the Board of Judges", {cue:"judges"}),
+      s("mech",    2, "Presentation of the Contest Mechanics", {cue:"mechanics"}),
       s("rd1",     2, "Round 1", {cue:"round", round:"r1"}),
       s("rd2",     2, "Round 2", {cue:"round", round:"r2"}),
       s("appre",   2, "Awarding of Certificate of Appreciation",
@@ -1522,6 +1574,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(prev && prev!==seg) prev.done = true;
     seg.done = false;
     state.progNow = seg.id;
+    disp.page = 0;
     if(seg.cue==="round" && seg.round) setCue("round", seg.round);
     else setCue(seg.cue || "segment");
     toast("On now: "+seg.title);
@@ -1797,36 +1850,43 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
       '<div class="pgm">'+parts+'</div>'+hostsFootHTML()+'</div></div>';
   }
 
-  /* One segment, full screen. With somebody named it is the card the coaches
-     and the judges get, so the whole ceremony reads as one piece; with nobody
-     named it is the heading and whatever sits under it. */
+  /* One segment, in two screens: its title, then whoever is taking it. The
+     title used to sit in small type on the portrait card, where a long one
+     crowded the name; announced on its own it reads as the emcee says it. A
+     segment with nobody named is the title screen alone. */
+  function segScreens(seg){
+    if(!seg) return [];
+    return seg.name.trim() ? [{who:false},{who:true}] : [{who:false}];
+  }
   function segmentSceneHTML(){
     var seg = nowSeg() || prog().filter(function(p){ return !p.done; })[0] || null;
     if(!seg) return '<div class="dsp">'+dspHead("Programme")+
       '<div class="body"><div class="none">No segment is on</div></div></div>';
 
+    var pg = pageOf(segScreens(seg)), sc = pg.slice[0];
     var body;
-    if(seg.name.trim()){
+    if(sc && sc.who){
       body = '<div class="intro solo" style="grid-template-columns:repeat(1,minmax(0,1fr))">'+
         '<div class="icard">'+portrait(seg)+
-        '<div class="itxt"><div class="num">'+esc(seg.title)+'</div>'+
-        '<div class="who">'+esc(seg.name)+'</div>'+
+        '<div class="itxt"><div class="who">'+esc(seg.name)+'</div>'+
         (seg.office ? '<div class="sch">'+esc(seg.office)+'</div>' : '')+
         orgLine(seg.org)+
         '</div></div></div>';
     } else {
       body = '<div class="seg">'+
         '<div class="segt">'+esc(seg.title)+'</div>'+
-        (seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
+        // the title alone — the name belongs on the card that follows it
+        (!seg.name.trim() && seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
         ((seg.items||[]).length
           ? '<div class="segitems">'+seg.items.map(function(t){
               return '<div class="segitem">'+esc(t)+'</div>'; }).join("")+'</div>'
           : '')+
-        (seg.org ? orgLine(seg.org) : '')+
+        (seg.org && !seg.name.trim() ? orgLine(seg.org) : '')+
       '</div>';
     }
     return '<div class="dsp">'+dspHead(PART_LABEL[seg.part])+
-      '<div class="body">'+body+'</div></div>';
+      '<div class="body">'+body+
+      pagerHTML(pg, 'Screen '+(disp.page+1)+' of '+pg.pages)+'</div></div>';
   }
 
   /* ===================== the deck =====================
@@ -3619,7 +3679,8 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   // entry, so they page one at a time; Portraits per page shapes the
   // introduction when its screens are built, not when they are turned
   function per(){
-    if(disp.cue==="mechanics" || disp.cue==="introduce" || disp.cue==="judges") return 1;
+    if(disp.cue==="mechanics" || disp.cue==="introduce" || disp.cue==="judges" ||
+       disp.cue==="segment") return 1;
     return perPage;
   }
 
@@ -3649,6 +3710,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(disp.cue==="mechanics") return mechPages();
     if(disp.cue==="introduce") return introScreens();
     if(disp.cue==="judges") return namedJudges();
+    if(disp.cue==="segment") return segScreens(nowSeg() || prog().filter(function(p){ return !p.done; })[0]);
     if(disp.cue==="round") return roundList(disp.round);
     if(disp.cue==="advancing") return hasMarks("r2") ? qualifiers() : [];
     if(disp.cue==="leaderboard") return s2.rows;
@@ -4094,15 +4156,24 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 
   function paintDisplay(){
     var html = sceneHTML();
+    /* Only write when the markup actually changed. Rewriting identical HTML
+       restarts every animation on the screen, and render() runs on every tally
+       tick — the clouds would snap back each time a box was ticked. fit() still
+       runs either way, since that is what a resize needs. */
+    function put(host){
+      if(host._scene !== html){
+        host._scene = html;
+        host.innerHTML = html;
+        wireScene(host);
+      }
+      fit(host);
+    }
     if(winRef && !winRef.closed){
       var r = winRef.document.getElementById("root");
-      if(r){ r.innerHTML = html; fit(r); wireScene(r); }
+      if(r) put(r);
     }
     var pv = $("preview");
-    if(pv.classList.contains("show")){
-      var pr = $("previewRoot");
-      pr.innerHTML = html; fit(pr); wireScene(pr);
-    }
+    if(pv.classList.contains("show")) put($("previewRoot"));
     justRevealed = false;
   }
 

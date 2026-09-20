@@ -179,7 +179,7 @@
 /* ---- one segment, full screen ----
    A segment nobody is named for is a heading: the title, and whatever runs
    under it. Named a speaker, it becomes the card the coaches and judges get. */
-.dsp .seg{text-align:center}
+.dsp .seg{text-align:center;margin:auto 0}   /* centred against the pager's own auto margin */
 .dsp .seg .segt{
   font-family:var(--pix);font-size:calc(var(--u)*3.6);line-height:1.5;color:var(--d-yellow);
   text-shadow:4px 4px 0 var(--d-navy), 8px 8px 0 rgba(32,51,87,.3);
@@ -607,3 +607,54 @@
   color:#fff;font-weight:700;text-shadow:1px 1px 0 var(--sky-3);display:flex;gap:calc(var(--u)*2)}
 .dsp .none{text-align:center;color:#fff;font-size:calc(var(--u)*2);font-weight:750;text-shadow:2px 2px 0 var(--sky-3)}
 
+
+/* ============ movement ============
+   Super Mario is the reference, so the motion is pixel-stepped rather than
+   smooth — but the audience is here to read names and scores off a projector,
+   so nothing under a line of text moves more than a couple of pixels, and
+   nothing that moves repeats faster than about a second and a half. Entrances
+   play once and settle. base.css turns all of it off under
+   prefers-reduced-motion. */
+
+/* the sky drifts, as it does behind every overworld. The tile is 300px, so the
+   loop is seamless; 90s makes it barely perceptible and never distracting. */
+@keyframes drift{ to{ background-position:-300px 0; } }
+.dsp::before{ animation:drift 90s linear infinite; }
+
+/* a heading arrives the way Mario lands: up, overshoot, down. Four steps, so it
+   reads as sprite animation rather than a fade. Transform only, and no fill —
+   an element that never gets to animate is simply in its final place, never
+   stuck invisible on a projector. Only on the ceremony screens: a score heading
+   must not replay every time a box is ticked. */
+@keyframes land{
+  0%  { transform:translateY(-14%) }
+  55% { transform:translateY(6%) }
+  100%{ transform:none }
+}
+.dsp .hero h1,
+.dsp .schead,
+.dsp .seg .segt,
+.dsp .pgm .phead{ animation:land .42s steps(4,end); }
+
+/* cards rise into place like a block hit from below */
+@keyframes riseup{
+  0%  { transform:translateY(18%) }
+  70% { transform:translateY(-3%) }
+  100%{ transform:none }
+}
+.dsp .icard,
+.dsp .seg .segitem{ animation:riseup .38s steps(4,end); }
+
+/* the segment that is on bobs on the spot — the question block waiting to be
+   hit. Two pixels, once every 1.6s: the eye finds it, the reader is not chased
+   down the page by it. */
+@keyframes bob{ to{ transform:translateY(-2px) } }
+.dsp .pline.now{ animation:bob 1.6s steps(2,end) infinite alternate; }
+
+/* the champion's frame glints, the way a coin does. Colour only — the portrait
+   and the name hold still. */
+@keyframes glint{
+  0%,100%{ box-shadow:0 6px 0 var(--ink), 0 0 0 calc(var(--u)*.8) var(--d-yellow) }
+  50%    { box-shadow:0 6px 0 var(--ink), 0 0 0 calc(var(--u)*.8) #FFFFFF }
+}
+.dsp .champ .por{ animation:glint 1.8s steps(2,end) infinite; }

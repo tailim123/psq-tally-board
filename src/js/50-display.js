@@ -41,7 +41,8 @@
   // entry, so they page one at a time; Portraits per page shapes the
   // introduction when its screens are built, not when they are turned
   function per(){
-    if(disp.cue==="mechanics" || disp.cue==="introduce" || disp.cue==="judges") return 1;
+    if(disp.cue==="mechanics" || disp.cue==="introduce" || disp.cue==="judges" ||
+       disp.cue==="segment") return 1;
     return perPage;
   }
 
@@ -71,6 +72,7 @@
     if(disp.cue==="mechanics") return mechPages();
     if(disp.cue==="introduce") return introScreens();
     if(disp.cue==="judges") return namedJudges();
+    if(disp.cue==="segment") return segScreens(nowSeg() || prog().filter(function(p){ return !p.done; })[0]);
     if(disp.cue==="round") return roundList(disp.round);
     if(disp.cue==="advancing") return hasMarks("r2") ? qualifiers() : [];
     if(disp.cue==="leaderboard") return s2.rows;
@@ -516,15 +518,24 @@
 
   function paintDisplay(){
     var html = sceneHTML();
+    /* Only write when the markup actually changed. Rewriting identical HTML
+       restarts every animation on the screen, and render() runs on every tally
+       tick — the clouds would snap back each time a box was ticked. fit() still
+       runs either way, since that is what a resize needs. */
+    function put(host){
+      if(host._scene !== html){
+        host._scene = html;
+        host.innerHTML = html;
+        wireScene(host);
+      }
+      fit(host);
+    }
     if(winRef && !winRef.closed){
       var r = winRef.document.getElementById("root");
-      if(r){ r.innerHTML = html; fit(r); wireScene(r); }
+      if(r) put(r);
     }
     var pv = $("preview");
-    if(pv.classList.contains("show")){
-      var pr = $("previewRoot");
-      pr.innerHTML = html; fit(pr); wireScene(pr);
-    }
+    if(pv.classList.contains("show")) put($("previewRoot"));
     justRevealed = false;
   }
 
