@@ -220,6 +220,7 @@
     // one rule: while the deck is on screen it owns the display, and every cue
     // below carries on working untouched for when it is not
     if(brk.on) return breakSceneHTML();
+    if(playing) return mediaSceneHTML();
     if(runLive()) return runSceneHTML();
 
     var s = standings(), list = named();
@@ -507,6 +508,27 @@
     Array.prototype.forEach.call(sc, function(b){
       b.onclick = function(){ setCue(b.dataset.scene); toast("On screen: "+cueName(b.dataset.scene)); };
     });
+    var md = root.querySelectorAll("[data-media]");
+    Array.prototype.forEach.call(md, function(b){
+      b.onclick = function(){ playMedia(b.dataset.media); };
+    });
+    var vid = root.querySelector("video.slidevid");
+    if(vid){
+      vid.onended = function(){ playMedia(null); };
+      // a name with no file behind it: say so rather than sit on a black screen
+      vid.onerror = function(){
+        var was = playing;
+        playMedia(null);
+        toast("No file at media/"+mediaSlug(was||"")+".mp4");
+      };
+      /* Autoplay is blocked unless the click that started it happened in this
+         document, so a click in the console's preview leaves the audience window
+         paused. Say which window to click rather than leaving a still frame up. */
+      var go = vid.play();
+      if(go && go.catch) go.catch(function(){
+        if(root.ownerDocument !== document) toast("Click the video on the audience screen to start it");
+      });
+    }
   }
   function turnPage(d){
     var l = pagedList();

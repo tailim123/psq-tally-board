@@ -438,10 +438,12 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
 .dsp.run{padding:0;background:#000;display:block;position:relative}
 .dsp.run::before,.dsp.run::after{display:none}
 .dsp.run>*{position:absolute}
-.dsp .slideimg{
+.dsp .slideimg,.dsp .slidevid{
   inset:0;width:100%;height:100%;object-fit:contain;display:block;
   z-index:0;background:#000;
 }
+/* a preliminary played from a file — full-bleed, with one way back */
+.dsp .medback{z-index:2;bottom:calc(var(--u)*3);left:50%;transform:translateX(-50%)}
 /* the clock rides in a corner, legible against any slide the RTC sends */
 .dsp .clock{
   z-index:2;top:calc(var(--u)*2);right:calc(var(--u)*2);min-width:calc(var(--u)*13);
@@ -582,7 +584,9 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   background:#FFFFFF;border:4px solid var(--ink);border-radius:calc(var(--u)*1);
   box-shadow:0 5px 0 var(--ink);padding:calc(var(--u)*1.4) calc(var(--u)*2.6);
   font-size:calc(var(--u)*2);font-weight:800;line-height:1.2;
+  font-family:inherit;color:inherit;cursor:pointer;   /* it is a button now */
 }
+.dsp .seg .segitem:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
 .dsp .seg .orgline{
   display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);
   margin-top:calc(var(--u)*2.4);
@@ -1858,6 +1862,28 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     if(!seg) return [];
     return seg.name.trim() ? [{who:false},{who:true}] : [{who:false}];
   }
+  /* ===================== segment media =====================
+     A preliminary is a video, not a card: the prayer, the anthem and the hymn
+     are all played from a file. The file is found by the item's own name, so
+     there is nothing to configure — rename the item and rename the file to
+     match. Missing file, missing name, no harm: the item just stays a card. */
+  var playing = null;                       // the item text being played, or null
+  function mediaSlug(t){
+    return String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+  /* Absolute, because the audience window is written into about:blank and has
+     no base URL of its own to resolve "media/..." against. */
+  function mediaURL(t){
+    try{ return new URL("media/" + mediaSlug(t) + ".mp4", location.href).href; }
+    catch(err){ return ""; }
+  }
+  function playMedia(t){ playing = t || null; render(); }
+  function mediaSceneHTML(){
+    return '<div class="dsp run">' +
+      '<video class="slidevid" src="' + esc(mediaURL(playing)) + '" autoplay controls></video>' +
+      '<button class="sbtn medback" data-media="">Back to the programme</button></div>';
+  }
+
   function segmentSceneHTML(){
     var seg = nowSeg() || prog().filter(function(p){ return !p.done; })[0] || null;
     if(!seg) return '<div class="dsp">'+dspHead("Programme")+
@@ -1879,7 +1905,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
         (!seg.name.trim() && seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
         ((seg.items||[]).length
           ? '<div class="segitems">'+seg.items.map(function(t){
-              return '<div class="segitem">'+esc(t)+'</div>'; }).join("")+'</div>'
+              return '<button class="segitem" data-media="'+esc(t)+'">'+esc(t)+'</button>'; }).join("")+'</div>'
           : '')+
         (seg.org && !seg.name.trim() ? orgLine(seg.org) : '')+
       '</div>';
@@ -3858,6 +3884,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     // one rule: while the deck is on screen it owns the display, and every cue
     // below carries on working untouched for when it is not
     if(brk.on) return breakSceneHTML();
+    if(playing) return mediaSceneHTML();
     if(runLive()) return runSceneHTML();
 
     var s = standings(), list = named();
@@ -4145,6 +4172,27 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
     Array.prototype.forEach.call(sc, function(b){
       b.onclick = function(){ setCue(b.dataset.scene); toast("On screen: "+cueName(b.dataset.scene)); };
     });
+    var md = root.querySelectorAll("[data-media]");
+    Array.prototype.forEach.call(md, function(b){
+      b.onclick = function(){ playMedia(b.dataset.media); };
+    });
+    var vid = root.querySelector("video.slidevid");
+    if(vid){
+      vid.onended = function(){ playMedia(null); };
+      // a name with no file behind it: say so rather than sit on a black screen
+      vid.onerror = function(){
+        var was = playing;
+        playMedia(null);
+        toast("No file at media/"+mediaSlug(was||"")+".mp4");
+      };
+      /* Autoplay is blocked unless the click that started it happened in this
+         document, so a click in the console's preview leaves the audience window
+         paused. Say which window to click rather than leaving a still frame up. */
+      var go = vid.play();
+      if(go && go.catch) go.catch(function(){
+        if(root.ownerDocument !== document) toast("Click the video on the audience screen to start it");
+      });
+    }
   }
   function turnPage(d){
     var l = pagedList();
@@ -4725,6 +4773,7 @@ td.actions{width:1%;white-space:nowrap;text-align:right}
   });
 
   document.addEventListener("keydown", function(e){
+    if(e.key==="Escape" && playing){ e.preventDefault(); playMedia(null); return; }
     if(e.key==="Escape" && $("preview").classList.contains("show")){ $("preview").classList.remove("show"); return; }
     /* F5 and Ctrl+R are cancellable; Ctrl+W, Ctrl+N and the toolbar button are
        not, which is why the autosave exists rather than this being the defence. */

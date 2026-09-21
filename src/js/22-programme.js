@@ -379,6 +379,28 @@
     if(!seg) return [];
     return seg.name.trim() ? [{who:false},{who:true}] : [{who:false}];
   }
+  /* ===================== segment media =====================
+     A preliminary is a video, not a card: the prayer, the anthem and the hymn
+     are all played from a file. The file is found by the item's own name, so
+     there is nothing to configure — rename the item and rename the file to
+     match. Missing file, missing name, no harm: the item just stays a card. */
+  var playing = null;                       // the item text being played, or null
+  function mediaSlug(t){
+    return String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+  /* Absolute, because the audience window is written into about:blank and has
+     no base URL of its own to resolve "media/..." against. */
+  function mediaURL(t){
+    try{ return new URL("media/" + mediaSlug(t) + ".mp4", location.href).href; }
+    catch(err){ return ""; }
+  }
+  function playMedia(t){ playing = t || null; render(); }
+  function mediaSceneHTML(){
+    return '<div class="dsp run">' +
+      '<video class="slidevid" src="' + esc(mediaURL(playing)) + '" autoplay controls></video>' +
+      '<button class="sbtn medback" data-media="">Back to the programme</button></div>';
+  }
+
   function segmentSceneHTML(){
     var seg = nowSeg() || prog().filter(function(p){ return !p.done; })[0] || null;
     if(!seg) return '<div class="dsp">'+dspHead("Programme")+
@@ -400,7 +422,7 @@
         (!seg.name.trim() && seg.office ? '<div class="segby">'+esc(seg.office)+'</div>' : '')+
         ((seg.items||[]).length
           ? '<div class="segitems">'+seg.items.map(function(t){
-              return '<div class="segitem">'+esc(t)+'</div>'; }).join("")+'</div>'
+              return '<button class="segitem" data-media="'+esc(t)+'">'+esc(t)+'</button>'; }).join("")+'</div>'
           : '')+
         (seg.org && !seg.name.trim() ? orgLine(seg.org) : '')+
       '</div>';

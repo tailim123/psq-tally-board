@@ -52,10 +52,12 @@
 .dsp.run{padding:0;background:#000;display:block;position:relative}
 .dsp.run::before,.dsp.run::after{display:none}
 .dsp.run>*{position:absolute}
-.dsp .slideimg{
+.dsp .slideimg,.dsp .slidevid{
   inset:0;width:100%;height:100%;object-fit:contain;display:block;
   z-index:0;background:#000;
 }
+/* a preliminary played from a file — full-bleed, with one way back */
+.dsp .medback{z-index:2;bottom:calc(var(--u)*3);left:50%;transform:translateX(-50%)}
 /* the clock rides in a corner, legible against any slide the RTC sends */
 .dsp .clock{
   z-index:2;top:calc(var(--u)*2);right:calc(var(--u)*2);min-width:calc(var(--u)*13);
@@ -196,7 +198,9 @@
   background:#FFFFFF;border:4px solid var(--ink);border-radius:calc(var(--u)*1);
   box-shadow:0 5px 0 var(--ink);padding:calc(var(--u)*1.4) calc(var(--u)*2.6);
   font-size:calc(var(--u)*2);font-weight:800;line-height:1.2;
+  font-family:inherit;color:inherit;cursor:pointer;   /* it is a button now */
 }
+.dsp .seg .segitem:active{transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
 .dsp .seg .orgline{
   display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*1.2);
   margin-top:calc(var(--u)*2.4);

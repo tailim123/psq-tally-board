@@ -315,6 +315,7 @@
   });
 
   document.addEventListener("keydown", function(e){
+    if(e.key==="Escape" && playing){ e.preventDefault(); playMedia(null); return; }
     if(e.key==="Escape" && $("preview").classList.contains("show")){ $("preview").classList.remove("show"); return; }
     /* F5 and Ctrl+R are cancellable; Ctrl+W, Ctrl+N and the toolbar button are
        not, which is why the autosave exists rather than this being the defence. */
